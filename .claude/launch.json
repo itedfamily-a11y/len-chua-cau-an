@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "chua",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["C:\\Users\\ADMIN\\AppData\\Local\\Temp\\claude\\C--Users-ADMIN-AppData-Local-Claude-Data-claude-pzs8sxrjxfjjc-scratch-workspaces-1453a719-87c1-496d-8a1e-516e2e445d01-9323121f-e9c2-464c-bc92-12d6488abdce-scratch-2026-11-03-1e359e\\e9b627ca-1b10-411c-8300-1503f3874b63\\scratchpad\\devserver.py", "D:\\dichua"],
+      "port": 5174
+    }
+  ]
+}

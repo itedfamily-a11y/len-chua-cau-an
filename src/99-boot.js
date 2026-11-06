@@ -7,8 +7,8 @@
     ['cảnh', buildWorld],
     ['bố cục khu mở rộng', typeof buildWorld2 === 'function' ? buildWorld2 : null],
     ['dựng khu mở rộng', typeof buildWorld2Geo === 'function' ? buildWorld2Geo : null],
-    ['nội thất chính điện', typeof buildHallArch === 'function' ? buildHallArch : null],
-    ['bàn thờ chính điện', typeof buildHallAltar === 'function' ? buildHallAltar : null],
+    ['chính điện', typeof buildChinhDien === 'function' ? buildChinhDien : null], // thay buildHallArch (15) + buildHallAltar (16): hai file cũ còn trong repo nhưng không gọi nữa
+    ['trang trí cung đình', typeof buildCungDinh === 'function' ? buildCungDinh : null], // sau chính điện (18), trước điện phụ / trang trí sân: sư tử, hoa biểu, vạc, hạc, nhật quỹ, cửa chính, kìm nóc
     ['điện phụ & tháp Văn Thù', typeof buildDienPhu === 'function' ? buildDienPhu : null], // trước trang trí: chừa chỗ cho cây cảnh, đèn đá
     ['trang trí sân chùa', typeof buildDecorInside === 'function' ? buildDecorInside : null],
     ['biển báo trước cổng', typeof buildGateSign === 'function' ? buildGateSign : null], // trước cảnh vật: quầy hàng tự lùi chỗ

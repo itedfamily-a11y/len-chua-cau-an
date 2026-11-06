@@ -22,7 +22,7 @@ function installAudio(G) {
     music: 0.23, musicDuck: 0.4, // nhạc nền (bài gốc ~-13 LUFS → ~-26 LUFS); khi làm hoạt động còn 40%
     windChime: 0.045, // chuông gió dưới mái hiên: rất khẽ
   };
-  const HALL = { x: 0, z: G.frame.xf(0, 0, -16).z }; // tâm chính điện (toạ độ gốc -16 → xf: phóng 1,2× + dời ra sau Tích Thiện Am): nơi nghe tụng kinh rõ nhất
+  const HALL = { x: 0, z: G.frame.xf(0, 0, -20).z }; // tâm chính điện (v4: toạ độ gốc -20 → xf = z −99,7, đúng trục mái −99,75; v3: -16 khi điện còn nông): nơi nghe tụng kinh rõ nhất
   const CH_BASE = 118; // cao độ nền của đoàn tụng (Hz)
 
   // ===== Trạng thái chung =====
@@ -769,7 +769,7 @@ function installAudio(G) {
     if (!p) return 'stone';
     if (G.insideHall && G.insideHall(p.x, p.z)) return 'hall';
     const ax = Math.abs(p.x);
-    if ((ax < 24 && p.z > -84 && p.z < 31) || (ax < 2.4 && p.z >= 31)) return 'stone';
+    if ((ax < 24 && p.z > -118 && p.z < 31) || (ax < 2.4 && p.z >= 31)) return 'stone'; // tường bao sau ở z = −118 (v4; v3: −100)
     return 'grass';
   }
   function onFootstep(pos) {

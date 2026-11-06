@@ -16,9 +16,9 @@ function buildDienPhu(G) {
   // ---------- Bộ gom chung: 5 mesh cho cả bốn điện ----------
   const WS = U.batch(), WF = U.batch(), WM = U.batch(), WL = U.batch(), WG = U.batch();
   const SPH = new THREE.SphereGeometry(1, 10, 7), SPL = new THREE.SphereGeometry(1, 7, 5), HEAD = new THREE.SphereGeometry(1, 14, 10);
-  const CAP = new THREE.SphereGeometry(1, 14, 7, 0, PI * 2, 0, PI * 0.43), HOOD = new THREE.SphereGeometry(1, 14, 8, 0, PI * 2, 0, PI * 0.62);
+  const CAP = new THREE.SphereGeometry(1, 14, 7, 0, PI * 2, 0, PI * 0.43);
   const CN4 = new THREE.ConeGeometry(0.5, 1, 4), CN6 = new THREE.ConeGeometry(0.5, 1, 6);
-  const own = [SPH, SPL, HEAD, CAP, HOOD, CN4, CN6];
+  const own = [SPH, SPL, HEAD, CAP, CN4, CN6];
   const frame = (ox, oz, yaw) => { // toạ độ cục bộ (x ngang, z ra sân) ↔ thế giới
     const c = Math.cos(yaw), s = Math.sin(yaw);
     return { ox, oz, yaw, mat: new THREE.Matrix4().makeRotationY(yaw).setPosition(ox, 0, oz),
@@ -124,41 +124,6 @@ function buildDienPhu(G) {
     glow(0.42, 1.46, 0.52, 0.9, [1.0, 0.88, 0.5], false);
   };
   // glow gọi trong hàm tượng dùng toạ độ của tượng: đổi sang toạ độ cục bộ của điện ở putFigure
-
-  // Quan Thế Âm Bồ Tát: đứng trên đài sen, áo trắng, khăn trùm đầu, tay phải cầm cành dương liễu, tay trái cầm bình nước
-  const quanAm = (T, Lb) => {
-    const wh = 0xf2ede2, whD = 0xd6cfbf, sk = 0xf0d8b4;
-    T.add(lathe([[0.64, 0], [0.68, 0.1], [0.6, 0.16], [0.5, 0.24], [0, 0.24]], 14), maroon);
-    petals(T, 0, 0.08, 0, 0.5, 14, 0.34, 0.26, 0.95, goldD); petals(T, 0, 0.2, 0, 0.36, 12, 0.34, 0.24, 0.45, goldC, 0.26);
-    cyl(T, 0, 0.38, 0, 0.3, 0.34, 0.08, goldD, 14);
-    T.add(lathe([[0, 0.4], [0.44, 0.4], [0.47, 0.48], [0.41, 0.8], [0.32, 1.3], [0.24, 1.66], [0.2, 1.86], [0.24, 1.96], [0.26, 2.04], [0.18, 2.1], [0, 2.1]], 14), wh, { s: [1, 1, 0.8] }); // áo trắng xòe
-    for (let i = 0; i < 5; i++) T.add(BOX, 0xe9e2d2, { p: [(i - 2) * 0.1, 0.85, 0.345], s: [0.025, 0.9 - Math.abs(i - 2) * 0.1, 0.02] }); // nếp áo
-    T.add(new THREE.TorusGeometry(0.31, 0.022, 5, 18), goldC, { p: [0, 1.4, 0], r: [PI / 2, 0, 0], s: [1, 0.8, 1] });         // đai lưng
-    cyl(T, 0, 2.12, 0, 0.08, 0.1, 0.14, sk, 8);
-    ell(T, 0, 2.3, 0.02, 0.16, 0.19, 0.17, sk);                                                                            // đầu
-    T.add(HOOD, wh, { p: [0, 2.32, -0.02], r: [-PI / 2, 0, 0], s: [0.25, 0.27, 0.27] });                                  // khăn trùm
-    for (const s of [-1, 1]) {
-      T.add(BOX, wh, { p: [s * 0.22, 2.0, -0.03], s: [0.08, 0.55, 0.24], r: [0, 0, s * 0.1] });                            // vạt khăn rủ hai vai
-      T.add(BOX, 0x4a2e12, { p: [s * 0.065, 2.31, 0.172], s: [0.06, 0.012, 0.015], r: [0, 0, s * 0.12] });                  // mắt khép
-      ell(T, s * 0.17, 2.27, 0, 0.025, 0.07, 0.03, sk);
-    }
-    T.add(BOX, wh, { p: [0, 1.9, -0.2], s: [0.4, 0.75, 0.06] });
-    T.add(BOX, 0xb98a4a, { p: [0, 2.26, 0.178], s: [0.03, 0.05, 0.03] }); T.add(BOX, 0xb8704a, { p: [0, 2.2, 0.178], s: [0.05, 0.015, 0.02] });
-    ell(T, 0, 2.43, 0.17, 0.02, 0.02, 0.015, 0xd04a30); T.add(CN4, goldC, { p: [0, 2.5, 0.19], s: [0.08, 0.1, 0.03] });     // bạch hào, trang sức trán
-    T.add(new THREE.TorusGeometry(0.4, 0.035, 6, 30), goldC, { p: [0, 2.3, -0.3] });                                      // quầng sáng sau đầu
-    T.add(new THREE.TorusGeometry(1.0, 0.04, 6, 40), goldD, { p: [0, 1.5, -0.36], s: [0.8, 1.5, 1] });
-    // tay phải: cành dương liễu; tay trái: bình nước cam lồ
-    const shR = [-0.26, 1.9, 0], elR = [-0.38, 1.55, 0.12], hdR = [-0.32, 1.72, 0.34];
-    limb(T, shR, elR, 0.09, 0.075, wh); limb(T, elR, hdR, 0.075, 0.06, wh); ell(T, hdR[0], hdR[1], hdR[2], 0.06, 0.05, 0.06, sk);
-    const w = [hdR, [-0.34, 2.12, 0.38], [-0.52, 2.34, 0.4], [-0.78, 2.22, 0.38], [-0.9, 1.9, 0.36], [-0.9, 1.6, 0.34]];
-    for (let i = 0; i < w.length - 1; i++) limb(T, w[i], w[i + 1], 0.016, 0.012, 0x5d8c3d);
-    for (let i = 2; i < w.length; i++) for (const d of [-0.04, 0.04]) ell(T, w[i][0] + d, w[i][1] - 0.07, w[i][2], 0.03, 0.1, 0.012, 0x6f9a45, { r: [0, 0, d * 6] });
-    const shL = [0.26, 1.9, 0], elL = [0.36, 1.5, 0.14], hdL = [0.24, 1.3, 0.4];
-    limb(T, shL, elL, 0.09, 0.075, wh); limb(T, elL, hdL, 0.075, 0.06, wh); ell(T, hdL[0], hdL[1], hdL[2], 0.07, 0.04, 0.08, sk);
-    T.add(lathe([[0, 0], [0.08, 0], [0.15, 0.08], [0.17, 0.2], [0.11, 0.34], [0.06, 0.4], [0.09, 0.45], [0, 0.45]], 10), 0xbfe0d0, { p: [0.24, 1.32, 0.42] }); // bình nước
-    cyl(T, 0.24, 1.78, 0.42, 0.095, 0.095, 0.03, goldC, 8);
-    limb(T, [0.24, 1.78, 0.42], [0.3, 1.96, 0.42], 0.012, 0.012, 0x5d8c3d);                                              // nhành nhỏ trong bình
-  };
 
   // Văn Thù Sư Lợi Bồ Tát cưỡi sư tử xanh: tay phải (bên −x) giơ kiếm, tay trái cầm đóa sen có cuốn kinh
   const figureAt = (T, Lb, fn, x, y, z, s) => { // dựng con tượng nhỏ rồi thu nhỏ/đặt lên chỗ khác
@@ -272,7 +237,7 @@ function buildDienPhu(G) {
     boxMM(T.F, -0.9, fh + 0.02, tf, 0.9, fh + 0.035, -0.1, 0x7a2418);
     const c1 = tf + 1.4, c2 = c1 + 1.3;                      // hai hàng bồ đoàn
     cushion(T, 0, fh, c1, true); cushion(T, -1.7, fh, c1); cushion(T, 1.7, fh, c1); cushion(T, 0, fh, c2);
-    putFigure(T, sp.deity, 0, fh + ph + 0.08, pzc, sp.scale || 0.62);
+    if (sp.deity) putFigure(T, sp.deity, 0, fh + ph + 0.08, pzc, sp.scale || 0.62);
     glow(0, fh + ph + 0.08 + (sp.haloY || 1.6), pzc + 0.3, 3.0, [1.0, 0.78, 0.36], false);
     flush(T, fr); toWorldFx(fr, g0, s0);
     // vật cản, kính chắn máy quay, độ cao, vùng mái, dẫn đường, vùng chừa, chỗ đứng cho khách
@@ -293,6 +258,14 @@ function buildDienPhu(G) {
     const alt = { x: fr.X(0, pzc), z: fr.Z(0, pzc) };
     const sp3 = [[-1.7, c1], [1.7, c1], [0, c2]].map(([x, z]) => ({ x: fr.X(x, z), z: fr.Z(x, z), yaw: U.yawTo(fr.X(x, z), fr.Z(x, z), alt.x, alt.z) }));
     const front = { x: fr.X(0, 2.6), z: fr.Z(0, 2.6) };
+    const ex = sp.ext && W.ext && W.ext[sp.ext];
+    if (ex && ex.statue) { // tượng nghìn tay dựng sẵn ở 09: đặt lên bệ, quay mặt ra cửa; hoạt động lần chuỗi hạt chuyển vào trong điện
+      const st = ex.statue, sy = fh + ph + 0.08, ss = sp.scale || 1, sa = { x: fr.X(0, tf + 0.5), z: fr.Z(0, tf + 0.5) };
+      st.position.set(alt.x, sy, alt.z); st.rotation.y = fr.yaw; st.scale.setScalar(ss); scene.add(st);
+      ex.poi = { x: fr.X(0, -2.1), z: fr.Z(0, -2.1), r: 2.2 };                                              // trước hàng bồ đoàn, cách POI Lễ ngoài thềm hơn 4 m
+      ex.stand = { x: sa.x, z: sa.z, yaw: U.yawTo(sa.x, sa.z, alt.x, alt.z) };                               // sát bàn thờ, quay vào tượng
+      ex.cam = { pos: [fr.X(0.8, -0.2), fh + 2.85, fr.Z(0.8, -0.2)], look: [alt.x, sy + 1.3 * ss, alt.z] };    // sát cửa (cách tượng ~7,5 m), lệch một bên, nhìn từ trên xuống thân tượng để thấy cả người chơi
+    }
     const lp = [fr.X(0, -D / 2 - 0.5), fh + (two ? 3.8 : 3.2), fr.Z(0, -D / 2 - 0.5)];
     const h = { id: sp.id, title: sp.title, extra: sp.extra || [], lamp: lp, cushion: { x: fr.X(0, c1), z: fr.Z(0, c1), y: fh + 0.16, yaw: U.yawTo(fr.X(0, c1), fr.Z(0, c1), alt.x, alt.z) }, altar: alt, front, nodes: nodes.map(([x, z, id]) => ({ x: fr.X(x, z), z: fr.Z(x, z), id })), spots: sp3,
       cam: { pos: [fr.X(0.3, -0.1), fh + 2.5, fr.Z(0.3, -0.1)], look: [fr.X(1.8, pzc), fh + ph + 0.08 + (sp.scale || 0.62) * 1.25, fr.Z(1.8, pzc)] }, // nhìn lệch phải để tượng nằm bên trái bảng đặt sát góc phải
@@ -330,7 +303,7 @@ function buildDienPhu(G) {
   const specs = [
     { id: 'duoc-su', title: 'Dược Sư Lưu Ly Quang Vương Phật', name: 'ĐIỆN DƯỢC SƯ', x0: 11.5, x1: 19.5, z0: -26, z1: -18, face: 'S', floorH: 0.45, tiers: 1, deity: drugBuddha, scale: 0.62, haloY: 1.8, extra: [[16.8, -27.4, 'dsBack']] },
     { id: 'dia-tang', title: 'Địa Tạng Vương Bồ Tát', name: 'ĐIỆN ĐỊA TẠNG', x0: -19.5, x1: -11.5, z0: -26, z1: -18, face: 'S', floorH: 0.45, tiers: 1, deity: diaTang, scale: 0.6, haloY: 1.8, extra: [[-16.8, -27.4, 'dtBack']] },
-    { id: 'quan-am-cac', title: 'Quan Thế Âm Bồ Tát', name: 'QUAN ÂM CÁC', x0: 12.5, x1: 21.5, z0: -1.0, z1: 7.2, face: 'W', floorH: 0.45, tiers: 2, deity: quanAm, scale: 1.0, haloY: 1.5, back: 2.2, extra: [[22.0, -2.4, 'qaE1'], [22.0, 3.0, 'qaE2'], [22.0, 10.0, 'qaE3']] }, // ao sen lớn tới z 7.2 nên điện lùi lên 1 m; lối bên đông 2,2 m
+    { id: 'quan-am-cac', title: 'Quan Thế Âm Bồ Tát', name: 'QUAN ÂM CÁC', x0: 12.5, x1: 21.5, z0: -1.0, z1: 7.2, face: 'W', floorH: 0.45, tiers: 2, deity: null, ext: 'quanAm', scale: 1.0, haloY: 1.75, back: 2.2, extra: [[22.0, -2.4, 'qaE1'], [22.0, 3.0, 'qaE2'], [22.0, 10.0, 'qaE3']] }, // ao sen lớn tới z 7.2 nên điện lùi lên 1 m; lối bên đông 2,2 m
   ];
   // dọn nút dẫn đường / chỗ đứng cũ nằm trong khuôn viên các toà mới (phải làm trước khi thêm nút mới)
   const preFp = [];
@@ -372,7 +345,7 @@ function buildDienPhu(G) {
       intro: ['Địa Tạng Vương Bồ Tát được biết đến với đại nguyện ở lại cùng chúng sinh trong cảnh khổ đau, cho đến khi tất cả được thoát khổ.', 'Nhiều người cũng nhớ đến Ngài khi hướng về ông bà, tổ tiên. Tích trượng và viên minh châu tượng trưng cho sự thức tỉnh và ánh sáng soi đường.'],
       wishes: ['Mong ông bà tổ tiên được an ổn', 'Mong mình biết ơn và sống tử tế', 'Mong ai gặp hoạn nạn sớm qua khó khăn'] },
     'quan-am-cac': { short: 'Quan Âm', desc: 'Vào Quan Âm Các, lễ Quan Thế Âm Bồ Tát', place: 'Quan Âm Các',
-      intro: ['Quan Thế Âm Bồ Tát là biểu tượng của lòng từ bi: lắng nghe tiếng kêu của thế gian và đưa tay giúp đỡ.', 'Cành dương liễu và bình nước cam lồ gợi nhớ sự dịu mát, xoa dịu nỗi đau. Đứng trước Ngài, ta nhắc nhau lắng nghe và thương yêu nhiều hơn.'],
+      intro: ['Quan Thế Âm Bồ Tát là biểu tượng của lòng từ bi: lắng nghe tiếng kêu của thế gian và đưa tay giúp đỡ.', 'Tượng nghìn mắt nghìn tay phỏng theo tượng ở chùa Bút Tháp: muôn bàn tay xoè ra như muốn lắng nghe và giúp đỡ muôn người. Đứng trước Ngài, ta nhắc nhau lắng nghe và thương yêu nhiều hơn.'],
       wishes: ['Mong gia đình hòa thuận', 'Mong mình biết lắng nghe', 'Mong người khó khăn được che chở'] },
     'van-thu': { short: 'Văn Thù', desc: 'Vào lòng tháp Báo Nghiêm, lễ Văn Thù Sư Lợi Bồ Tát', place: 'Tháp Báo Nghiêm – điện Văn Thù',
       intro: ['Văn Thù Sư Lợi Bồ Tát là biểu tượng của trí tuệ. Thanh kiếm tượng trưng cho trí tuệ cắt đứt phiền não; cuốn kinh trên đóa sen nhắc việc học hỏi và hiểu đúng.', 'Nhiều người đến trước Ngài với mong muốn học hành sáng suốt, làm việc tỉnh táo và rõ ràng.'],

@@ -133,11 +133,11 @@ function buildScenery(G) {
   };
   const rectHit = (x, z, r, x0, z0, x1, z1) => { const dx = Math.max(x0 - x, 0, x - x1), dz = Math.max(z0 - z, 0, z - z1); return dx * dx + dz * dz < r * r; };
   // dải đi bộ 1.65 m sát tường ngoài (đông, tây, sau, hai cánh cổng) và sân trước cổng phải để trống
-  const STRIPS = [[24.3, -86, 25.95, 33.6], [-25.95, -86, -24.3, 33.6], [-25.95, -85.95, 25.95, -84.3], [7, 31.3, 25.95, 32.95], [-25.95, 31.3, -7, 32.95], [-9, 28.5, 9, 34.5]];
+  const STRIPS = [[24.3, -120, 25.95, 33.6], [-25.95, -120, -24.3, 33.6], [-25.95, -119.95, 25.95, -118.3], [7, 31.3, 25.95, 32.95], [-25.95, 31.3, -7, 32.95], [-9, 28.5, 9, 34.5]]; // tường sau ở z = −118 (v4; ngoài tường −118,3; v3: −100)
   function canPlace(x, z, r) {
     if (col.hit(x, z, r)) return false;
     if (Math.abs(x) < 2.6 + r && z > 28 && z < 80) return false;                                  // lối vào chùa
-    if (x > -24.3 - r && x < 24.3 + r && z > -84.4 - r && z < 31.4 + r) return false;             // trong khuôn viên
+    if (x > -24.3 - r && x < 24.3 + r && z > -118.4 - r && z < 31.4 + r) return false;            // trong khuôn viên (v4: tường sau z −118)
     for (const s of STRIPS) if (rectHit(x, z, r, s[0], s[1], s[2], s[3])) return false;
     if (x < bnd.x0 - 4 - r || x > bnd.x1 + 4 + r || z < bnd.z0 - 4 - r || z > bnd.z1 + 4 + r) return true; // ngoài tầm đi bộ
     for (const n of NV) { const dx = n.x - x, dz = n.z - z, m = r + 0.6; if (dx * dx + dz * dz < m * m) return false; }
@@ -159,7 +159,7 @@ function buildScenery(G) {
     const r91 = U.rng(91);
     for (let i = 0; i < 64; i++) {
       let x, z;
-      for (;;) { x = (r91() * 2 - 1) * 46; z = -100 + r91() * 172; if (!(x > -26.5 && x < 26.5 && z > -86.5 && z < 33.5) && !(Math.abs(x) < 6 && z > 30)) break; }
+      for (;;) { x = (r91() * 2 - 1) * 46; z = -100 + r91() * 172; if (!(x > -26.5 && x < 26.5 && z > -120.5 && z < 33.5) && !(Math.abs(x) < 6 && z > 30)) break; } // (đúng như 05-world.js: sửa cả hai nơi cùng lúc)
       const s = i % 5 === 0 ? 0 : 0.9 + r91() * 0.6;
       old.push({ x, z, r: s ? 0.5 * s : 1.1 });
     }
@@ -315,7 +315,7 @@ function buildScenery(G) {
   const RIVER = [];  // mẫu dọc dòng: {x,z,nx,nz,hw,lv}
   const EXC = [];    // vùng cấm dựng ruộng: hình tròn {x,z,r}
   safe('sông', () => {
-    const CP = [[205, -160], [150, -140], [100, -124], [50, -116], [0, -121], [-42, -126], [-70, -108], [-76, -70], [-68, -30], [-74, 8], [-70, 40], [-76, 76], [-92, 110], [-112, 140]];
+    const CP = [[205, -160], [150, -140], [100, -136], [50, -140], [0, -144], [-42, -148], [-78, -128], [-76, -70], [-68, -30], [-74, 8], [-70, 40], [-76, 76], [-92, 110], [-112, 140]];
     const dense = [];
     for (let i = 0; i < CP.length - 1; i++) {
       const p0 = CP[Math.max(0, i - 1)], p1 = CP[i], p2 = CP[i + 1], p3 = CP[Math.min(CP.length - 1, i + 2)];
@@ -634,7 +634,7 @@ function buildScenery(G) {
   });
   // cỏ cao và hoa dại rải ở bãi cỏ ngoài tường cho thảm cỏ bớt phẳng
   safe('cỏ dại', () => {
-    const zones = [[-31, 31, 33.8, 75.5], [26.2, 31, -85, 33], [-31, -26.2, -85, 33], [-25, 25, -89.5, -86.3]];
+    const zones = [[-31, 31, 33.8, 75.5], [26.2, 31, -119, 33], [-31, -26.2, -119, 33], [-25, 25, -123.5, -120.3]];
     let n = 0;
     for (let t = 0; t < 2400 && n < 230; t++) {
       const zn = zones[[0, 0, 1, 0, 2, 0, 3][t % 7]], x = rr(zn[0], zn[1]), z = rr(zn[2], zn[3]);
@@ -653,8 +653,8 @@ function buildScenery(G) {
       domeTree(x, z, s, 1800 + ((x + z) | 0), true, true); EXC.push({ x, z, r: 4.5 });
     }
     for (let row = 0; row < 3; row++) for (let x = -30; x < 31; x += rr(7, 10)) {
-      const z = -94 - row * 5.8 + rr(-1, 1);
-      if (nearOld(x, z, 2.2)) continue;
+      const z = -124 - row * 5.2 + rr(-1, 1);  // hàng cây sau tường bao (v4: tường ở z −118, dải đi bộ ngoài tường đến −120): cách tường ≥ 6 m, và chừa bờ sông
+      if (nearOld(x, z, 2.2) || riverDist(x, z) < 8) continue;
       const t = rnd(), sd = 1500 + ((x * 3) | 0) + row;
       t < 0.45 ? domeTree(x, z, rr(1.1, 1.6), sd, false) : t < 0.7 ? umbrellaTree(x, z, rr(1, 1.3), sd, false) : t < 0.85 ? bamboo(x, z, sd, 7, false) : areca(x, z, rr(8, 10.5), false);
     }
@@ -761,8 +761,8 @@ function buildScenery(G) {
       else if (canPlace(x, z, 0.5)) banana(x, z, 1.1, true, true);
     };
     // dải hai bên tường (chừa lối đi bộ 1.65 m sát tường) và dải sau tường
-    for (const sx of [1, -1]) for (let z = -82; z < 30; z += rr(7.5, 11)) put(sx * rr(28.6, 30.4), z, pick([0, 0, 1, 2, 3, 4]));
-    for (let x = -22; x < 23; x += rr(6.5, 9.5)) put(x, rr(-88.6, -86.8), pick([0, 1, 1, 2, 3]));
+    for (const sx of [1, -1]) for (let z = -116; z < 30; z += rr(7.5, 11)) put(sx * rr(28.6, 30.4), z, pick([0, 0, 1, 2, 3, 4]));
+    for (let x = -22; x < 23; x += rr(6.5, 9.5)) put(x, rr(-122.6, -120.8), pick([0, 1, 1, 2, 3]));
     // rặng cây, cau, dừa dọc đường làng
     for (const r of ROADS) for (let k = 0; k < r.pts.length - 1; k++) for (let t = 0.2; t < 1; t += 0.5) {
       const x = r.pts[k][0] + (r.pts[k + 1][0] - r.pts[k][0]) * t, z = r.pts[k][1] + (r.pts[k + 1][1] - r.pts[k][1]) * t, sd = rnd() < 0.5 ? 1 : -1, ox = x + sd * 3.0, oz = z + sd * 1.0;
@@ -772,7 +772,7 @@ function buildScenery(G) {
     // mảng cây trên vùng đất xa và quanh xóm (tránh ô ruộng đã đặt)
     for (let g = 0; g < 16; g++) {
       const gx = rr(-130, 130), gz = rr(-150, 150);
-      if (Math.hypot(gx, gz - 20) < 75 || EXC.some((e) => Math.hypot(e.x - gx, e.z - gz) < e.r + 8) || riverDist(gx, gz) < 14 || placed.some((q) => rectNear(q, gx, gz, 11))) continue;
+      if (Math.hypot(gx, gz - 20) < 75 || (gx > -34 && gx < 34 && gz > -128 && gz < 40) || EXC.some((e) => Math.hypot(e.x - gx, e.z - gz) < e.r + 8) || riverDist(gx, gz) < 14 || placed.some((q) => rectNear(q, gx, gz, 11))) continue;
       for (let k = 0; k < 4; k++) { const x = gx + rr(-8, 8), z = gz + rr(-8, 8); rnd() < 0.7 ? domeTree(x, z, rr(1.2, 1.9), (rnd() * 1e6) | 0, false) : bamboo(x, z, (rnd() * 1e6) | 0, 5, false); }
     }
   });
@@ -799,7 +799,7 @@ function buildScenery(G) {
       endPart(p);
     });
     // cò bay: ba đàn bốn con, bay vòng trên đồng
-    [[40, 40, 38, 14, 0.09], [-50, 10, 46, 9, -0.075], [20, -70, 52, 12, 0.08]].forEach(([cx, cz, R, h, om], i) => {
+    [[40, 40, 38, 14, 0.09], [-50, 10, 46, 9, -0.075], [72, -72, 44, 12, 0.08]].forEach(([cx, cz, R, h, om], i) => { // đàn 3: tâm (72,−72) R 44 (v3: (20,−70) R 52 — chính điện v4 sâu tới z −113 nên vòng bay cũ xuyên qua tường/mái điện; vòng mới nằm ngoài x > 22,6)
       for (let b = 0; b < 4; b++) {
         const p = newPart('bird', cx, h, cz, i * 1.7 + b * 0.16, { R: R + b * 1.8 * (b % 2 ? 1 : -1), om, h: h + b * 0.8 });
         const S = 0.55;

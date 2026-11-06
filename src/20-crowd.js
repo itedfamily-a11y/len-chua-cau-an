@@ -377,7 +377,8 @@ function installCrowd(G) {
     for (let k = 0; k < ORDER.length; k++) {
       let w = wt[k];
       const d = nearestFree(ORDER[k], p);
-      w = d < 0 ? 0 : w / (1 + (d / 10) * (d / 10)); // việc ở gần được ưu tiên hơn việc ở xa
+      const dk = k === 2 ? 60 : k === 1 ? 42 : 10; // 'sit'/'pray' ở chính điện (cuối sân, ~115–145 m từ cổng; v3: 50/35): giảm nhẹ theo khoảng cách để điện có người lễ, ngồi
+      w = d < 0 ? 0 : w / (1 + (d / dk) * (d / dk)); // việc ở gần được ưu tiên hơn việc ở xa
       if (ORDER[k] === p.lastKind) w *= 0.15;
       _w[k] = w; tot += w;
     }
@@ -487,7 +488,7 @@ function installCrowd(G) {
     switch (p.act) {
       case 'incense': p.bows = randInt(2, 3); p.bp = rand(2.4, 3.2); p.dur = 3.2 + p.bows * p.bp + 0.5; break;
       case 'pray': p.dur = rand(6, 14); p.bowEvery = rand(5.5, 8); break;
-      case 'sit': p.dur = rand(15, 45); break;
+      case 'sit': p.dur = rand(40, 110); break; // ngồi tụng trong chính điện lâu hơn: điện 96 chỗ trông có người
       case 'photo': p.dur = rand(10, 22); p.phoneUp = false; p.cyc = rand(0.4, 1.4); p.shotDone = true; break;
       case 'tree': p.lookT = rand(3, 5); p.dur = p.lookT + rand(5, 9); break;
       case 'pond': p.dur = rand(10, 20); break;
@@ -1009,7 +1010,7 @@ function installCrowd(G) {
   }
   function seedInitial() {
     let paired = false; // thử ghép một cặp chụp ảnh (người chụp + người đứng làm mẫu)
-    const plan = [['incense', 4], ['pray', 6], ['sit', 5], ['photo', 3], ['tree', 3], ['pond', 3], ['bell', 1], ['fortune', 1], ['bench', 1], ['wander', 6]];
+    const plan = [['incense', 4], ['pray', 6], ['sit', 10], ['photo', 3], ['tree', 3], ['pond', 2], ['bell', 1], ['fortune', 1], ['bench', 1], ['wander', 4]]; // chính điện 160 chỗ (v4; v3: 96): gieo sẵn 10 người ngồi
     for (let k = 0; k < plan.length; k++) {
       const kind = plan[k][0];
       for (let i = 0; i < plan[k][1]; i++) {

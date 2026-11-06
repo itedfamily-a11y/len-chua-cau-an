@@ -289,7 +289,7 @@ function qualityTick(raw) {
 // =====================================================================
 G.collide = {
   list: [],
-  bounds: { x0: -31, x1: 31, z0: -90, z1: 76 },
+  bounds: { x0: -31, x1: 31, z0: -119, z1: 76 }, // z0: tường bao phía sau đã lùi từ −84 ra −100 (v3) rồi ra −118 (v4: chính điện sâu 27 m, tường sau điện z −113,2; hành lang tới −113)
   circle(x, z, r, tag) { const c = { t: 0, x, z, r, tag }; this.list.push(c); return c; },
   box(x0, z0, x1, z1, tag) { const c = { t: 1, x0: Math.min(x0, x1), z0: Math.min(z0, z1), x1: Math.max(x0, x1), z1: Math.max(z0, z1), tag }; this.list.push(c); return c; },
   ellipse(x, z, rx, rz, tag) { const c = { t: 2, x, z, rx, rz, tag }; this.list.push(c); return c; },
@@ -333,12 +333,17 @@ function pushOut(c, p, r) {
   }
 }
 
-// Độ cao mặt đất (nền chính điện cao 0.6, có bậc thềm phía trước)
-// x0…h là toạ độ gốc (cục bộ) của toà điện; chỗ đứng thật = phóng đều s=1,2 quanh tâm (0, pz) (pz = tường sau) rồi dời dy/dz (tầng nền sau Tích Thiện Am)
-G.L = { hall: { x0: -10.5, x1: 10.5, z0: -23.5, zTop: -8.6, zStep: -7.8, h: 0.6, dy: 1.2, dz: -57.7, s: 1.2, pz: -23.5 } };
+// Độ cao mặt đất (chính điện v3/v4: ba tầng nền đá trắng 1.2 / 2.4 / 3.6 → sàn điện 4.8, bậc thang giữa; heightAt đầy đủ của khu nền do 18-chinh-dien.js bọc lên trên)
+// Chính điện v2→v4 (18-chinh-dien.js): s = 1 nên toạ độ gốc → thế giới chỉ là phép dời (0, dy, dz) = (0, 4.08, −79.7); thân điện dựng ở "khung v2" (sàn 1.92, mép nền trước z −63.3)
+// rồi dời cả khối (DZ = dz + 57.7 = −22): x ±18.5, z −113.2 … −85.3 (mép nền), sàn dy + h = 4.8 (v4: điện sâu 27 m — tường sau z −113,2 — nên z0 = −33.5: hộp gốc zl ∈ (−33.5, −4.7) ↔ z ∈ (−113.2, −84.4)).
+// Công thức dưới đây chỉ còn là nền gốc của chuỗi heightAt (dấu chân điện cũ, bên ngoài khu nền 18 lo)
+G.L = { hall: { x0: -18.5, x1: 18.5, z0: -33.5, zTop: -5.6, zStep: -4.7, h: 0.72, dy: 4.08, dz: -79.7, s: 1, pz: -33.5, v2: true, stepX: 7 } };
 G.heightAt = (x, z) => {
   const H = G.L.hall, s = H.s, xl = x / s, zl = H.pz + (z - H.dz - H.pz) / s; // về toạ độ gốc của điện
-  if (xl > H.x0 && xl < H.x1 && zl < H.zStep && zl > H.z0) return H.dy + s * Math.min(1, (H.zStep - zl) / (H.zStep - H.zTop)) * H.h;
+  if (xl > H.x0 && xl < H.x1 && zl < H.zStep && zl > H.z0) {
+    if (H.v2 && Math.abs(xl) > H.stepX) return zl < H.zTop ? H.dy + H.h : H.dy; // v2: chỉ giữa (|x| < stepX) có bậc thềm; hai bên mép nền dựng đứng, trước mép là tầng nền 1,2
+    return H.dy + s * Math.min(1, (H.zStep - zl) / (H.zStep - H.zTop)) * H.h;
+  }
   return 0;
 };
 G.insideHall = (x, z) => { for (const r of G.roofZones) if (x > r[0] && x < r[1] && z > r[2] && z < r[3]) return true; return false; };
@@ -376,7 +381,7 @@ G.frame = {
   },
 };
 // trong nhà có mái (máy quay đứng gần, không chui lên mái): chính điện + các toà khu mở rộng
-{ const a = G.frame.xf(-9, 0, -23), b = G.frame.xf(9, 0, -10.6); G.roofZones = [[a.x, b.x, a.z, b.z]]; }
+G.roofZones = [[-17.5, 17.5, -112.6, -86.0]]; // chính điện v4 (lùi 22 m so với v2, sâu 27 m; 18-chinh-dien.js đặt lại cho khớp tường)
 
 // =====================================================================
 //  DẪN ĐƯỜNG: đồ thị điểm mốc, tự nối các điểm nhìn thấy nhau
@@ -855,7 +860,7 @@ G.snapshot = (w, h, opts = {}) => {
   if (opts.view === 'player') {
     snapCam.fov = 58; snapCam.position.copy(camera.position); snapCam.quaternion.copy(camera.quaternion);
   } else {
-    snapCam.fov = 50; snapCam.position.set(-17, 9.5, -47); snapCam.lookAt(1.5, 5.0, -72); // nhìn chéo từ trên cao: Tích Thiện Am phía trước, chính điện phía sau
+    snapCam.fov = 50; snapCam.position.set(34, 24, -40); snapCam.lookAt(-2, 9, -98); // nhìn chéo từ trên cao phía đông: Tích Thiện Am + sân chính điện phía trước, ba tầng nền đá trắng + thang rồng + chính điện ba tầng mái vàng phía sau
   }
   snapCam.updateProjectionMatrix(); snapCam.updateMatrixWorld();
   const pr = renderer.getPixelRatio();

@@ -331,7 +331,9 @@ function installActivitiesC(G) {
 
   async function runCuuPham() {
     const C = E.cuuPham;
-    if (!G.activity.begin('cuuPham', { cam: C.cam })) { busy = false; return; }
+    const asp = G.size.w / G.size.h, pull = asp < 1 ? U.clamp(0.66 / asp, 1, 1.5) : 1, c0 = asp < 0.8 && C.camP ? C.camP : C.cam; // màn dọc: góc riêng, chia trước hệ số lùi máy của lõi
+    const cam = pull > 1 ? { pos: c0.pos.map((v, i) => c0.look[i] + (v - c0.look[i]) / pull), look: c0.look } : c0;
+    if (!G.activity.begin('cuuPham', { cam })) { busy = false; return; }
     const r = newRun('cuuPham');
     const holder = { p: null };
     let state = 'wait', base = spin.total, dragId = -1, dragX = 0, holdId = -1, again = false;

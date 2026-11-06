@@ -74,16 +74,16 @@ function buildDecorInside(G) {
     if (inR(x, z, r, -2.6, 2.6, -13.4, 31)) return true;     // lối giữa sân trước, đến đầu cầu
     if (inR(x, z, r, -2.6, 2.6, -62, -13.4)) return true;    // lối giữa phía sau: cầu → bậc → tầng nền → trước Tích Thiện Am
     if (inR(x, z, r, -2.6, 2.6, -65.5, -57)) return true;    // lối giữa sân chính điện (sau Tích Thiện Am)
-    if (inR(x, z, r, -12.6, 12.6, -82.3, -62.2)) return true;  // nền chính điện (rộng ±12,6 sau khi phóng 1,2×)
+    if (inR(x, z, r, -20.4, 20.4, -117.8, -73.8)) return true;  // toàn bộ nền ba tầng đá trắng + bậc thềm + chính điện (18-chinh-dien.js): x ±20,4, z −117,8…−73,8 (v4; v3: −99,8…−65,8)
+    if (inR(x, z, r, -20.2, 20.2, -73.8, -62.3)) return true;  // sân chính điện trước chân tầng 1 (y 1,2, z −62,3…−73,8; v4 sâu 12 m): sư tử đồng, chỗ đứng chắp tay, nút đường — để trống, không bồn hoa / chậu / ghế
     if (inR(x, z, r, -8.5, 8.5, 28.6, 40)) return true;
     if (inR(x, z, r, -4.4, 4.4, -25.4, -22.6)) return true;  // bậc trước tầng nền
     if (inR(x, z, r, -13.3, -10.7, -43.3, -36.7)) return true; // bậc tây
-    if (inR(x, z, r, 14.2, 16.8, -74.5, -69.5) || inR(x, z, r, -16.8, -14.2, -74.5, -69.5)) return true; // hai bậc bên lên tầng nền chính điện
-    if (inR(x, z, r, 11.85, 13.45, -83.7, -62) || inR(x, z, r, -13.45, -11.85, -83.7, -62)) return true; // lối đi hai bên chính điện: chừa dải rộng 1,6 m
+    if (inR(x, z, r, 15.0, 19.0, -62.4, -59.2) || inR(x, z, r, -19.0, -15.0, -62.4, -59.2)) return true; // hai bậc góc lên tầng nền chính điện
     if (Math.abs(x) > 20.3 - r && z < -11) return true;      // hành lang
     if (BN && Math.hypot(x - BN.x, z - BN.z) < (BN.banR || 4.4) + r) return true;
     for (const b of G.decorBans || []) if (inR(x, z, r, b[0], b[1], b[2], b[3])) return true; // vùng chừa do toà khác đăng ký [x0, x1, z0, z1] (17-dien-phu.js)
-    return x < -23.0 + r || x > 23.0 - r || z > 30.0 - r || z < -83 + r;
+    return x < -23.0 + r || x > 23.0 - r || z > 30.0 - r || z < -117.0 + r; // (v4: tường bao sau ở z −118, mặt trong −117,7)
   }
   const reserved = []; // chỗ chừa cho người đứng xem [x, z, r]
   const resv = (x, z, r) => { for (const q of reserved) if (Math.hypot(x - q[0], z - q[1]) < r + q[2]) return true; return false; };

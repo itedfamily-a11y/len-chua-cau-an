@@ -271,7 +271,7 @@ function buildWorld(G) {
     for (const m of signs) m.emissiveIntensity = 0.18 + tod.night * 0.32;
     if (W.water) { _wc.copy(waterDeep).lerp(cur.top, 0.25).multiplyScalar(0.75 - tod.night * 0.3); W.water.material.color.copy(_wc); }
     if (G.player) { // tâm vùng bóng bám theo người chơi, bước 12 m
-      const sx = Math.round(G.player.pos.x / 12) * 12, sz = U.clamp(Math.round((G.player.pos.z - 16) / 12) * 12, -60, 4);
+      const sx = Math.round(G.player.pos.x / 12) * 12, sz = U.clamp(Math.round((G.player.pos.z - 16) / 12) * 12, -94, 4); // tới −94 (v4): chính điện lùi sâu đến z ≈ −113 vẫn nằm trong hộp bóng ±40 m
       if (sx !== tod.shX || sz !== tod.shZ) { tod.shX = sx; tod.shZ = sz; sun.target.position.set(sx, 0, sz); sun.target.updateMatrixWorld(); tod.lastShadowT = -1; }
     }
     sun.position.add(sun.target.position);
@@ -281,7 +281,7 @@ function buildWorld(G) {
   { // ảnh chụp chia sẻ: dời vùng bóng về chỗ chính điện rồi trả lại
     const saved = new V3();
     G.events.on('snapshot:before', () => {
-      saved.copy(sun.target.position); sun.target.position.set(0, 0, -70); sun.target.updateMatrixWorld();
+      saved.copy(sun.target.position); sun.target.position.set(0, 0, -96); sun.target.updateMatrixWorld();
       sun.position.copy(_ld).multiplyScalar(90).add(sun.target.position); G.renderer.shadowMap.needsUpdate = true;
     });
     G.events.on('snapshot:after', () => {
@@ -293,7 +293,7 @@ function buildWorld(G) {
 
   // độ cao mặt cỏ (phẳng khắp vùng đi lại được, nhấp nhô dần ra xa) — dùng chung cho cảnh vật bên ngoài
   G.terrainY = (x, z) => {
-    const ox = Math.max(0, Math.abs(x) - 32), oz = Math.max(0, z - 77, -91 - z), dOut = Math.hypot(ox, oz);
+    const ox = Math.max(0, Math.abs(x) - 32), oz = Math.max(0, z - 77, -109 - z), dOut = Math.hypot(ox, oz);
     return (Math.sin(x * 0.031) * Math.cos(z * 0.027) * 3.2 + Math.sin(x * 0.012 + 1.3) * 4) * U.smoothstep(25, 120, dOut) - 0.03;
   };
   // =====================================================================
@@ -362,7 +362,7 @@ function buildWorld(G) {
     col.box(Math.min(x0, x1) - (alongX ? 0 : 0.3), Math.min(z0, z1) - (alongX ? 0.3 : 0), Math.max(x0, x1) + (alongX ? 0 : 0.3), Math.max(z0, z1) + (alongX ? 0.3 : 0), 'wall');
   }
   wall(-24, 31, -7.0, 31); wall(7.0, 31, 24, 31);
-  wall(-24, -84, -24, 31); wall(24, -84, 24, 31); wall(-24, -84, 24, -84);
+  wall(-24, -118, -24, 31); wall(24, -118, 24, 31); wall(-24, -118, 24, -118); // tường sau lùi từ z −84 về −100 (v3), rồi về −118 (v4: sân chính điện sâu 12 m, chính điện sâu 27 m trên nền ba bậc)
 
   // ---------- Cột gỗ đỏ ----------
   function column(x, z, y0, h, r = 0.24, collide = true) {
@@ -445,7 +445,8 @@ function buildWorld(G) {
   //  Dựng theo toạ độ gốc (nền 0,6) vào bộ gom riêng rồi dời nguyên khối (0, dy, dz) lên tầng nền sau Tích Thiện Am
   // =====================================================================
   const fm = G.frame.mark(), OS = S, OF = F, OM = M, OLB = LB;
-  {
+  if (G.L.hall.v2) { W.seats = []; W.hallFloorY = G.L.hall.h; } // chính điện v2: vỏ điện, nội thất, bàn thờ do 18-chinh-dien.js dựng; ở đây chỉ giữ tượng + mõ (18 đặt lại vị trí)
+  else {
     const S = U.batch(), F = U.batch(), M = U.batch(), LB = U.batch();
     const H = G.L.hall, y0 = H.h;
     boxMM(F, H.x0, 0, H.z0, H.x1, y0, H.zTop, C.stone);
@@ -873,7 +874,7 @@ function buildWorld(G) {
       let x, z;
       for (;;) {
         x = (rnd() * 2 - 1) * 46; z = -100 + rnd() * 172;
-        const insideWalls = x > -26.5 && x < 26.5 && z > -86.5 && z < 33.5;
+        const insideWalls = x > -26.5 && x < 26.5 && z > -120.5 && z < 33.5; // (13-scenery.js lấy mẫu y hệt: sửa cả hai nơi cùng lúc)
         const onPath = Math.abs(x) < 6 && z > 30;
         if (!insideWalls && !onPath) break;
       }
@@ -888,9 +889,23 @@ function buildWorld(G) {
   // núi xa (đường viền hoàng hôn)
   {
     const rnd = U.rng(77);
+    // v4: sông chạy sau tường bao (z ≈ −136…−148, 13-scenery.js) nên chân núi xa (nơi mặt nón cắt mặt đất) không được trùm lên sông ở đoạn sau chùa / bên tây, cũng không lấn vào khuôn viên:
+    // núi nào lấn vào thì lùi ra xa và phóng to theo (k ≤ 1,4 — hình dáng trên đường chân trời giữ nguyên), nếu chưa đủ thì thu hẹp chân; núi không lấn thì giữ nguyên như cũ
+    // (KEEP = tim sông từ (100,−136) về tây rồi xuống (−68,−30) — cùng điểm điều khiển với 13-scenery.js, lề 12 m; và các góc tường bao, lề 6 m)
+    const KEEP = [];
+    {
+      const cp = [[100, -136], [50, -140], [0, -144], [-42, -148], [-78, -128], [-76, -70], [-68, -30]];
+      for (let i = 0; i < cp.length - 1; i++) { const n = Math.ceil(Math.hypot(cp[i + 1][0] - cp[i][0], cp[i + 1][1] - cp[i][1]) / 10); for (let t = 0; t < n; t++) KEEP.push([cp[i][0] + ((cp[i + 1][0] - cp[i][0]) * t) / n, cp[i][1] + ((cp[i + 1][1] - cp[i][1]) * t) / n, 12]); }
+      KEEP.push([-68, -30, 12]);
+      for (const [x, z] of [[-26, -120], [26, -120], [0, -120], [-26, -60], [26, -60], [-26, 0], [26, 0], [-26, 33], [26, 33]]) KEEP.push([x, z, 6]);
+    }
     for (let i = 0; i < 34; i++) {
       const a = (i / 34) * PI * 2 + rnd() * 0.15, d = 190 + rnd() * 120, h = 16 + rnd() * 34, r = 55 + rnd() * 45;
-      FAR.add(new THREE.ConeGeometry(r, h, 5 + (i % 3)), i % 2 ? 0x6a4a62 : 0x55405a, { p: [Math.cos(a) * d, h / 2 - 3, Math.sin(a) * d + 15], r: [0, rnd() * 3, 0], j: 0.1 });
+      const clear = (k, q) => { const cx = Math.cos(a) * d * k, cz = Math.sin(a) * d * k + 15, re = q * (1 - 3 / (h * k)); return KEEP.every((m) => Math.hypot(cx - m[0], cz - m[1]) >= re + m[2]); }; // re: bán kính chân thấy được (nón chìm 3 m)
+      let k = 1, q;
+      while (k < 1.4 && !clear(k, r * k)) k += 0.02;
+      q = r * k; while (q > r * k * 0.6 && !clear(k, q)) q *= 0.96;
+      FAR.add(new THREE.ConeGeometry(q, h * k, 5 + (i % 3)), i % 2 ? 0x6a4a62 : 0x55405a, { p: [Math.cos(a) * d * k, (h * k) / 2 - 3, Math.sin(a) * d * k + 15], r: [0, rnd() * 3, 0], j: 0.1 });
     }
   }
 
@@ -922,8 +937,7 @@ function buildWorld(G) {
   hx(0, -12.0, 'hallIn'); hx(-2.4, -11.8); hx(2.4, -11.8); hx(-2.4, -15.8); hx(2.4, -15.8); hx(0, -14.6);
   // sân chính điện, hai lối đi bên hông nền điện, dải sau điện, đỉnh và chân hai bậc bên
   N(0, -61.2, 'hallCourt'); N(-7.6, -61.2); N(7.6, -61.2);
-  for (const sx of [-1, 1]) { N(sx * 13.6, -64.2); N(sx * 13.6, -72); N(sx * 13.6, -80.2); N(sx * 13.6, -82.6); N(sx * 17.8, -72); } // điện rộng ±12,6, mép nền ±14,5
-  N(0, -82.6);
+  // (nút trong khuôn viên chính điện mới — x ±18,5, z −83,2…−61,8 — do 18-chinh-dien.js dọn rồi thêm lại; hai lối đi bên và bậc góc do 08-world2.js thêm)
   N(-17, 24); N(21.2, 28.6); N(-19, 10); N(19.8, 3.6);
 
   const ring = (cx, cz, r, angs, toCenter = true) => angs.map((a) => { const x = cx + Math.sin(a) * r, z = cz + Math.cos(a) * r; return { x, z, yaw: toCenter ? U.yawTo(x, z, cx, cz) : a }; });
@@ -931,14 +945,14 @@ function buildWorld(G) {
   G.spots = {
     gateOut: { x: 0, z: 72 }, gate: { x: 0, z: 31 }, gateIn: { x: 0, z: 27.5 },
     incense: ring(0, 4, 2.3, [0.75, -0.75, 1.35, -1.35, 1.95, -1.95, 2.6, -2.6]),
-    hallFront: [...[-8.4, -6, -3.6, -1.2, 1.2, 3.6, 6, 8.4].map((x) => ({ x, z: -60.6, yaw: PI })), ...[-7.2, -4.8, -2.4, 0, 2.4, 4.8, 7.2].map((x) => ({ x, z: -59.4, yaw: PI }))], // sân chính điện (sau Tích Thiện Am −57 … bậc thềm −62,4)
+    hallFront: [...[-8.4, -6, -3.6, -1.2, 1.2, 3.6, 6, 8.4].map((x) => ({ x, z: -71.4, yaw: PI })), ...[-7.2, -4.8, -2.4, 0, 2.4, 4.8, 7.2].map((x) => ({ x, z: -72.6, yaw: PI }))], // sân chính điện (v4: sau Tích Thiện Am −57,6 … chân bậc thềm −74); hai hàng đứng sát chân bậc, nhìn về điện
     hallSeats: W.seats,
     tree: [0, 0.9, 1.75, 2.5, -0.9, -1.75, -2.5].map((p) => { const x = 15.5 + Math.cos(p) * 3.3, z = -5 + Math.sin(p) * 3.3; return { x, z, yaw: U.yawTo(x, z, 15.5, -5) }; }),
     pond: [[10.4, 6.6], [14.4, 6.2], [18.8, 6.8], [23.0, 14.0], [23.0, 18.6], [14.6, 26.4], [20.4, 25.6], [9.0, 25.0]].map(([x, z]) => ({ x, z, yaw: U.yawTo(x, z, 15.2, 16.2) })),
     bell: [look(-11.2, -6.4, -15.6, -3), look(-11.4, 0.6, -15.6, -3), look(-13.2, 1.3, -15.6, -3)],
     fortune: [look(-15.3, 16.7, -14.35, 14.2), look(-12.7, 16.7, -14.35, 14.2)],
     photo: [
-      { ...look(-8.2, -59.4, 0, -70), subject: { x: 0, z: -70 } }, { ...look(8.2, -59.4, 0, -70), subject: { x: 0, z: -70 } },
+      { ...look(-8.2, -59.4, 0, -78), subject: { x: 0, z: -78 } }, { ...look(8.2, -59.4, 0, -78), subject: { x: 0, z: -78 } }, // v4: người chụp vẫn đứng cạnh hoa biểu, ngắm về chân bậc thềm (0, −78); người được chụp (cách 7,5 m) đứng giữa sân chính điện ≈ (±5,2; −66,3), điện ba tầng làm nền phía sau (đẩy chỗ chụp lùi theo sân thì ít người dùng hơn: khoảng cách tới cổng xa thêm 8 m → giảm gần 3 lần)
       { ...look(0, -3.5, 0, -17), subject: { x: 0, z: -17 } }, { ...look(-6.2, 6.6, 0, 4), subject: { x: 0, z: 4 } },
       { ...look(10.3, 1.4, 15.5, -5), subject: { x: 15.5, z: -5 } }, { ...look(6.6, 9.6, 15.2, 16.2), subject: { x: 15.2, z: 16.2 } },
       { ...look(-8.6, -0.4, -15.6, -3), subject: { x: -15.6, z: -3 } }, { ...look(-3.5, 25.5, 0, 31), subject: { x: 0, z: 31 } },
@@ -948,6 +962,6 @@ function buildWorld(G) {
     bench: W.benchSeats,
   };
   W.places.push({ label: 'Cổng tam quan', desc: 'Lối vào chùa', icon: 'gate', x: 0, z: 27.5 });
-  W.places.push({ label: 'Trước chính điện', desc: 'Đứng chắp tay hướng về điện Phật', icon: 'hall', x: 0, z: -60 });
+  W.places.push({ label: 'Trước chính điện', desc: 'Đứng chắp tay hướng về điện Phật', icon: 'hall', x: 0, z: -69.5 });
   W.lanternMaterial = G.mats.lantern;
 }

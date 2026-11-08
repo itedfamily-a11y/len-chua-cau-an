@@ -2,9 +2,12 @@
 //  CHÍNH ĐIỆN v4 — "ĐẠI HÙNG BẢO ĐIỆN": gian rộng 37 m, sâu 27 m, trần gian giữa cao 11,7 m, ba tầng mái vàng lưu ly, chỗ cho 160 người ngồi tụng kinh,
 //  đặt trên nền đá trắng ba tầng (kiểu "Tu Di toạ") với thang lớn ba chặng và thềm rồng ở giữa, tường đỏ — phong cách cung đình
 //  (chỉ là PHONG CÁCH: tường son, ngói vàng, đá trắng, lan can, thềm rồng; vẫn là điện thờ Phật, không có ngai vàng hay chữ của vua).
-//  Phỏng theo nét điện Tam Bảo lớn của các chùa Bắc Bộ: ba pho Phật Tam Thế ngồi trước ba hào quang
-//  hình lá bồ đề dát vàng, cột gỗ sẫm to, bảng hiệu nền đen chữ vàng, một bàn thờ dài đủ lễ vật,
-//  đôi hạc đồng đứng trên lưng rùa, sàn đỏ có thảm lối giữa, đèn chùm hoa sen.
+//  Phỏng theo nét điện Tam Bảo lớn của các chùa Bắc Bộ: ban thờ MỘT cụm ở giữa (v5, dựng ở 18-ban-tho.js: Đức Phật Thích Ca trên toà sen,
+//  Quán Âm sứ trắng và Địa Tạng hai bên, tấm phông mạn-đà-la son + khung vòm vàng, bàn thờ son đủ lễ vật, tả chung hữu cổ), cột gỗ sẫm to,
+//  bảng hiệu nền đen chữ vàng, đôi hạc đồng đứng trên lưng rùa, sàn đỏ có thảm lối giữa, đèn chùm hoa sen.
+//  v6 (nội thất tối ấm, ban thờ là vùng sáng duy nhất): tường ván olive-đen #34281A (vách gác #2A2014), trần #241A12, cột nâu đỏ sẫm #26100C có đai vàng, sàn gỗ tối ván 0,35 m + ván chân tường vàng sẫm,
+//  thảm lối giữa hẹp x ±1,0, chiếu nâu + bồ đoàn #9A6B2A (16 cạnh, nhẵn), đèn trống treo mép vàng với 44 sợi tua đỏ hạt vàng (thay đèn chùm hoa sen), đèn lồng cam lathe 24 cạnh, ô sáng gác mái mờ,
+//  đôi hạc dời ra x ±10,6; vàng trong điện nhẵn (flatShading tắt); máy quay gõ mõ CHÍNH DIỆN trên trục có fov riêng (xem camSolve; đọc W.banTho / W.statueFocus); hệ số đèn điểm của điện hạ 0,6 → 0,35.
 //
 //  KHUNG TOẠ ĐỘ (đọc kỹ trước khi sửa): THÂN ĐIỆN (tường, mái, cột, nội thất, tượng, hạc…) vẫn dựng ở "khung v2" — sàn Y0 = 1,92,
 //  mép nền trước z −63,3, tường sau z −91,2 (v4: sâu 27 m; v3 là −81,2) — rồi dời cả khối bằng MỘT THREE.Group (hallGrp) đặt ở (0, DY, DZ) = (0, +2,88, −22).
@@ -57,9 +60,12 @@ function buildChinhDien(G) {
   // ---------- Bảng màu ----------
   const K = {
     plaster: 0xa3342b, plasterD: 0x8f2b24, skirt: C.stoneD, stone: C.stone, stoneL: C.stoneL, // tường son đậm kiểu cung đình (chân tường vẫn đá)
-    wood: 0x8e2a22, woodD: 0x5e2c1a, woodL: 0x8a4626, dark: 0x24120a, panel: 0x6a2a1c, ceil: 0x5a2a1a,
+    wood: 0x8e2a22, woodD: 0x5e2c1a, woodL: 0x8a4626, dark: 0x24120a, panel: 0x4c4636, ceil: 0x363026,
     gold: 0xe2b04a, goldL: 0xf6d77c, goldD: 0xa87c2c, red: 0x9a2a1e, redD: 0x8a2418, lac: 0x8a2216,
-    floor: 0x9a3826, mat: 0x8a281c, bronze: 0x7a6244, bronzeD: 0x54442f, cream: 0xf3e3c3,
+    floor: 0x45321f, mat: 0x4a3018, bronze: 0x7a6244, bronzeD: 0x54442f, cream: 0xf3e3c3,
+    // v6 (nội thất tối ấm, ban thờ là vùng sáng duy nhất): màu riêng cho phần TRONG điện
+    panelU: 0x3c362a, ceilC: 0x3e3a32, plank: 0x6e4a30, skirtG: 0x80612d, colI: 0x26100c, carpet: 0x5e0b0f, carpetS: 0x4a090d, cushion: 0x9a6b2a, cushionB: 0xb07a30,
+    lamp: 0x80602c, rim: 0xb08430, beamI: 0x4a4232, tassel: 0xb3141c, bead: 0xdcb458, lantern: 0xf0902c, glowDim: 0x6a4a2a,
   };
 
   // ---------- Bộ gom: ngoài / trong ----------
@@ -76,6 +82,22 @@ function buildChinhDien(G) {
     if (!T.list.length) return;
     const g = U.merge(T.list); _mp.makeRotationY(yaw); _mp.scale(_sv.set(sc, sc, sc)); _mp.setPosition(x, y, z); g.applyMatrix4(_mp); B.addGeo(g);
   };
+  // mảnh NHẴN (v6): U.batch.add làm phẳng pháp tuyến từng tam giác (mặt khía); nội thất tối-ấm cần cột / đèn / đệm trơn nhẵn → giữ pháp tuyến của hình gốc (trụ, lathe, cầu), tô màu đỉnh đều
+  const _sm = new THREE.Matrix4(), _sq = new THREE.Quaternion(), _se = new THREE.Euler(), _sp = new V3(), _ss = new V3(), _sc = new THREE.Color();
+  const sm = (B, geo, color, o = {}) => {
+    const g = geo.index ? geo.toNonIndexed() : geo.clone();
+    for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal') g.deleteAttribute(k);
+    if (!g.attributes.normal) g.computeVertexNormals();
+    _sp.set(0, 0, 0); if (o.p) _sp.set(o.p[0], o.p[1], o.p[2]);
+    _se.set(0, 0, 0); if (o.r) _se.set(o.r[0], o.r[1], o.r[2]); _sq.setFromEuler(_se);
+    const sc = o.s ?? 1; if (typeof sc === 'number') _ss.set(sc, sc, sc); else _ss.set(sc[0], sc[1], sc[2]);
+    g.applyMatrix4(_sm.compose(_sp, _sq, _ss));
+    const n = g.attributes.position.count, arr = new Float32Array(n * 3); _sc.set(color);
+    for (let i = 0; i < n; i++) { arr[i * 3] = _sc.r; arr[i * 3 + 1] = _sc.g; arr[i * 3 + 2] = _sc.b; }
+    g.setAttribute('color', new THREE.BufferAttribute(arr, 3));
+    B.addGeo(g);
+  };
+  const scyl = (B, x, y, z, rt, rb, h, color, seg = 16, open = false) => { const g = new THREE.CylinderGeometry(rt, rb, h, seg, 1, open); sm(B, g, color, { p: [x, y, z] }); g.dispose(); };
   // chắn máy quay của thân điện: toạ độ khung v2 → thế giới (+DY, +DZ)
   const blocker = (x0, y0, z0, x1, y1, z1) => G.cam.blockers.push(new THREE.Box3(new V3(x0, y0 + DY, z0 + DZ), new V3(x1, y1 + DY, z1 + DZ)));
   // biển chữ: addSign tự scene.add(mesh) → chuyển vào hallGrp (Group.add gỡ khỏi scene); mesh giữ ma trận cục bộ (matrixAutoUpdate = false) nên vẫn đúng chỗ khi nhóm dời
@@ -99,7 +121,7 @@ function buildChinhDien(G) {
   };
   const meshIn = [], meshOut = [];
   // vật liệu vàng trong điện (sáng hơn vàng ngoài sân) + đồng sẫm cho tượng; đổi độ sáng theo ngày/đêm ở cuối hàm
-  const goldI = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 60, specular: 0xffe6a0, emissive: 0x6e4410, flatShading: true });
+  const goldI = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 40, specular: 0xb89a58, emissive: 0x38220a, flatShading: false }); // v6: nhẵn, ít bão hoà (vàng thờ trong điện tối)
   const buddhaMat = new THREE.MeshPhongMaterial({ vertexColors: true, color: 0xb08a5c, shininess: 45, specular: 0x8a6a30, emissive: 0x2a1a0a, flatShading: true });
 
   // =====================================================================
@@ -120,10 +142,12 @@ function buildChinhDien(G) {
     const BOXT = (() => { const g = new THREE.BoxGeometry(1, 1, 1), a = g.index.array, keep = []; for (let f = 0; f < 6; f++) if (f !== 3) for (let k = 0; k < 6; k++) keep.push(a[f * 6 + k]); g.setIndex(keep); return g; })();
     const PLN = new THREE.PlaneGeometry(1, 1); PLN.rotateX(-PI / 2);   // tấm phẳng hướng lên (đường chỉ lát, đường giữa)
     const KNOB = new THREE.SphereGeometry(1, 6, 3), NECK = new THREE.CylinderGeometry(0.5, 0.5, 1, 5);
-    own.push(BOXT, PLN, KNOB, NECK);
+    // hộp chỉ bốn mặt bên (không đáy, không nắp): cho ba vòng bị vòng trên bè hơn che kín nắp (eo lõm, thân trên, gờ chỉ). Nắp ẩn dưới mặt đá mà vẫn là hai tam giác 38 × 33 m nằm ngang → khi máy quay đứng trong khung nền (cửa điện), một đỉnh nằm sau máy quay, tam giác bị cắt mặt phẳng gần rồi rasteriser vẽ sai độ sâu, thành mảng be che cả người
+    const BOXN = (() => { const g = new THREE.BoxGeometry(1, 1, 1), a = g.index.array, keep = []; for (let f = 0; f < 6; f++) if (f !== 2 && f !== 3) for (let k = 0; k < 6; k++) keep.push(a[f * 6 + k]); g.setIndex(keep); return g; })();
+    own.push(BOXT, BOXN, PLN, KNOB, NECK);
     const M1 = 0xece4d4, M2 = 0xd9d0bd, MR = 0xe6dcc6, MRD = 0xb3a88f, MC = 0xcfc5ad, MLN = 0xc4baa3; // đá trắng hai tông / thềm rồng ấm hơn / nét chạm sẫm / mây / đường chỉ lát
     const GD = 0xd9a84a, GDL = 0xf0cf70;                                                          // vàng cho chi tiết mạ
-    const bx = (B, x0, y0, z0, x1, y1, z1, color, j = 0.03) => B.add(BOXT, color, { p: [(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2], s: [Math.abs(x1 - x0), Math.abs(y1 - y0), Math.abs(z1 - z0)], j });
+    const bx = (B, x0, y0, z0, x1, y1, z1, color, j = 0.03, geo = BOXT) => B.add(geo, color, { p: [(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2], s: [Math.abs(x1 - x0), Math.abs(y1 - y0), Math.abs(z1 - z0)], j });
     // hộp "xiên" giữa hai mặt phẳng z (zA < zB): tại zA cao yA0…yA1, tại zB cao yB0…yB1 (khối dưới thềm rồng, má thang, mũ má dốc)
     const wedge = (B, x0, x1, zA, zB, yA0, yA1, yB0, yB1, color, j = 0.03) => {
       const g = new THREE.BoxGeometry(1, 1, 1), P = g.attributes.position;
@@ -145,12 +169,12 @@ function buildChinhDien(G) {
     // ---------- Ba tầng: chân – thân dưới – eo lõm (Tu Di) có trụ nhỏ – thân trên – gờ chỉ sẫm 0,12 m – mặt đá nhô ra ----------
     TIER.forEach((T) => {
       const { hx, zf, zb, y0, y1 } = T;
-      const ring = (o, ya, yb, color) => bx(BS, -hx - o, ya, zb - o, hx + o, yb, zf + o, color);
+      const ring = (o, ya, yb, color, geo) => bx(BS, -hx - o, ya, zb - o, hx + o, yb, zf + o, color, 0.03, geo);
       ring(0.05, y0, y0 + 0.14, M2);                         // chân
       ring(0, y0 + 0.14, y0 + 0.45, M1);                     // thân dưới
-      ring(-0.07, y0 + 0.45, y0 + 0.75, M2);                 // eo lõm cao 0,3 giữa mặt
-      ring(0, y0 + 0.75, y1 - 0.24, M1);                     // thân trên
-      ring(0.03, y1 - 0.24, y1 - 0.12, M2);                  // gờ chỉ sẫm dưới mép trên 0,12 m
+      ring(-0.07, y0 + 0.45, y0 + 0.75, M2, BOXN);           // eo lõm cao 0,3 giữa mặt (nắp bị thân trên che kín: bỏ)
+      ring(0, y0 + 0.75, y1 - 0.24, M1, BOXN);               // thân trên (nắp bị gờ chỉ che kín: bỏ)
+      ring(0.03, y1 - 0.24, y1 - 0.12, M2, BOXN);            // gờ chỉ sẫm dưới mép trên 0,12 m (nắp bị mặt đá che kín: bỏ)
       ring(0.07, y1 - 0.12, y1, M1);                         // mặt đá (mép nhô)
       // trụ nhỏ trong eo lõm (mặt trước + hai mặt bên; mặt sau khuất)
       const ya = y0 + 0.45, yb = y0 + 0.75, runF = 2 * hx, nF = Math.max(2, Math.round(runF / 1.5)), runS = zf - zb, nS = Math.max(2, Math.round(runS / 2.0));
@@ -430,8 +454,8 @@ function buildChinhDien(G) {
     ring(X.S, -15.8, 15.8, NZ0, NZ1, YE - 0.4, 13.9, 0.2, K.plasterD);      // bốn vách (rỗng: nhìn từ trong lên là trần gian giữa, không có đáy hộp)
     ring(X.S, -15.95, 15.95, NZ0 - 0.05, NZ1 + 0.05, 13.45, 13.9, 0.55, K.woodD);   // đai gỗ sẫm quanh đỉnh
     ring(X.G, -15.97, 15.97, NZ0 - 0.07, NZ1 + 0.07, 13.4, 13.45, 0.6, K.gold);
-    boxMM(I.S, -15.4, YAI - 0.1, ZB + WT, -15.35, YCE, ZF - WT, K.panel); boxMM(I.S, 15.35, YAI - 0.1, ZB + WT, 15.4, YCE, ZF - WT, K.panel);
-    boxMM(I.S, -15.4, YAI - 0.1, ZF - WT - 0.05, 15.4, YCE, ZF - WT, K.panel); boxMM(I.S, -15.4, YAI - 0.1, ZB + WT, 15.4, YCE, ZB + WT + 0.05, K.panel);
+    boxMM(I.S, -15.4, YE - 0.42, ZB + WT, -15.35, YCE, ZF - WT, K.panelU); boxMM(I.S, 15.35, YE - 0.42, ZB + WT, 15.4, YCE, ZF - WT, K.panelU);
+    boxMM(I.S, -15.4, YE - 0.42, ZF - WT - 0.05, 15.4, YCE, ZF - WT, K.panelU); boxMM(I.S, -15.4, YE - 0.42, ZB + WT, 15.4, YCE, ZB + WT + 0.05, K.panelU); // (hạ mép dưới xuống YE − 0,42: che dải son của vách gác tầng 2 lộ ra trên đỉnh tường)
     for (const x of [-12.9, -8.7, 8.7, 12.9]) win(X.S, x, 12.4, NZ1, 2.6, 1.6, 'S', 5, 2);
     for (const sx of [-1, 1]) for (const z of BAYS) win(X.S, sx * 15.8, 12.4, z, 2.6, 1.6, sx > 0 ? 'E' : 'W', 5, 2);
     sign(['ĐẠI HÙNG BẢO ĐIỆN'], 9.0, 1.7, 0, 12.35, NZ1 + 0.05, 0, { ppu: 200, bg1: '#1b1210', bg2: '#0d0908' });
@@ -448,114 +472,163 @@ function buildChinhDien(G) {
   // =====================================================================
   safe('sàn', () => {
     const XI = XW - WT, ZI0 = ZB + WT, ZI1 = ZF - WT; // mặt trong: x ±18,1; z −90,8 … −64,7
-    boxMM(I.F, -XI, Y0, ZI0, XI, Y0 + 0.015, ZI1, K.floor);
-    for (const sx of [-1, 1]) boxMM(I.G, sx * 17.45, Y0 + 0.014, ZI0 + 0.4, sx * 17.55, Y0 + 0.02, ZI1 - 0.4, K.gold);
-    // thảm lối giữa (x ±1,2) viền vàng; thảm vuông trước bàn thờ (x ±4,6, z −80,5 … −77,9: chỗ người chơi gõ mõ); chiếu dài dưới từng hàng bồ đoàn
-    boxMM(I.F, -1.2, Y0 + 0.015, -78.05, 1.2, Y0 + 0.024, ZI1 - 0.05, K.redD);
-    for (const sx of [-1, 1]) boxMM(I.G, sx * 1.2 - 0.04, Y0 + 0.024, -78.05, sx * 1.2 + 0.04, Y0 + 0.03, ZI1 - 0.05, K.gold);
-    boxMM(I.F, -4.6, Y0 + 0.015, -80.5, 4.6, Y0 + 0.024, -78.05, K.redD);
-    for (const z of [-80.5, -78.05]) boxMM(I.G, -4.6, Y0 + 0.024, z - 0.04, 4.6, Y0 + 0.03, z + 0.04, K.gold);
+    // v6: sàn gỗ tối. Nền = màu đường ghép (K.plank, sáng hơn); trên đó ván rộng ≈ 0,35 m chạy dọc z, mỗi ván chia 2–4 đoạn so le (khe 2,4 cm), sắc độ lệch nhẹ
+    boxMM(I.F, -XI, Y0, ZI0, XI, Y0 + 0.012, ZI1, K.plank);
+    { const rr = U.rng(77), nP = Math.round((2 * XI) / 0.35), pw = (2 * XI) / nP, c = new THREE.Color();
+      for (let i = 0; i < nP; i++) {
+        const x0 = -XI + i * pw + 0.012, x1 = -XI + (i + 1) * pw - 0.012; let z = ZI0;
+        while (z < ZI1 - 0.01) {
+          let z1 = Math.min(ZI1, z + 3 + rr() * 5.5); if (ZI1 - z1 < 1.6) z1 = ZI1;
+          c.set(K.floor).multiplyScalar(0.86 + rr() * 0.28);
+          boxMM(I.F, x0, Y0 + 0.004, z + 0.012, x1, Y0 + 0.016, z1 - 0.012, c.getHex(), { j: 0.03 }); z = z1;
+        }
+      } }
+    // ván chân tường vàng sẫm cao 0,2 m dọc tường hông, tường sau và tường trước (chừa ô cửa chính x ±3,6)
+    { const SKH = 0.2, SKT = 0.06;
+      for (const sx of [-1, 1]) {
+        boxMM(I.S, sx * XI, Y0, ZI0, sx * (XI - SKT), Y0 + SKH, ZI1, K.skirtG);
+        boxMM(I.S, sx * 3.6, Y0, ZI1 - SKT, sx * XI, Y0 + SKH, ZI1, K.skirtG);
+      }
+      boxMM(I.S, -XI, Y0, ZI0, XI, Y0 + SKH, ZI0 + SKT, K.skirtG); }
+    // thảm lối giữa HẸP (x ±1,0) viền vàng; thảm vuông trước bàn thờ (x ±4,6, z −80,5 … −78,05: chỗ người chơi gõ mõ) tối hơn; chiếu dài nâu dưới từng hàng bồ đoàn
+    boxMM(I.F, -1.0, Y0 + 0.03, -78.05, 1.0, Y0 + 0.045, ZI1 - 0.05, K.carpet); // cao 4,5 cm trên ván sàn: 2,4 cm bị tranh chấp độ sâu ở máy quay gõ mõ màn dọc (tấm dài cắt mặt phẳng gần)
+    for (const sx of [-1, 1]) boxMM(I.G, sx * 1.0 - 0.04, Y0 + 0.024, -78.05, sx * 1.0 + 0.04, Y0 + 0.03, ZI1 - 0.05, K.goldD);
+    boxMM(I.F, -4.6, Y0 + 0.03, -80.5, 4.6, Y0 + 0.045, -78.05, K.carpetS);
+    for (const z of [-80.5, -78.05]) boxMM(I.G, -4.6, Y0 + 0.024, z - 0.04, 4.6, Y0 + 0.03, z + 0.04, K.goldD);
     for (const z of ROWS) for (const sx of [-1, 1]) {
-      boxMM(I.F, sx * 1.45, Y0 + 0.015, z - 0.52, sx * 14.85, Y0 + 0.022, z + 0.52, K.mat);
-      for (const dz of [-0.52, 0.52]) boxMM(I.G, sx * 1.45, Y0 + 0.022, z + dz - 0.025, sx * 14.85, Y0 + 0.027, z + dz + 0.025, K.goldD);
+      boxMM(I.F, sx * 1.45, Y0 + 0.016, z - 0.52, sx * 14.85, Y0 + 0.022, z + 0.52, K.mat);
+      for (const dz of [-0.52, 0.52]) boxMM(I.G, sx * 1.45, Y0 + 0.022, z + dz - 0.025, sx * 14.85, Y0 + 0.027, z + dz + 0.025, 0x6e5424);
     }
   });
 
-  // cột gỗ sẫm: x ±8,025 (giữa hai bồ đoàn) và ±15,4; ba hàng ở z CROWS (giữa các hàng bồ đoàn). Đà ngang / trần theo lưới ZL (7 hàng, 6 ô)
+  // cột sơn son thếp vàng: CHỈ hai hàng cột quân x ±15,4 (ranh gian giữa / hai gian bên), ba hàng ở z CROWS (giữa các hàng bồ đoàn) → 6 cột.
+  // (v4.1: trước có thêm hàng x ±8,025 = 12 cột gỗ sẫm r 0,56 chắn tầm nhìn giữa điện; nay gian giữa 30,8 m thông suốt, cột thon r 0,44…0,48, thân son đỏ như tường ngoài.) Đà ngang / trần theo lưới ZL (7 hàng, 6 ô)
   safe('cột', () => {
-    const cx = [-NAVE, -8.025, 8.025, NAVE];
+    const cx = [-NAVE, NAVE];
     for (const x of cx) for (const z of CROWS) {
-      cyl(I.F, x, Y0 + 0.2, z, 0.8, 0.86, 0.4, K.stone, 8);
-      cyl(I.G, x, Y0 + 0.46, z, 0.6, 0.66, 0.12, K.gold, 10);
+      scyl(I.F, x, Y0 + 0.2, z, 0.68, 0.74, 0.4, 0x4e4034, 24);             // tảng đá kê chân cột (v6: tối, trụ 24 cạnh nhẵn)
+      scyl(I.G, x, Y0 + 0.46, z, 0.52, 0.58, 0.12, K.gold, 24);              // vành vàng chân cột
       const h = YCE - Y0 - 0.5;
-      cyl(I.S, x, Y0 + 0.52 + h / 2, z, 0.5, 0.56, h, K.woodD, 10);
-      for (const yy of [3.6, 7.0, 10.4]) cyl(I.G, x, yy, z, 0.56, 0.56, 0.1, K.gold, 10);
-      cyl(I.G, x, YCE - 0.2, z, 0.62, 0.56, 0.2, K.gold, 10);
-      colH.circle(x, z, 0.6, 'col');
+      scyl(I.S, x, Y0 + 0.52 + h / 2, z, 0.44, 0.48, h, K.colI, 24);         // thân cột sơn son sẫm (v6: nâu đỏ tối #26100C)
+      for (const yy of [3.6, 7.0, 10.4]) scyl(I.G, x, yy, z, 0.49, 0.49, 0.1, K.gold, 24); // ba đai vàng
+      scyl(I.G, x, YCE - 0.2, z, 0.56, 0.49, 0.2, K.gold, 24);               // đầu cột
+      colH.circle(x, z, 0.56, 'col');
     }
-    // đà ngang nối đầu cột + đà dọc; viền vàng dưới đà (đà cao 0,75: y YCE − 0,75 … YCE)
+    // đà ngang gác lên hai hàng cột quân, chạy suốt gian giữa + đà dọc trên đầu cột quân; viền vàng dưới đà (đà cao 0,75: y YCE − 0,75 … YCE)
     const YBM = YCE - 0.75;
     for (const z of ZL) {
-      boxMM(I.S, -NAVE, YBM, z - 0.27, NAVE, YCE, z + 0.27, K.woodD);
+      boxMM(I.S, -NAVE, YBM, z - 0.27, NAVE, YCE, z + 0.27, K.beamI);
       boxMM(I.G, -NAVE, YBM - 0.04, z - 0.27, NAVE, YBM, z + 0.27, K.goldD);
     }
-    for (const x of [-NAVE + 0.27, -8.025, 0, 8.025, NAVE - 0.27]) {
-      boxMM(I.S, x - 0.27, YBM, ZB + WT, x + 0.27, YCE, ZF - WT, K.woodD);
+    for (const x of [-NAVE + 0.27, NAVE - 0.27]) {
+      boxMM(I.S, x - 0.27, YBM, ZB + WT, x + 0.27, YCE, ZF - WT, K.beamI);
       boxMM(I.G, x - 0.27, YBM - 0.04, ZB + WT, x + 0.27, YBM, ZF - WT, K.goldD);
+    }
+    for (const x of [-8.025, 0, 8.025]) { // ba gân trần dọc mảnh (không còn cột đỡ bên dưới) chia ô trần 4 × 6
+      boxMM(I.S, x - 0.16, YCE - 0.42, ZB + WT, x + 0.16, YCE, ZF - WT, K.beamI);
+      boxMM(I.G, x - 0.16, YCE - 0.46, ZB + WT, x + 0.16, YCE - 0.42, ZF - WT, K.goldD);
     }
     // trần: ô hộp đỏ sẫm có hoa vàng giữa mỗi ô (4 × 6 ô)
     boxMM(I.S, -NAVE, YCE, ZB + WT, NAVE, YCE + 0.14, ZF - WT, K.ceil);
     const xl = [-NAVE, -8.025, 0, 8.025, NAVE];
     for (let i = 0; i < 4; i++) for (let j = 0; j < ZL.length - 1; j++) {
       const xa = xl[i] + 0.3, xb = xl[i + 1] - 0.3, za = ZL[j + 1] + 0.3, zb = ZL[j] - 0.3;
-      boxMM(I.S, xa, YCE - 0.04, za, xb, YCE, zb, K.redD);
-      cyl(I.G, (xa + xb) / 2, YCE - 0.08, (za + zb) / 2, 0.4, 0.4, 0.06, K.gold, 10);
+      boxMM(I.S, xa, YCE - 0.04, za, xb, YCE, zb, K.ceilC);
+      scyl(I.G, (xa + xb) / 2, YCE - 0.08, (za + zb) / 2, 0.34, 0.34, 0.06, K.goldD, 18);
     }
     // trần hai gian bên (thấp, y YAI ≈ 10,5) + vách gác trong (ván sẫm có đường chỉ vàng)
     for (const sx of [-1, 1]) {
       boxMM(I.S, sx * NAVE, YAI, ZB + WT, sx * 18.1, YAI + 0.12, ZF - WT, K.ceil);
       boxMM(I.G, sx * (NAVE + 0.02), YAI - 0.04, ZB + WT, sx * (NAVE + 0.1), YAI, ZF - WT, K.goldD);
       for (const z of BAYS) { // ô sáng gác mái (cửa sổ trời nhìn từ trong), mỗi ô trần một ô
-        boxMM(I.L, sx * (NAVE - 0.06), YAI + 0.9, z - 1.3, sx * (NAVE - 0.02), YCE - 0.8, z + 1.3, 0xc98a42);
-        for (const dz of [-0.45, 0.45]) boxMM(I.S, sx * (NAVE - 0.1), YAI + 0.9, z + dz - 0.03, sx * (NAVE - 0.03), YCE - 0.8, z + dz + 0.03, K.woodD);
+        boxMM(I.L, sx * (NAVE - 0.06), YAI + 0.9, z - 1.3, sx * (NAVE - 0.02), YCE - 0.8, z + 1.3, K.glowDim); // v6: ô sáng gác mái chỉ còn hắt ấm mờ (không còn là nguồn sáng mạnh)
+        for (const dz of [-0.45, 0.45]) boxMM(I.S, sx * (NAVE - 0.1), YAI + 0.9, z + dz - 0.03, sx * (NAVE - 0.03), YCE - 0.8, z + dz + 0.03, K.beamI);
       }
     }
     // đường chỉ vàng quanh vách trong (cao 4,0 m)
-    for (const sx of [-1, 1]) boxMM(I.G, sx * 18.08, 4.0, ZB + WT, sx * 18.0, 4.07, ZF - WT, K.gold);
-    boxMM(I.G, -XW + WT, 4.0, ZB + WT, XW - WT, 4.07, ZB + WT + 0.04, K.gold);
+    for (const sx of [-1, 1]) boxMM(I.G, sx * 18.08, 4.0, ZB + WT, sx * 18.0, 4.07, ZF - WT, K.goldD);
+    boxMM(I.G, -XW + WT, 4.0, ZB + WT, XW - WT, 4.07, ZB + WT + 0.04, K.goldD);
   });
 
-  // câu đối dọc trên bốn cột hàng gần bàn thờ nhất (hàng CROWS cuối, z −76,85), mặt hướng ra cửa
+  // câu đối dọc: hai câu trên hai cột quân hàng gần bàn thờ nhất (z −76,85, mặt hướng ra cửa); hai câu trên tường sau (x ±7,5, hai bên tấm phông) dựng ở 18-ban-tho.js
   safe('câu đối', () => {
-    const txt = [['TỪ', 'BI', 'HỈ', 'XẢ'], ['GIỚI', 'ĐỊNH', 'TUỆ'], ['BÌNH', 'AN', 'HÒA', 'THUẬN'], ['TRÍ', 'TUỆ', 'AN', 'LẠC']];
-    [-NAVE, -8.025, 8.025, NAVE].forEach((x, i) => { const m = sign(txt[i], 0.85, 4.0, x, 6.7, CROWS[CROWS.length - 1] + 0.58, 0, { vertical: true, ppu: 170, bg1: '#1b1210', bg2: '#0d0908' }); meshIn.push(m); });
+    const o = { vertical: true, ppu: 170, bg1: '#1b1210', bg2: '#0d0908' };
+    [[['TỪ', 'BI', 'HỈ', 'XẢ'], -NAVE], [['TRÍ', 'TUỆ', 'AN', 'LẠC'], NAVE]].forEach(([t, x]) => meshIn.push(sign(t, 0.85, 4.0, x, 6.7, CROWS[CROWS.length - 1] + 0.58, 0, o)));
+    // (hai câu trên tường sau hai bên hào quang giữa: dựng ở 18-ban-tho.js cùng ban thờ)
   });
 
-  // đèn chùm hoa sen: ba tầng cánh vàng quanh quả cầu sáng, xích treo từ trần
+  // đèn trống treo (v6, thay đèn chùm hoa sen cánh vàng to): thân trống tròn nhỏ mép vàng, trong đỏ sẫm, dưới có đĩa sáng ấm; quanh mép buông 44 sợi tua đỏ có hạt vàng mỗi 0,25 m
   safe('đèn chùm', () => {
-    const lotus = (x, z, yc, k = 1.25) => { // k: hệ số to hơn v3 (điện cao 11,7 m)
-      cyl(I.M, x, (YCE + yc + 0.5 * k) / 2, z, 0.04, 0.04, YCE - yc - 0.5 * k, K.goldD, 5);
-      cyl(I.G, x, YCE - 0.1, z, 0.22 * k, 0.4 * k, 0.18, K.gold, 8);
-      const tier = (R, n, len, wid, tilt, y, color, ph) => { // cánh sen bầu: elip dẹt nghiêng ra ngoài
-        const st = Math.sin(tilt), ct = Math.cos(tilt); R *= k; len *= k; wid *= k; y = yc - (yc - y) * k;
-        for (let i = 0; i < n; i++) { const a = ph + (i / n) * TAU, m = R + (st * len) / 2; I.G.add(SPHS, color, { p: [x + Math.sin(a) * m, y + (ct * len) / 2, z + Math.cos(a) * m], s: [wid, len / 2, wid * 0.32], r: [tilt, a, 0], order: 'YXZ' }); }
-      };
-      tier(0.35, 12, 1.15, 0.36, 1.05, yc - 0.65, K.gold, 0);
-      tier(0.25, 9, 0.95, 0.32, 0.7, yc - 0.42, K.goldL, 0.35);
-      tier(0.12, 7, 0.8, 0.27, 0.36, yc - 0.2, K.gold, 0.1);
-      I.L.add(SPH, 0xffe9a8, { p: [x, yc + 0.32 * k, z], s: 0.3 * k, j: 0.02 });
-      I.G.add(CN6, K.gold, { p: [x, yc + 0.72 * k, z], s: [0.18 * k, 0.4 * k, 0.18 * k] });
-      I.G.add(CN6, K.gold, { p: [x, yc - 0.85 * k, z], s: [0.3 * k, 0.5 * k, 0.3 * k], r: [PI, 0, 0] });
-      for (let i = 0; i < 8; i++) { const a = (i / 8) * TAU + 0.2; I.L.add(SPHS, 0xffd27a, { p: [x + Math.sin(a) * 1.3 * k, yc - 0.2 * k, z + Math.cos(a) * 1.3 * k], s: 0.1 * k, j: 0.02 }); }
-      glow(x, yc, z, 3.6 * k, [1.0, 0.78, 0.4], false); glow(x, yc, z, 2.4 * k, [1.0, 0.6, 0.25], true);
+    const CYL3 = new THREE.CylinderGeometry(1, 1, 1, 3, 1, true), CIRC = new THREE.CircleGeometry(1, 32); own.push(CYL3, CIRC);
+    const rr = U.rng(9), NT = 44;
+    const lamp = (x, z, yc, k = 0.75) => {                    // k: tỉ lệ cả bộ (đèn chùm cũ 1,25 × 0,6)
+      const R = 0.95, Hd = 0.45, yt = yc + Hd / 2, yb = yc - Hd / 2;
+      cyl(I.M, x, (YCE + yt + 0.3) / 2, z, 0.03, 0.03, YCE - yt - 0.3, K.goldD, 6);           // xích treo
+      scyl(I.G, x, YCE - 0.08, z, 0.28, 0.4, 0.16, K.rim, 16);                                  // đế móc trên trần
+      scyl(I.G, x, yt + 0.15, z, 0.08, 0.34, 0.3, K.rim, 16);                                   // nón đỉnh
+      scyl(I.L, x, yc, z, R, R, Hd, K.lamp, 32, true);                                          // thân trống: lụa đỏ sẫm, tự sáng nhẹ
+      sm(I.L, CIRC, 0xb87030, { p: [x, yb + 0.01, z], s: R * 0.99, r: [PI / 2, 0, 0] });          // đĩa dưới: ánh đèn ấm bên trong (nhìn từ dưới lên)
+      for (const yy of [yt, yb]) scyl(I.G, x, yy, z, R + 0.03, R + 0.03, 0.08, K.rim, 32);        // hai vành vàng
+      for (let i = 0; i < NT; i++) {                                                            // tua: sợi đỏ mảnh + hạt vàng
+        const a = (i / NT) * TAU, tx = x + Math.sin(a) * R * 0.97, tz = z + Math.cos(a) * R * 0.97, len = 0.9 + rr() * 0.5;
+        I.S.add(CYL3, K.tassel, { p: [tx, yb - len / 2, tz], s: [0.012, len, 0.012], j: 0.04 });
+        for (let h = 0.25; h < len - 0.05; h += 0.25) I.G.add(OCT, K.bead, { p: [tx, yb - h, tz], s: 0.034, j: 0.03 });
+        I.G.add(OCT, K.bead, { p: [tx, yb - len, tz], s: 0.052, j: 0.03 });                     // hạt cuối tua
+      }
+      glow(x, yc - 0.1, z, 3.6 * k, [1.0, 0.78, 0.4], false); glow(x, yc - 0.1, z, 2.4 * k, [1.0, 0.6, 0.25], true);
     };
-    for (const sx of [-1, 1]) for (const z of [-68, -74.5, -81]) lotus(sx * 5, z, 9.4); // 6 đèn chùm (v3: 4)
+    for (const sx of [-1, 1]) for (const z of [-68, -74.5, -81]) lamp(sx * 6.5, z, 10.0); // 6 đèn (v6: dời 1,5 m về phía hàng cột bên: x ±6,5)
   });
 
   // đèn lồng đỏ: hai bên gian giữa dưới đà, và dọc hai gian bên
   safe('đèn lồng', () => {
-    for (const sx of [-1, 1]) for (const z of BAYS.slice(0, 5)) for (const x of [2.0, 11.7]) hangLanternInto(I.S, I.L, sx * x, YCE - 0.79, z, 2.0, 1.3); // gian giữa: 5 ô đầu (ô sau cùng là hào quang) × 2 hàng × 2 bên = 20 đèn, treo dưới đà
+    // v6: đèn lồng trơn nhẵn (lathe 24 cạnh, pháp tuyến nhẵn) màu cam #F0902C, nhỏ hơn 12 %; 05-world.hangLanternInto vẫn dựng đèn ngoài hiên
+    const LANT = lathe([[0, -0.25], [0.12, -0.24], [0.21, -0.17], [0.25, 0], [0.21, 0.17], [0.12, 0.24], [0, 0.25]], 24); own.push(LANT);
+    const hangLanternInto = (SB, LB, x, yTop, z, len, s0) => {
+      const s = s0 * 0.88, y = yTop - len - 0.27 * s;
+      box(SB, x, yTop - len / 2, z, 0.025, len, 0.025, 0x2a1a10);
+      sm(LB, LANT, K.lantern, { p: [x, y, z], s });
+      scyl(I.G, x, y + 0.27 * s, z, 0.11 * s, 0.13 * s, 0.07 * s, K.rim, 14);
+      scyl(I.G, x, y - 0.27 * s, z, 0.13 * s, 0.11 * s, 0.07 * s, K.rim, 14);
+      scyl(SB, x, y - 0.42 * s, z, 0.02 * s, 0.05 * s, 0.24 * s, K.tassel, 6);
+      glow(x, y, z, 1.7 * s, [1.0, 0.58, 0.2], true);
+    };
+    for (const sx of [-1, 1]) for (const z of BAYS.slice(0, 5)) hangLanternInto(I.S, I.L, sx * 11.7, YCE - 0.79, z, 2.0, 1.3); // gian giữa: 5 ô đầu (ô sau cùng là tấm phông ban thờ) × 1 hàng × 2 bên = 10 đèn, treo dưới đà (v4.1: bỏ hàng x ±2,0 sát trục giữa cho thoáng tầm nhìn lên ban Phật)
     for (const sx of [-1, 1]) for (const z of BAYS) hangLanternInto(I.S, I.L, sx * 16.9, YAI, z, 0.8, 1.1);                                        // hai gian bên: 6 đèn mỗi bên
   });
 
   // =====================================================================
   //  160 BỒ ĐOÀN (10 hàng × 16) + CHỖ NGỒI CỦA NGƯỜI CHƠI + MÕ
   // =====================================================================
-  const CUSH = lathe([[0, 0], [0.3, 0], [0.34, 0.04], [0.32, 0.11], [0.18, 0.15], [0, 0.155]], 8);
-  const BIGC = lathe([[0, 0], [0.46, 0], [0.5, 0.05], [0.47, 0.15], [0.3, 0.2], [0, 0.205]], 12);
+  const CUSH = lathe([[0, 0], [0.3, 0], [0.34, 0.04], [0.32, 0.11], [0.18, 0.15], [0, 0.155]], 16);   // v6: 16 cạnh (cũ 8), pháp tuyến nhẵn
+  const BIGC = lathe([[0, 0], [0.46, 0], [0.5, 0.05], [0.47, 0.15], [0.3, 0.2], [0, 0.205]], 20);
   own.push(CUSH, BIGC);
   const sxAt = (k) => 1.9 + k * 1.75; // k = 0…7 → 1,9 … 14,15 (ROWS: 10 hàng khai báo ở khối kích thước chính)
   const HALL = G.world.hall;
-  // máy quay hoạt động gõ mõ (30-activities-a đọc W.hall.cam lúc bắt đầu): sau lưng, hơi lệch trái người chơi, thấy cả người chơi + mõ + pho Phật giữa + hào quang.
-  // Lõi máy quay lùi máy ×pull trên màn dọc hẹp; ở đây chia trước cho pull để máy dừng đúng chỗ mong muốn (như 17-dien-phu.js)
-  const CAMD = { pos: [-1.0, 4.9, -69.6], look: [0, 4.7, -86] }, CAMP = { pos: [-1.0, 4.6, -71.4], look: [0, 4.4, -86] }; // toạ độ KHUNG v2 (dùng cho lối nhìn bồ đoàn bên dưới); v4: pho Phật cao 1,3× nên máy lùi + nâng
+  // ---------- Máy quay hoạt động gõ mõ (v6): CHÍNH DIỆN trên trục giữa, ống kính hẹp, ban thờ chiếm ≈ 88 % bề ngang khung ----------
+  // 30-activities-a đọc W.hall.cam lúc bắt đầu (pos / look / fov: getter, tính lại mỗi lần theo tỉ lệ màn hình). Hình học ban thờ đọc LƯỜI từ W.banTho (THẾ GIỚI, do 18-ban-tho ghi;
+  // chưa có thì dùng số dự phòng BT0) + W.statueFocus. Giả định: headY / archTop đo ở mặt phẳng pho giữa (z = statueFocus.z − 0,4); tableFront = z mặt trước bệ / bàn tại x ±halfWidth.
+  // Cách đặt: bề ngang bệ = 0,885 nửa khung (fov suy ra), đỉnh vòm ≈ +0,72…0,76 và đầu Phật ≈ +0,25…0,30 (màn dọc cao hơn) bằng góc ngẩng tính kín; máy thấp hơn đầu người chơi một chút, nhìn lên ngực pho.
+  // Màn dọc hẹp: máy sát tường trước (z −87,35), ống kính rộng ~73° để cả hai pho bên (x ±4,35, ngoài cùng ±6,3) lọt khung. Lõi máy quay lùi máy ×pull trên màn dọc: chia trước cho pull để máy dừng đúng chỗ.
+  const BT0 = { slabTop: 6.38, tableFront: -103, headY: 11.456, chestY: 9.745, archTop: 14.56, halfWidth: 6.6 }; // = ban thờ v6 thật (18-ban-tho.js) để CAMD/CAMP và lối nhìn bồ đoàn (tính trước buildBanTho) vẫn đúng; halfWidth giữ 6,6 làm mốc tỉ lệ sc
+  const camSolve = (asp) => {
+    const B = Object.assign({}, BT0, W.banTho || {}), zc = (W.statueFocus ? W.statueFocus.z : -107.6) - 0.4, sc = B.halfWidth / BT0.halfWidth, portrait = asp < 0.8;
+    const cy = B.slabTop + (portrait ? 1.5 : 0.7), cz = portrait ? -87.35 : B.tableFront + 13.9 * sc;
+    const tanH = portrait ? (B.halfWidth * 0.955) / (0.93 * (cz - zc - 0.6)) : B.halfWidth / (0.885 * (cz - B.tableFront));
+    const fov = U.clamp((2 * Math.atan(tanH / asp) * 180) / PI, 24, 80), t = Math.tan((fov * PI) / 360);
+    const pitch = Math.atan2((B.archTop + B.headY) / 2 - cy, cz - zc) - Math.atan((portrait ? 0.62 : 0.55) * t); // đặt trung điểm (đỉnh vòm, đầu Phật) ở NDC y +0,55 (màn dọc +0,62)
+    return { pos: [0, cy, cz], look: [0, cy + Math.tan(pitch) * (cz - zc), zc], fov };
+  };
+  const toV2 = (c) => ({ pos: [c.pos[0], c.pos[1] - DY, c.pos[2] - DZ], look: [c.look[0], c.look[1] - DY, c.look[2] - DZ], fov: c.fov });
+  const CAMD = toV2(camSolve(16 / 9)), CAMP = toV2(camSolve(390 / 844)); // toạ độ KHUNG v2 (cho lối nhìn bồ đoàn bên dưới + ctx của ban thờ); số liệu dự phòng lúc dựng
   const camW = (c) => ({ pos: [c.pos[0], c.pos[1] + DY, c.pos[2] + DZ], look: [c.look[0], c.look[1] + DY, c.look[2] + DZ] }); // → thế giới (+DY, +DZ)
   const CAMDW = camW(CAMD), CAMPW = camW(CAMP);
   const camNow = (k) => {
-    const asp = G.size.w / G.size.h, c = asp < 0.8 ? CAMPW : CAMDW, pull = asp < 1 ? U.clamp(0.66 / asp, 1, 1.5) : 1;
+    const asp = G.size.w / G.size.h, c = camSolve(asp), pull = asp < 1 ? U.clamp(0.66 / asp, 1, 1.5) : 1;
     return k === 'look' ? c.look.slice() : [0, 1, 2].map((i) => c.look[i] + (c.pos[i] - c.look[i]) / pull);
   };
-  HALL.cam = { get pos() { return camNow('pos'); }, get look() { return camNow('look'); }, desktop: CAMDW, phone: CAMPW };
+  HALL.cam = { get pos() { return camNow('pos'); }, get look() { return camNow('look'); }, get fov() { return camSolve(G.size.w / G.size.h).fov; }, desktop: CAMDW, phone: CAMPW };
+  G.events.on('resize', () => { if (G.activity && G.activity.current === 'mo') G.cam.focus({ pos: HALL.cam.pos, look: HALL.cam.look, fov: HALL.cam.fov, dur: 0.4 }); }); // xoay màn hình giữa lúc gõ mõ → dựng lại khung
   const MO = { x: 0.1, z: -79.3 };       // chỗ chiếc mõ (bên phải, hơi lên trước bồ đoàn của người chơi) — v4: hàng bồ đoàn cuối −77,5, dải trống, rồi chỗ gõ mõ
   let seatTotal = 0;
   safe('bồ đoàn', () => {
@@ -566,164 +639,31 @@ function buildChinhDien(G) {
       return Math.hypot(x - lx - dx * t, z - lz - dz * t) < 0.6;
     };
     const inCamLane = (x, z) => lane(CAMD, x, z) || lane(CAMP, x, z);
+    const rc = U.rng(5), cc = new THREE.Color();
     for (const z of ROWS) for (const sx of [-1, 1]) for (let k = 0; k < 8; k++) {
       const x = sx * sxAt(k);
-      I.S.add(CUSH, 0xd9a441, { p: [x, Y0 + 0.027, z], j: 0.06 });
+      cc.set(K.cushion).multiplyScalar(0.92 + rc() * 0.16);
+      sm(I.S, CUSH, cc.getHex(), { p: [x, Y0 + 0.027, z] });
       seatTotal++;
       if (inCamLane(x, z)) continue;
       W.seats.push({ x, z: z + DZ, y: 1.95 + DY, yaw: PI });
     }
     // hàng trước: bốn bồ đoàn lớn; chỗ (−1, −78,9) là của người chơi, ba chỗ còn lại chỉ bày
-    for (const x of [-3, -1, 1, 3]) I.S.add(BIGC, x === -1 ? 0xe2b04a : 0xd9a441, { p: [x, Y0 + 0.027, -78.9], j: 0.05 });
-    I.S.add(lathe([[0, 0], [0.5, 0], [0.55, 0.03], [0.48, 0.075], [0, 0.08]], 10), 0xf0cf70, { p: [MO.x, Y0 + 0.025, MO.z], j: 0.04 }); // đệm tròn dưới chiếc mõ (cho khỏi lẫn với thảm đỏ)
+    for (const x of [-3, -1, 1, 3]) sm(I.S, BIGC, x === -1 ? K.cushionB : K.cushion, { p: [x, Y0 + 0.027, -78.9] });
+    sm(I.S, lathe([[0, 0], [0.5, 0], [0.55, 0.03], [0.48, 0.075], [0, 0.08]], 20), 0xb88a36, { p: [MO.x, Y0 + 0.025, MO.z] }); // đệm tròn dưới chiếc mõ (cho khỏi lẫn với thảm đỏ)
   });
 
   // =====================================================================
-  //  BÀN THỜ DÀI + LỄ VẬT + BA BỆ
-  // =====================================================================
-  safe('bàn thờ', () => {
-    // v4: bàn dài ±15,9 (v3 ±14,45; không dài tới 1,3× vì tường trong ở ±18,1 và lối dọc hai bên x ±16,9 phải còn đi qua được), sâu 1,3, mặt bàn Y0 + 1,42 (+ viền vàng = TT)
-    const z0 = -82.3, z1 = -81.0, AL = 15.9;
-    boxMM(I.S, -(AL - 0.15), Y0, z0, AL - 0.15, Y0 + 1.32, z1, K.lac);                         // thân bàn sơn son
-    boxMM(I.S, -AL, Y0 + 1.32, z0 - 0.1, AL, Y0 + 1.42, z1 + 0.1, 0x8a2418);                  // mặt bàn
-    for (const [a, b, c, d] of [[-AL - 0.05, z0 - 0.12, AL + 0.05, z0 - 0.08], [-AL - 0.05, z1 + 0.08, AL + 0.05, z1 + 0.12]]) boxMM(I.G, a, Y0 + 1.42, b, c, Y0 + 1.45, d, K.gold);
-    for (const sx of [-1, 1]) boxMM(I.G, sx * (AL + 0.05) - 0.02, Y0 + 1.42, z0 - 0.12, sx * (AL + 0.05) + 0.02, Y0 + 1.45, z1 + 0.12, K.gold);
-    boxMM(I.G, -(AL - 0.1), Y0 + 0.02, z1, AL - 0.1, Y0 + 0.13, z1 + 0.04, K.goldD);
-    boxMM(I.G, -(AL - 0.1), Y0 + 1.2, z1, AL - 0.1, Y0 + 1.32, z1 + 0.04, K.gold);
-    // ô chạm vàng mặt trước: mười bốn ô, giữa có hoa tròn
-    for (let i = 0; i < 14; i++) {
-      const xc = (i - 6.5) * 2.2;
-      boxMM(I.G, xc - 0.85, Y0 + 0.22, z1, xc + 0.85, Y0 + 0.27, z1 + 0.05, K.gold); boxMM(I.G, xc - 0.85, Y0 + 1.0, z1, xc + 0.85, Y0 + 1.05, z1 + 0.05, K.gold);
-      boxMM(I.G, xc - 0.85, Y0 + 0.22, z1, xc - 0.8, Y0 + 1.05, z1 + 0.05, K.gold); boxMM(I.G, xc + 0.8, Y0 + 0.22, z1, xc + 0.85, Y0 + 1.05, z1 + 0.05, K.gold);
-      I.G.add(new THREE.CylinderGeometry(0.3, 0.3, 0.05, 10), i % 2 ? K.goldD : K.goldL, { p: [xc, Y0 + 0.635, z1 + 0.03], r: [PI / 2, 0, 0] });
-    }
-    colH.box(-AL - 0.05, z0 - 0.1, AL + 0.05, z1 + 0.1, 'altar');
-    // lư hương đồng ba chân + nén hương: giữa (k 1,6) và hai bên (k 1,3), khói bay lên
-    const bowl = (x, z, k) => {
-      I.M.add(lathe([[0, 0], [0.2, 0], [0.34, 0.1], [0.42, 0.3], [0.46, 0.5], [0.52, 0.58], [0.46, 0.62], [0.4, 0.55]], 12), K.bronze, { p: [x, TT, z], s: k });
-      for (let i = 0; i < 3; i++) { const a = (i / 3) * TAU + 0.5; cyl(I.M, x + Math.sin(a) * 0.24 * k, TT + 0.05 * k, z + Math.cos(a) * 0.24 * k, 0.05 * k, 0.07 * k, 0.1 * k, K.bronze, 6); }
-      for (const sx of [-1, 1]) I.M.add(new THREE.TorusGeometry(0.16 * k, 0.04 * k, 4, 8, PI), K.bronze, { p: [x + sx * 0.5 * k, TT + 0.58 * k, z] });
-      cyl(I.S, x, TT + 0.55 * k, z, 0.4 * k, 0.4 * k, 0.04, 0x6b6158, 10);
-      const rnd = U.rng(Math.round(x * 7) + 3);
-      for (let i = 0; i < 16; i++) { const a = rnd() * TAU, r = Math.sqrt(rnd()) * 0.32 * k, h = (0.3 + rnd() * 0.3) * k; box(I.S, x + Math.cos(a) * r, TT + 0.57 * k + h / 2, z + Math.sin(a) * r, 0.016 * k, h, 0.016 * k, 0x8a3020, { r: [(rnd() - 0.5) * 0.2, 0, (rnd() - 0.5) * 0.2] }); }
-      W.smokeSpots.push([x, TT + 1.35 * k + DY, z + DZ]);
-    };
-    const zt = (z0 + z1) / 2;
-    bowl(0, zt, 1.6); bowl(-SIDE_X, zt, 1.3); bowl(SIDE_X, zt, 1.3);
-    // nến: ba đôi (hai bên lư hương giữa và hai lư hương bên)
-    const candle = (x, k = 1.3) => {
-      cyl(I.S, x, TT + 0.26 * k, zt, 0.055 * k, 0.06 * k, 0.52 * k, 0xc8302a, 7, { j: 0.04 });
-      cyl(I.G, x, TT + 0.03 * k, zt, 0.1 * k, 0.12 * k, 0.06 * k, K.gold, 7);
-      I.L.add(CN4, 0xffd27a, { p: [x, TT + 0.6 * k, zt], s: [0.09 * k, 0.16 * k, 0.09 * k] });
-      glow(x, TT + 0.62 * k, zt, 0.7 * k, [1.0, 0.72, 0.32], false);
-    };
-    for (const x of [-1.9, 1.9, -SIDE_X + 2.0, -SIDE_X - 2.0, SIDE_X - 2.0, SIDE_X + 2.0]) candle(x);
-    // bình hoa sứ (men lam) cắm hoa
-    const vase = (x, tall) => {
-      I.S.add(lathe([[0, 0], [0.16, 0], [0.21, 0.15], [0.2, 0.4], [0.12, 0.62], [0.14, 0.72], [0.18, 0.78], [0.1, 0.76]], 10), 0xe8edf0, { p: [x, TT, zt], s: tall, j: 0.03 });
-      I.S.add(lathe([[0.19, 0.2], [0.215, 0.24], [0.205, 0.38], [0.19, 0.4]], 10), 0x2f5a98, { p: [x, TT, zt], s: tall, j: 0.03 });
-      const cols = [0xf2a0b8, 0xf5c43a, 0xfbe4ea, 0xe8602c, 0xf5c43a, 0xf2a0b8, 0xffffff];
-      for (let i = 0; i < 9; i++) {
-        const a = i * 2.4, r = (i % 3) * 0.1, yy = TT + (0.85 + (i % 4) * 0.1) * tall;
-        sph(I.S, x + Math.cos(a) * r, yy, zt + Math.sin(a) * r, 0.1 * tall, cols[i % cols.length], 6, 4);
-      }
-      cyl(I.S, x, TT + 0.95 * tall, zt, 0.012, 0.012, 0.35 * tall, 0x4c7a35, 4);
-    };
-    for (const x of [-4.6, 4.6, -7.5, 7.5]) vase(x, 1.5);
-    // mâm ngũ quả trên đế vàng (k 1,2)
-    const tray = (x, k = 1.2) => {
-      I.G.add(lathe([[0, 0], [0.22, 0], [0.2, 0.08], [0.07, 0.2], [0.07, 0.34], [0.3, 0.46], [0.34, 0.5], [0, 0.5]], 10), K.gold, { p: [x, TT, zt], s: k });
-      const fr = [0xf39a2a, 0xd8322a, 0x7cbf4a, 0xf5d03a, 0xf39a2a, 0xd8322a];
-      for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; sph(I.S, x + Math.cos(a) * 0.2 * k, TT + 0.58 * k, zt + Math.sin(a) * 0.2 * k, 0.1 * k, fr[i], 6, 4); }
-      for (let i = 0; i < 3; i++) { const a = (i / 3) * TAU + 0.5; sph(I.S, x + Math.cos(a) * 0.1 * k, TT + 0.7 * k, zt + Math.sin(a) * 0.1 * k, 0.095 * k, fr[i + 1], 6, 4); }
-      sph(I.S, x, TT + 0.82 * k, zt, 0.1 * k, 0xf5d03a, 6, 4);
-    };
-    for (const x of [-3.2, 3.2, -6.0, 6.0, -8.9, 8.9]) tray(x);
-    // ba bệ đá tám cạnh hai tầng sau bàn (v4: ×1,3, cao PH = 1,17; hai bệ bên ở x ±SIDE_X)
-    for (const x of [-SIDE_X, 0, SIDE_X]) {
-      const r = x === 0 ? 3.19 : 2.99;
-      cyl(I.F, x, Y0 + 0.325, ZBUD, r, r + 0.06, 0.65, K.stone, 8, { r: [0, PI / 8, 0] });
-      cyl(I.G, x, Y0 + 0.65, ZBUD, r + 0.025, r + 0.025, 0.07, K.gold, 8, { r: [0, PI / 8, 0] });
-      cyl(I.F, x, Y0 + 0.91, ZBUD, r - 0.3, r - 0.25, 0.52, K.stoneL, 8, { r: [0, PI / 8, 0] });
-      cyl(I.G, x, Y0 + PH, ZBUD, r - 0.27, r - 0.27, 0.05, K.goldD, 8, { r: [0, PI / 8, 0] });
-      colH.circle(x, ZBUD, r + 0.05, 'pedestal');
-    }
-  });
-
-  // =====================================================================
-  //  BA PHO PHẬT TAM THẾ + HÀO QUANG HÌNH LÁ + BẢNG HIỆU
+  //  BAN THỜ: bàn thờ dài + lễ vật + bệ + tượng + hào quang + bảng hiệu + câu đối tường sau — dựng ở 18-ban-tho.js (buildBanTho(G, ctx)).
+  //  ctx = hằng số / hàm trợ giúp của thân điện (toạ độ KHUNG v2, thế giới = +DY, +DZ); mesh riêng thêm vào hallGrp phải push vào meshIn (cắt cảnh), tượng vào statueMeshes.
   // =====================================================================
   const statueMeshes = [];
-  safe('tượng', () => {
-    const base = W.statue;
-    if (!base) return;
-    const sets = [{ x: 0, s: 2.21 }, { x: -SIDE_X, s: 2.015 }, { x: SIDE_X, s: 2.015 }]; // v4: 1,3× v3 (1,7 / 1,55)
-    sets.forEach((p, i) => {
-      const m = i === 0 ? base : base.clone();
-      m.material = buddhaMat; // đồng sẫm hơn hào quang vàng cho nổi bật
-      m.position.set(p.x, Y0 + PH, ZBUD); m.scale.setScalar(p.s); m.rotation.set(0, 0, 0); m.updateMatrix();
-      hallGrp.add(m); // pho giữa là mesh của 05-world (đang nằm trong scene, ngay cả khi 05 đặt nó ở chỗ khác sau G.frame.shift) → chuyển vào hallGrp; hai pho bên là bản sao. Không còn pho nào ở chỗ cũ (thế giới (0, 5,68, −100,3)).
-      statueMeshes.push(m);
-    });
-    W.statueFocus.set(0, Y0 + PH + 1.62 * 2.21 + DY, ZBUD + 0.4 + DZ); // vị trí LOGIC (thế giới)
-  });
-
-  safe('hào quang', () => {
-    const ZF2 = ZBUD - 1.25 * 1.3; // mặt trước hào quang (−87,625; v3: ZBUD − 1,25)
-    const mandorla = (cx, Hm, Wm, sc) => {
-      const y0 = Y0 + PH + 0.08, cyL = 0.42 * Hm;
-      const prof = (t) => Wm * Math.pow(Math.max(0, Math.sin(PI * Math.pow(t, 0.72))), 0.9);
-      const P = (s, t, side) => [side * s * prof(t), cyL + s * (Hm * t - cyL)];
-      const outline = (s) => {
-        const pts = [], N = 40;
-        for (let i = 0; i <= N; i++) { const q = P(s, i / N, 1); pts.push(new THREE.Vector2(q[0], q[1])); }
-        for (let i = N - 1; i >= 1; i--) { const q = P(s, i / N, -1); pts.push(new THREE.Vector2(q[0], q[1])); }
-        return pts;
-      };
-      const layer = (s, front, depth, color) => {
-        const g = new THREE.ExtrudeGeometry(new THREE.Shape(outline(s)), { depth, bevelEnabled: false });
-        I.G.add(g, color, { p: [cx, y0, ZF2 + front - depth], j: 0.035 }); g.dispose();
-      };
-      layer(1.0, 0.0, 0.24, 0x8a1e14);       // viền đỏ mảnh
-      layer(0.975, 0.03, 0.27, 0xf2c75e);    // đường chỉ vàng sáng
-      layer(0.955, 0.05, 0.29, 0xb4842c);    // dải hoa văn vàng sẫm
-      layer(0.8, 0.08, 0.32, 0xf2c75e);
-      layer(0.785, 0.1, 0.34, 0xe3ae48);     // lòng hào quang
-      // hạt tròn dọc dải hoa văn; ngọn lửa nhọn quanh mép ngoài
-      for (let i = 1; i < 24; i++) for (const sd of [-1, 1]) {
-        const q = P(0.875, 0.04 + (i / 24) * 0.9, sd);
-        I.G.add(OCT, K.goldL, { p: [cx + q[0], y0 + q[1], ZF2 + 0.08], s: [0.1, 0.1, 0.05] });
-      }
-      for (let i = 0; i < 20; i++) for (const sd of [-1, 1]) {
-        const t = 0.1 + (i / 19) * 0.86, a = P(1.0, t - 0.01, sd), b = P(1.0, t + 0.01, sd);
-        let tx = b[0] - a[0], ty = b[1] - a[1]; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
-        const nx = sd > 0 ? ty : -ty, ny = sd > 0 ? -tx : tx, L = 0.65 + 0.13 * (i % 2);
-        I.G.add(CN4, i % 2 ? K.gold : K.goldL, { p: [cx + (a[0] + b[0]) / 2 + nx * L * 0.45, y0 + (a[1] + b[1]) / 2 + ny * L * 0.45, ZF2 - 0.1], s: [0.26, L, 0.09], r: [0, 0, -Math.atan2(nx, ny)] });
-      }
-      // vầng sáng sau đầu: đĩa kem + vòng vàng + tia
-      const hy = Y0 + PH + 2.43 * sc, hr = 1.45 * sc / 1.7 + 0.1;
-      I.G.add(new THREE.CircleGeometry(hr, 22), 0xf7e8b4, { p: [cx, hy, ZF2 + 0.125], j: 0.02 });
-      I.G.add(new THREE.TorusGeometry(hr, 0.08, 4, 28), K.gold, { p: [cx, hy, ZF2 + 0.13] });
-      I.G.add(new THREE.TorusGeometry(hr * 0.78, 0.04, 4, 24), K.goldD, { p: [cx, hy, ZF2 + 0.13] });
-      for (let i = 0; i < 20; i++) {
-        const a = (i / 20) * TAU, rr = hr + 0.7;
-        I.G.add(CN4, K.goldL, { p: [cx + Math.sin(a) * rr, hy + Math.cos(a) * rr, ZF2 + 0.12], s: [0.12, 1.0, 0.05], r: [0, 0, -a] });
-      }
-      glow(cx, hy, ZF2 + 0.9, 4.2 * sc / 1.7 + 0.6, [1.0, 0.8, 0.42], false);
-    };
-    mandorla(0, 9.1, 3.77, 2.21);                 // 1,3× v3 (7,0 / 2,9 / 1,7)
-    mandorla(-SIDE_X, 8.19, 3.38, 2.015);
-    mandorla(SIDE_X, 8.19, 3.38, 2.015);
-    // bảng hiệu nền đen chữ vàng: v4 treo dưới trần, TRƯỚC mặt hào quang 0,33 m (không còn áp tường sau). Ở tường sau, đỉnh hào quang giữa (9,1 m) che chữ giữa bảng
-    // theo thị sai từ máy quay gõ mõ (máy thấp 4,9, bảng cao 13). Tâm bảng 12,0 → bảng 11,5…12,5: đỉnh hào quang (12,27) khuất sau bảng, tia vầng sáng sau đầu (≤ 11,15) hở dưới bảng.
-    // Thân gỗ sẫm phía sau mặt chữ (PlaneGeometry một mặt: nhìn từ lối đi sau tượng không bị xuyên) + hai thanh treo từ trần xuống mép trên bảng.
-    const ZBRD = ZF2 + 0.33, YBRD = 12.0; // mặt chữ −87,295 (thế giới −109,3)
-    [['QUÁ KHỨ PHẬT', -SIDE_X], ['HIỆN TẠI PHẬT', 0], ['VỊ LAI PHẬT', SIDE_X]].forEach(([t, x]) => {
-      meshIn.push(sign([t], 6.4, 1.0, x, YBRD, ZBRD, 0, { ppu: 200, bg1: '#1b1210', bg2: '#0d0908' }));
-      I.G.add(BOX, 0x1b1210, { p: [x, YBRD, ZBRD - 0.05], s: [6.5, 1.1, 0.09] });
-      for (const sx of [-1, 1]) I.G.add(BOX, K.goldD, { p: [x + sx * 2.7, (YCE + YBRD + 0.55) / 2, ZBRD - 0.05], s: [0.07, YCE - YBRD - 0.55, 0.07] });
-    });
-  });
+  const ctxBT = {
+    hallGrp, meshIn, statueMeshes, I, K, safe, sign, glow, colH, blocker, own,
+    Y0, DY, DZ, FLOOR, TT, ZBUD, PH, SIDE_X, NAVE, XW, ZB, WT, ZF, YCE, YW, YAI, ZL, BAYS, CROWS, ROWS, MO,
+    BOX, SPH, SPHS, CN4, CN6, OCT, box, boxMM, cyl, sph, lathe, branch, put, grp, goldI, buddhaMat, camD: CAMD, camP: CAMP, camW,
+  };
+  if (typeof buildBanTho === 'function') safe('ban thờ (18-ban-tho)', () => buildBanTho(G, ctxBT)); else G.errors.push('chính điện: thiếu 18-ban-tho.js');
 
   // =====================================================================
   //  ĐÔI HẠC ĐỒNG ĐỨNG TRÊN LƯNG RÙA
@@ -752,9 +692,9 @@ function buildChinhDien(G) {
       branch(TG, [0, 3.56, 1.04], [0, 3.48, 1.6], 0.035, 0.01, K.gold, 5);
       TG.add(CN4, 0xf2a8c0, { p: [0, 3.5, 1.66], s: [0.14, 0.3, 0.14], r: [PI / 2 + 0.2, 0, 0] });
       grp(I.M, TM, x, Y0, z, yaw, 1.15); grp(I.G, TG, x, Y0, z, yaw, 1.15); // v4: 1,15× (v3 0,95)
-      colH.circle(x, z, 0.8, 'crane');
+      colH.circle(x, z, 1.4, 'crane'); // đế rùa rộng ~1,5 m: bán kính 1,4 (0,8 cũ làm người chơi lún vào đế)
     };
-    crane(-7.6, -79.6, 0.55); crane(7.6, -79.6, -0.55); // đứng trước bàn thờ, hai bên thảm (z −79,6: đuôi rùa sát mặt bàn −80,9, đầu rùa cách hàng bồ đoàn cuối −77,5 ≥ 0,4 m)
+    crane(-10.6, -79.6, 0.55); crane(10.6, -79.6, -0.55); // v6: dời ra x ±10,6 (cũ ±7,6) để rời khung hình gõ mõ; vẫn z −79,6 (đầu rùa cách hàng bồ đoàn cuối −77,5 ≥ 0,4 m)
   });
 
   // =====================================================================
@@ -804,7 +744,7 @@ function buildChinhDien(G) {
     N(0, -65.9 + DZ, 'hallDoor'); N(0, -68.9 + DZ); N(0, -71.9 + DZ); N(0, -74.9 + DZ); N(0, -78.3 + DZ, 'hallMo');
     for (const sx of [-1, 1]) {
       N(sx * 14, -77); N(sx * 10.5, -80.3); N(sx * 18.5, -82);        // cánh tầng 1 (y 2,4) và tầng 2 (y 3,6), đi lên từ chiếu nghỉ (nút (±10,5, −80,3) nối chiếu nghỉ 2 với (±18,5, −82): má thang chắn đường thẳng)
-      N(sx * 4.6, -66.3 + DZ); N(sx * 4.6, -73.0 + DZ); N(sx * 11.6, -66.3 + DZ); N(sx * 11.6, -73.0 + DZ); N(sx * 11.6, -80.0 + DZ);
+      N(sx * 4.6, -66.3 + DZ); N(sx * 4.6, -73.0 + DZ); N(sx * 11.6, -66.3 + DZ); N(sx * 11.6, -73.0 + DZ); N(sx * 13.6, -79.4 + DZ); N(sx * 7.0, -79.6 + DZ);
       for (const z of [-66, -72, -78, -84, -89]) N(sx * 16.9, z + DZ);   // gian bên (thế giới −88 … −111)
     }
     G.nav.built = false;
@@ -814,8 +754,8 @@ function buildChinhDien(G) {
   let shown = true;
   const near = (p) => { const dx = p.x, dy = p.y - (7 + DY), dz = p.z - (-77.75 + DZ); return dx * dx + dy * dy + dz * dz < 52 * 52; };
   const setVis = (v) => { for (const m of meshIn) m.visible = v; };
-  const CD = (W.chinhDien = { lightK: 0.6 });
-  const gDay = new THREE.Color(0x6e4410), gNight = new THREE.Color(0x8a5818), bDay = new THREE.Color(0x2a1a0a), bNight = new THREE.Color(0x4a3012), hl0 = W.lights && W.lights.hall;
+  const CD = (W.chinhDien = { lightK: 0.35 });
+  const gDay = new THREE.Color(0x38220a), gNight = new THREE.Color(0x4c3010), bDay = new THREE.Color(0x2a1a0a), bNight = new THREE.Color(0x4a3012), hl0 = W.lights && W.lights.hall;
   G.onUpdate(() => {
     const s = near(G.camera.position); if (s !== shown) { shown = s; setVis(s); }
     if (s) { goldI.emissive.copy(gDay).lerp(gNight, G.tod.night); buddhaMat.emissive.copy(bDay).lerp(bNight, G.tod.night); }

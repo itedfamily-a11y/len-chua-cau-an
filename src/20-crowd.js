@@ -15,6 +15,14 @@ function installCrowd(G) {
   const M_WAIT = 0, M_WALK = 1, M_ACT = 2, M_GROUP = 3;
   const SEP = 0.8, SEP2 = SEP * SEP, PLR = 1.8, PLR2 = PLR * PLR;
   const BASE_TARGET = 34, LOW_TARGET = 32, MIN_STAY = 26, MAX_LEAVING = 9;
+  // Người ngồi trong chính điện ("hall sitters"): thêm NGOÀI BASE_TARGET; chế độ ngồi: tụng kinh / thiền / lần chuỗi
+  const SM_TUNG = 1, SM_THIEN = 2, SM_LAN = 3;
+  const SIT_N = 14, SIT_LOW = 10, SIT_KEEP = 8, SIT_LEAD = 60, SIT_MIN = 180, SIT_MAX = 480; // SIT_KEEP: luôn chừa ≥ 8 ô trống cho đoàn khách
+  // "Nêm" trước máy quay gõ mõ: khi gõ mõ, máy quay đứng cách người chơi ~12,4 m và nhìn lên ban thờ; bất kỳ khách nào (đứng hay ngồi)
+  // trong 14 m đầu của khung hình đều thành cái đầu to bị cắt ở đáy khung → thu nhỏ dần về 0 (hệ số vis) khi 0 < d < WEDGE_D và |bên| < k·d + WEDGE_PAD
+  // (d, bên: toạ độ ngang so với trục máy quay → hướng nhìn; k = min(WEDGE_K, 1,15 · tan(fov/2) · tỉ lệ khung) — máy tính 0,62, màn dọc hẹp hơn).
+  // Nêm được "chốt" tới khi máy quay trả về chỗ cũ (G.cam.blend ≈ 0) để khách không mọc lại trong lúc máy còn thấp; hết gõ mõ mọi người hiện lại.
+  const WEDGE_D = 14, WEDGE_K = 0.62, WEDGE_PAD = 0.7, VIS_RATE = 5; // VIS_RATE: tốc độ ẩn / hiện (đơn vị vis trên giây, 5 → 0,2 giây)
 
   // ---------- Biến tạm dùng lại (không cấp phát trong vòng lặp) ----------
   const _pv = new V3(), _pv2 = new V3(), _sv = new V3(), _one = new V3(1, 1, 1), _zeroV = new V3();
@@ -25,6 +33,7 @@ function installCrowd(G) {
   const ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
   const _col = new THREE.Color(), WHITE = new THREE.Color(1, 1, 1);
   const _sc = {}; // kết quả worldToScreen dùng lại
+  let wOn = false, wLatch = false, wCx = 0, wCz = 0, wFx = 0, wFz = 1, wK = WEDGE_K; // nêm trước máy quay gõ mõ (cập nhật mỗi khung trong update, chỉ khi đang gõ mõ)
 
   // =====================================================================
   //  VẬT LIỆU & CÁC LỚP InstancedMesh (mỗi bộ phận cơ thể một lớp)
@@ -180,7 +189,7 @@ function installCrowd(G) {
       bows: 2, bp: 3, bowEvery: 7, bowOff: 0, lookT: 4, shakeT: 4, gestEvery: 7, idleStyle: 0, seatStyle: 0, puffN: 0,
       phase: 0, ph: 0, walkAmt: 0, bob: 0,
       a: { la: 0.05, lz: 0.34, ra: 0.05, rz: -0.34, hip: 0, head: 0, hyaw: 0, roll: 0, sit: 0, phone: 0 },
-      nextSpeak: 0, bub: null, getBV: null,
+      nextSpeak: 0, bub: null, getBV: null, sitter: false, sitMode: 0, vis: 1,
     };
     p.getBV = () => p.bv;
     return p;
@@ -188,6 +197,7 @@ function installCrowd(G) {
   const pool = [];
   for (let i = 0; i < POOL; i++) pool.push(makePilgrim(i));
   const act = [];             // khách đang hoạt động (danh sách công khai G.crowd.list)
+  const sitList = [];         // người ngồi chính điện đang có mặt (cả người đang đi tới chỗ ngồi); cũng nằm trong act
   const groups = [];          // các đoàn đang đi
   const flagOwner = new Array(FLAGS).fill(null);
   let hi = -1;                // ô cao nhất đang dùng (để giới hạn số bản vẽ)
@@ -202,7 +212,7 @@ function installCrowd(G) {
     p.phoneUp = false; p.cyc = 0; p.shotDone = true; p.flashReq = false; p.waveT = rand(2, 5);
     p.bowOff = rand(0, 6); p.gestEvery = rand(6, 9); p.idleStyle = randInt(0, 2); p.seatStyle = Math.random() < 0.6 ? 1 : 0; p.puffN = 0;
     p.phase = rand(0, TAU); p.ph = rand(0, TAU); p.walkAmt = 0; p.bob = 0;
-    p.nextSpeak = 0; p.bub = null;
+    p.nextSpeak = 0; p.bub = null; p.sitter = false; p.sitMode = 0; p.vis = 1;
     const a = p.a; a.la = a.ra = 0.05; a.lz = 0.34; a.rz = -0.34; a.hip = a.head = a.hyaw = a.roll = a.sit = a.phone = 0;
   }
   function allocPilgrim() { for (let i = 0; i < POOL; i++) if (!pool[i].active) return pool[i]; return null; }
@@ -225,6 +235,7 @@ function installCrowd(G) {
   function despawn(p) {
     if (!p.active) return;
     releaseSpot(p); endPair(p); releaseFlag(p);
+    if (p.sitter) dropSitter(p);
     if (p.leave) { p.leave = false; leavingN--; }
     if (p.bub && p.bub.target === p.getBV) p.bub.until = 0; // tắt bong bóng đang gắn vào người này
     p.bub = null;
@@ -264,11 +275,12 @@ function installCrowd(G) {
   ];
   const taken = {};
   for (const k in KINDS) taken[k] = new Array(KINDS[k].length).fill(null);
+  const HELD = { held: true }; // dấu "người chơi đang giữ chỗ" trong taken.sit (chỉ một chỗ một lúc, xem G.crowd.seats)
   const _w = new Array(ORDER.length).fill(0);
 
   function farFromPlayer(s) {
     const P = G.player.pos, dx = s.x - P.x, dz = s.z - P.z;
-    return dx * dx + dz * dz > 2.25; // bỏ qua chỗ cách người chơi dưới 1,5 m
+    return dx * dx + dz * dz > 2.25 && !(wOn && inWedge(s.x, s.z)); // bỏ qua chỗ cách người chơi dưới 1,5 m; đang gõ mõ thì cũng bỏ chỗ nằm trong nêm trước máy quay (coi như đã có người)
   }
   // Chọn ngẫu nhiên một chỗ trống; nếu có người p thì bốc tối đa 3 chỗ và lấy chỗ gần nhất (đỡ đi xa)
   function pickSpot(kind, p) {
@@ -354,7 +366,7 @@ function installCrowd(G) {
     if (entered && nextGroup - time < 40) t -= 6; // sắp có đoàn: bớt người cũ để khỏi quá đông
     return t;
   }
-  function staying() { return act.length - leavingN; }
+  function staying() { return act.length - leavingN - sitList.length; } // người ngồi chính điện nằm NGOÀI chỉ tiêu BASE_TARGET
   function markLeave(p) { if (!p.leave) { p.leave = true; leavingN++; } }
 
   function next(p) {
@@ -415,7 +427,7 @@ function installCrowd(G) {
     let best = null;
     for (let i = 0; i < act.length; i++) {
       const p = act[i];
-      if (p.leave || p.grp || p.isGuide || time - p.born < 40) continue;
+      if (p.leave || p.grp || p.isGuide || p.sitter || time - p.born < 40) continue;
       if (!best || p.born < best.born) best = p;
     }
     return best;
@@ -488,7 +500,10 @@ function installCrowd(G) {
     switch (p.act) {
       case 'incense': p.bows = randInt(2, 3); p.bp = rand(2.4, 3.2); p.dur = 3.2 + p.bows * p.bp + 0.5; break;
       case 'pray': p.dur = rand(6, 14); p.bowEvery = rand(5.5, 8); break;
-      case 'sit': p.dur = rand(40, 110); break; // ngồi tụng trong chính điện lâu hơn: điện 96 chỗ trông có người
+      case 'sit': // ngồi tụng trong chính điện lâu hơn: điện 160 chỗ trông có người; người ngồi thường trực (sitter) 3–8 phút
+        p.dur = p.sitter ? rand(SIT_MIN, SIT_MAX) : rand(40, 110);
+        if (p.sitter) p.nextSpeak = Math.max(p.nextSpeak, G.time + rand(3, 14));
+        break;
       case 'photo': p.dur = rand(10, 22); p.phoneUp = false; p.cyc = rand(0.4, 1.4); p.shotDone = true; break;
       case 'tree': p.lookT = rand(3, 5); p.dur = p.lookT + rand(5, 9); break;
       case 'pond': p.dur = rand(10, 20); break;
@@ -509,6 +524,7 @@ function installCrowd(G) {
     if (!p.linger) p.lastKind = p.spotKind || (p.act === 'idle' ? 'wander' : p.act);
     endPair(p);
     releaseSpot(p);
+    if (p.sitter) { dropSitter(p); markLeave(p); } // hết buổi ngồi: đứng dậy, ra về (người thay thế sẽ tới ngồi)
     if (p.a.sit > 0.4) { p.mode = M_WAIT; p.act = 'idle'; p.delay = 0.9; return; } // đứng dậy rồi mới đi
     next(p);
   }
@@ -609,6 +625,10 @@ function installCrowd(G) {
       p.repaths = 0; p.pathReq = true; p.path = null; return;
     }
     if (p.fails >= 3 && far) { p.pos.x = p.gx; p.pos.z = p.gz; p.fails = 0; p.repaths = 0; p.pathReq = true; p.path = null; return; }
+    if (p.sitter) { // người ngồi chính điện kẹt đường: giữ nguyên chỗ, thử đường khác; quá 5 lần thì bỏ ý định ngồi, ra về
+      if (p.fails < 5) { p.repaths = 0; p.pathReq = true; p.path = null; return; }
+      releaseSpot(p); dropSitter(p); markLeave(p); beginLeave(p); return;
+    }
     // đổi mục tiêu khác
     releaseSpot(p); endPair(p);
     if (p.fails >= 2) { p.mode = M_WAIT; p.act = 'idle'; p.delay = 1.2; } else chooseActivity(p);
@@ -771,7 +791,11 @@ function installCrowd(G) {
         }
         case 'sit':
           T.sit = 1;
-          if (p.seatStyle === 0) { arms(-0.55, -0.32, -0.55, 0.32); T.hip = 0.02; T.head = 0.1; T.hyaw = Math.sin(time * 0.3 + ph) * 0.2; }
+          if (p.sitMode >= SM_THIEN) { // ngồi thiền / lần chuỗi: tay đặt trong lòng, đầu hơi cúi, đứng yên hoàn toàn — chỉ nhịp thở chậm (hông ±0,012 ở 0,25 Hz), không xoay đầu
+            arms(-0.55, -0.32, -0.55, 0.32); T.hip = 0.02 + Math.sin(time * 1.5708 + ph) * 0.012; T.head = 0.2; T.hyaw = 0;
+            if (p.sitMode === SM_LAN) { T.ra = -1.0 + Math.sin(time * TAU + ph) * 0.05; T.rz = 0.42; } // lần chuỗi: tay phải nâng nhẹ, nhích đều 1 Hz
+          }
+          else if (p.seatStyle === 0 && p.sitMode !== SM_TUNG) { arms(-0.55, -0.32, -0.55, 0.32); T.hip = 0.02; T.head = 0.1; T.hyaw = Math.sin(time * 0.3 + ph) * 0.2; }
           else {
             armsPray();
             const c = (t + p.bowOff * 3) % 22, b = c < 3.4 ? bowCurve(c / 3.4) : 0;
@@ -833,6 +857,7 @@ function installCrowd(G) {
     p.walkAmt += ((moving ? 1 : 0) - p.walkAmt) * fW;
     if (moving) p.phase += p.speedNow * dt * p.stride;
     p.bob = p.walkAmt * Math.abs(Math.sin(p.phase)) * p.bobAmp + Math.sin(time * 1.6 + p.ph) * 0.006 * (1 - p.walkAmt);
+    if (p.sitMode >= SM_THIEN) p.bob = 0; // thiền: không nhấp nhô
     poseFor(p, time);
     a.la += (T.la - a.la) * fP; a.lz += (T.lz - a.lz) * fP; a.ra += (T.ra - a.ra) * fP; a.rz += (T.rz - a.rz) * fP;
     a.hip += (T.hip - a.hip) * fP; a.head += (T.head - a.head) * fP; a.hyaw += (T.hyaw - a.hyaw) * fP; a.roll += (T.roll - a.roll) * fP;
@@ -850,6 +875,59 @@ function installCrowd(G) {
   }
 
   // =====================================================================
+  //  NÊM TRƯỚC MÁY QUAY GÕ MÕ: khách đứng / đi trong nêm thu nhỏ dần về 0 (hệ số vis), ra khỏi nêm hoặc hết gõ mõ thì lớn lại
+  // =====================================================================
+  function wedgeBegin() { // gọi một lần mỗi khung: đang gõ mõ thì dựng nêm từ máy quay thật (vị trí + hướng nhìn nằm ngang), không thì tắt
+    wOn = false;
+    const A = G.activity, cam = G.camera;
+    if (!A || !cam) return;
+    if (A.current === 'mo') wLatch = true; // chốt: G.activity.end() xoá current rồi mới G.cam.release() 0,9 s — giữ nêm tới khi máy quay về hẳn
+    else if (A.current || !(G.cam && G.cam.blend > 0.05)) wLatch = false;
+    if (!wLatch) return;
+    _pv.set(0, 0, -1).applyQuaternion(cam.quaternion);
+    const h = Math.sqrt(_pv.x * _pv.x + _pv.z * _pv.z);
+    if (h < 0.2) return; // máy gần như nhìn thẳng xuống / lên: không có trục ngang
+    wFx = _pv.x / h; wFz = _pv.z / h; wCx = cam.position.x; wCz = cam.position.z;
+    wK = Math.min(WEDGE_K, 1.15 * Math.tan(cam.fov * PI / 360) * (cam.aspect || 1));
+    wOn = true;
+  }
+  function wedgeDepth(x, z) { // khoảng cách dọc trục máy quay nếu (x, z) nằm trong nêm, ngược lại -1
+    const dx = x - wCx, dz = z - wCz, d = dx * wFx + dz * wFz;
+    if (d <= 0 || d >= WEDGE_D) return -1;
+    const lat = dz * wFx - dx * wFz, w = wK * d + WEDGE_PAD;
+    return lat < w && lat > -w ? d : -1;
+  }
+  function inWedge(x, z) { return wedgeDepth(x, z) >= 0; }
+  function stepVis(p, dt) {
+    const d = wOn ? wedgeDepth(p.pos.x + p.ox, p.pos.z + p.oz) : -1;
+    const tgt = d >= 0 ? 0 : 1; // mọi khách trong nêm (đứng hay ngồi) đều ẩn
+    if (tgt === 0 && p.bub) { if (p.bub.target === p.getBV) p.bub.until = 0; p.bub = null; } // không để bong bóng lơ lửng trên người đã ẩn
+    if (p.vis < tgt) p.vis = Math.min(tgt, p.vis + VIS_RATE * dt);
+    else if (p.vis > tgt) p.vis = Math.max(tgt, p.vis - VIS_RATE * dt);
+  }
+  function shrinkAt(mesh, i, k, cx, cy, cz) { // thu nhỏ ma trận thứ i của lớp mesh theo tỉ lệ k quanh điểm (cx, cy, cz)
+    const e = mesh.instanceMatrix.array, o = i * 16;
+    e[o] *= k; e[o + 1] *= k; e[o + 2] *= k; e[o + 4] *= k; e[o + 5] *= k; e[o + 6] *= k; e[o + 8] *= k; e[o + 9] *= k; e[o + 10] *= k;
+    e[o + 12] = cx + (e[o + 12] - cx) * k; e[o + 13] = cy + (e[o + 13] - cy) * k; e[o + 14] = cz + (e[o + 14] - cz) * k;
+  }
+  function applyVis(p, cx, cz) { // gọi sau writePilgrim khi p.vis < 1: thu mọi bộ phận (kể cả bóng, cờ) về chân người đó; vis < 0.02 thì ẩn hẳn
+    const v = p.vis, k = v * v * (3 - 2 * v), cy = p.gy, sl = p.slot, f = p.flagSlot;
+    if (v < 0.02) {
+      for (let q = 0; q < perPilgrim.length; q++) {
+        const m = perPilgrim[q][0], per = perPilgrim[q][1];
+        for (let j = 0; j < per; j++) m.setMatrixAt(sl * per + j, ZERO);
+      }
+      if (f >= 0) { mStick.setMatrixAt(f, ZERO); mFlag.setMatrixAt(f, ZERO); }
+      return;
+    }
+    for (let q = 0; q < perPilgrim.length; q++) {
+      const m = perPilgrim[q][0], per = perPilgrim[q][1];
+      for (let j = 0; j < per; j++) shrinkAt(m, sl * per + j, k, cx, cy, cz);
+    }
+    if (f >= 0) { shrinkAt(mStick, f, k, cx, cy, cz); shrinkAt(mFlag, f, k, cx, cy, cz); }
+  }
+
+  // =====================================================================
   //  GHI MA TRẬN: gốc (vị trí, hướng, tỉ lệ) × nghiêng hông × từng bộ phận
   // =====================================================================
   function writePilgrim(p, time) {
@@ -858,7 +936,7 @@ function installCrowd(G) {
     const px = p.pos.x + p.ox, pz = p.pos.z + p.oz;
     const hy = p.yaw * 0.5;
     _q.set(0, Math.sin(hy), 0, Math.cos(hy));
-    _rootM.compose(_pv.set(px, vy, pz), _q, _sv.set(s, s * (1 + 0.012 * Math.sin(time * 1.7 + p.ph)), s));
+    _rootM.compose(_pv.set(px, vy, pz), _q, _sv.set(s, s * (1 + (p.sitMode >= SM_THIEN ? 0 : 0.012) * Math.sin(time * 1.7 + p.ph)), s));
     // hông (điểm xoay khi cúi / lắc lư)
     _e.set(a.hip + p.hunch, 0, a.roll, 'XYZ'); _q.setFromEuler(_e);
     _hipM.multiplyMatrices(_rootM, _loc.compose(_pv.set(0, HIP, 0), _q, _one));
@@ -899,7 +977,7 @@ function installCrowd(G) {
       _tmp.multiply(_loc.makeTranslation(0, 0.035, 0.055));
       _tmp.scale(_sv.setScalar(a.phone));
       mPhone.setMatrixAt(sl, _tmp);
-      if (p.flashReq) { p.flashReq = false; flashAt(te[12] + te[8] * 0.25, te[13] + te[9] * 0.25, te[14] + te[10] * 0.25); }
+      if (p.flashReq) { p.flashReq = false; if (p.vis > 0.5) flashAt(te[12] + te[8] * 0.25, te[13] + te[9] * 0.25, te[14] + te[10] * 0.25); }
     } else { mPhone.setMatrixAt(sl, ZERO); p.flashReq = false; }
     // cờ của hướng dẫn viên: cán cắm qua bàn tay phải, lá cờ bay về phía sau
     if (p.flagSlot >= 0) {
@@ -913,6 +991,7 @@ function installCrowd(G) {
     // điểm gắn bong bóng chữ
     p.bv.set(px, vy, pz);
     p.bubbleY = (p.hat ? 1.78 : 1.6) * s + 0.25;
+    if (p.vis < 1) applyVis(p, px, pz); // đang ẩn / hiện dần (chỉ khi gõ mõ có khách trong nêm trước máy quay)
   }
 
   // =====================================================================
@@ -962,18 +1041,29 @@ function installCrowd(G) {
     recent[recentN] = line; recentN = (recentN + 1) % recent.length;
     return line;
   }
+  // lời của người ngồi tụng: lấy nguyên văn từ G.kinh.shortLines (nếu có), không thì dùng LINES.pray; lần chuỗi chỉ niệm danh hiệu Phật A Di Đà
+  function sitterLine(p) {
+    if (p.sitMode === SM_LAN) return 'Nam mô A Di Đà Phật';
+    const kv = G.kinh, pl = kv && kv.shortLines && kv.shortLines.length >= 4 ? kv.shortLines : LINES.pray;
+    let line = pl[(Math.random() * pl.length) | 0];
+    for (let k = 0; k < 5 && recent.indexOf(line) >= 0; k++) line = pl[(Math.random() * pl.length) | 0];
+    recent[recentN] = line; recentN = (recentN + 1) % recent.length;
+    return line;
+  }
   function speak(time) {
     if (!G.started || !act.length || G.ui.bubbleCount() >= 2) return; // tối đa 2 bong bóng của đám đông cùng lúc
-    const c = G.camera.position, W = G.size.w, H = G.size.h;
+    const c = G.camera.position, W = G.size.w, H = G.size.h, PP = G.player.pos;
+    const inHall = sitList.length > 0 && G.insideHall(PP.x, PP.z); // người chơi ở trong chính điện: ưu tiên lời của người ngồi tụng
     for (let tries = 0; tries < 16; tries++) {
-      const p = act[(Math.random() * act.length) | 0];
-      if (p.nextSpeak > time || p.mode === M_WAIT || p.act === 'leave') continue;
+      const p = inHall && tries < 10 ? sitList[(Math.random() * sitList.length) | 0] : act[(Math.random() * act.length) | 0];
+      if (p.nextSpeak > time || p.mode === M_WAIT || p.act === 'leave' || p.vis < 0.99) continue; // người đang bị ẩn (nêm gõ mõ) không nói
+      if (p.sitMode === SM_THIEN || (p.sitter && p.mode !== M_ACT)) continue; // ngồi thiền thì im lặng; người còn đang đi tới chỗ ngồi chưa tụng
       const dx = c.x - p.pos.x, dy = c.y - p.pos.y, dz = c.z - p.pos.z;
       if (dx * dx + dy * dy + dz * dz > 484) continue; // trong khoảng 22 m quanh máy quay
       G.ui.worldToScreen(_pv.set(p.bv.x, p.bv.y + p.bubbleY, p.bv.z), _sc); // vị trí bong bóng (trên đầu)
       if (!_sc.visible || _sc.x < 40 || _sc.x > W - 40 || _sc.y < 90 || _sc.y > H - 40) continue;
-      p.bub = G.ui.bubble(p.getBV, pickLine(p), randInt(3200, 4200), p.bubbleY);
-      p.nextSpeak = time + 25;
+      p.bub = G.ui.bubble(p.getBV, p.sitter ? sitterLine(p) : pickLine(p), randInt(3200, 4200), p.bubbleY);
+      p.nextSpeak = time + (p.sitMode === SM_TUNG ? rand(18, 40) : p.sitMode === SM_LAN ? rand(60, 90) : 25);
       return;
     }
   }
@@ -1030,9 +1120,111 @@ function installCrowd(G) {
   }
 
   // =====================================================================
+  //  NGƯỜI NGỒI TRONG CHÍNH ĐIỆN ("hall sitters"): đoàn người ngồi tụng kinh / thiền thường trực,
+  //  thêm NGOÀI BASE_TARGET (14 người, 10 khi quality:low) để chính điện không bao giờ trống.
+  //  Mỗi người ngồi 3–8 phút rồi đứng dậy ra về; người thay thế đi vào (từ điểm vào gần chính điện nhất mà máy quay
+  //  không thấy, không có thì từ cổng), lên bậc, qua cửa chính điện và ngồi vào bồ đoàn trống. Giữ ≥ SIT_KEEP ô trống cho đoàn khách.
+  // =====================================================================
+  const SM_FRAC = [0, 0.55, 0.35, 0.10]; // tụng 55 % · thiền 35 % · lần chuỗi 10 %
+  const ENT = [[0, -60.4, 1.8], [0, -38, 1.2], [0, -21.4, 0.8]]; // điểm vào dọc trục chùa, gần chính điện nhất trước: sân chính điện, trước Tích Thiện Am, đầu cầu đá ([x, z, độ lệch x]; cạnh nút dẫn đường)
+  function entryHidden(ex, ez) { // máy quay ở xa, hoặc ở vừa phải mà điểm đó nằm ngoài màn hình / bị tường chắn → hiện ở đó không ai thấy
+    const c = G.camera.position, dx = c.x - ex, dz = c.z - ez, d2 = dx * dx + dz * dz;
+    if (d2 > 3600) return true;
+    if (d2 < 400) return false;
+    G.ui.worldToScreen(_pv.set(ex, 2.2, ez), _sc);
+    return !_sc.visible || !G.nav.los(c.x, c.z, ex, ez, 0.2);
+  }
+  function dropSitter(p) {
+    if (!p.sitter) return;
+    p.sitter = false; p.sitMode = 0;
+    const i = sitList.indexOf(p);
+    if (i >= 0) { sitList[i] = sitList[sitList.length - 1]; sitList.pop(); }
+  }
+  // chọn chế độ cho người mới sao cho tỉ lệ các chế độ luôn gần 55 / 35 / 10 (bù chỗ thiếu, có chút ngẫu nhiên)
+  function chooseSitMode() {
+    let c1 = 0, c2 = 0, c3 = 0;
+    for (let i = 0; i < sitList.length; i++) { const m = sitList[i].sitMode; if (m === SM_TUNG) c1++; else if (m === SM_THIEN) c2++; else c3++; }
+    const n = sitList.length + 1;
+    const d1 = SM_FRAC[1] * n - c1 + Math.random() * 0.7, d2 = SM_FRAC[2] * n - c2 + Math.random() * 0.7, d3 = SM_FRAC[3] * n - c3 + Math.random() * 0.7;
+    return d1 >= d2 && d1 >= d3 ? SM_TUNG : d2 >= d3 ? SM_THIEN : SM_LAN;
+  }
+  // biến một người vừa kích hoạt thành người ngồi thường trực: không nón lá, áo lam / xám / nâu / trắng của người đi lễ, lần chuỗi thì đeo tràng hạt
+  function makeSitter(p, mode) {
+    p.sitter = true; p.sitMode = mode; sitList.push(p);
+    p.hat = false; p.bun = p.bun || Math.random() < 0.3; if (mode === SM_LAN) p.beads = true;
+    const r = Math.random(), arr = r < 0.6 ? ROBE.lam : r < 0.76 ? ROBE.grey : r < 0.9 ? ROBE.brown : ROBE.white;
+    const robe = arr[(Math.random() * arr.length) | 0], j = rand(0.93, 1.07), sl = p.slot;
+    setC(mBody, sl, robe, j); setC(mLegs, sl, robe, j); setC(mArms, sl * 2, robe, j); setC(mArms, sl * 2 + 1, robe, j);
+    colDirty = true;
+  }
+  // chọn bồ đoàn trống cho người ngồi: lấy ngẫu nhiên 8 chỗ, ưu tiên chỗ có 1–2 người ngồi cạnh (thành từng nhóm nhỏ), tránh chỗ kín mít
+  function pickSitterSeat() {
+    const list = KINDS.sit, tk = taken.sit;
+    let best = -1, bs = -1e9;
+    for (let t = 0; t < 8; t++) {
+      const i = (Math.random() * list.length) | 0;
+      if (tk[i] || !farFromPlayer(list[i])) continue;
+      const s = list[i];
+      let nb = 0;
+      for (let j = 0; j < list.length; j++) {
+        if (j === i || !tk[j]) continue;
+        const dx = list[j].x - s.x, dz = list[j].z - s.z;
+        if (dx * dx + dz * dz < 4.6) nb++; // cạnh bên (1,75 m) hoặc hàng trước / sau (1,3 m)
+      }
+      const sc = (nb === 0 ? 0 : nb === 1 ? 1.2 : nb === 2 ? 0.8 : -0.6 * (nb - 2)) + Math.random() * 0.8;
+      if (sc > bs) { bs = sc; best = i; }
+    }
+    return best;
+  }
+  function seedSitters() { // gieo sẵn SIT_N người đã ngồi từ trước; còn ≥ 110 giây nữa mới đứng dậy (một phút đầu không ai đi)
+    for (let k = 0; k < SIT_N; k++) {
+      const idx = pickSitterSeat();
+      if (idx < 0) break;
+      const p = allocPilgrim();
+      if (!p) break;
+      const s = KINDS.sit[idx];
+      activate(p, Math.random() < 0.35 ? 2 : 0, false, s.x, s.z, 0);
+      makeSitter(p, chooseSitMode());
+      placeAtSpot(p, 'sit', idx);
+      p.at = rand(0, p.dur - 110);
+      p.nextSpeak = G.time + rand(2, 30);
+    }
+  }
+  function spawnSitter() { // người thay thế: đi vào bằng đường dẫn thường, giữ sẵn một bồ đoàn
+    if (POOL - act.length <= SIT_KEEP) return false;
+    const idx = pickSitterSeat();
+    if (idx < 0) return false;
+    const p = allocPilgrim();
+    if (!p) return false;
+    const o = S.gateOut, s = KINDS.sit[idx], kd = Math.random() < 0.65 ? 0 : 2;
+    let k = 0;
+    while (k < ENT.length && !entryHidden(ENT[k][0], ENT[k][1])) k++;
+    if (k < ENT.length) activate(p, kd, false, ENT[k][0] + rand(-ENT[k][2], ENT[k][2]), ENT[k][1] + rand(-0.6, 0.6), PI);
+    else activate(p, kd, false, o.x + rand(-1.5, 1.5), o.z + rand(0, 1.5), PI); // không điểm vào nào kín: đi từ cổng như mọi khách
+    makeSitter(p, chooseSitMode());
+    reserve(p, 'sit', idx);
+    p.act = 'sit';
+    travelTo(p, s.x, s.z, s.yaw);
+    return true;
+  }
+  // giữ đủ số người ngồi: người sắp đứng dậy (còn ≤ SIT_LEAD giây) không tính, nên người thay thế đã đi tới đúng lúc
+  function sitterTick() {
+    let eff = 0;
+    for (let i = 0; i < sitList.length; i++) { const p = sitList[i]; if (p.mode !== M_ACT || p.dur - p.at > SIT_LEAD) eff++; }
+    if (eff < (lowQ ? SIT_LOW : SIT_N)) spawnSitter();
+  }
+  function trimSitters() { // quality:low: mời bớt người ngồi dư (đứng dậy trong chốc lát), không cho người thay thế
+    let extra = sitList.length - SIT_LOW;
+    for (let i = 0; i < sitList.length && extra > 0; i++) {
+      const p = sitList[i];
+      if (p.mode === M_ACT) { p.dur = Math.min(p.dur, p.at + rand(8, 60)); extra--; }
+    }
+  }
+
+  // =====================================================================
   //  VÒNG LẶP CHÍNH: lịch đến/đi, điều hoà số người, cập nhật từng người
   // =====================================================================
-  let regT = 2, bubT = 5, disposed = false;
+  let regT = 2, bubT = 5, sitT = 4, disposed = false;
   function schedule(dt, time) {
     if (!entered && G.started) { entered = true; nextGroup = time + 25; }
     if (time >= nextTrickle) { // khách lẻ đến từ cổng mỗi 10–25 giây khi còn ít người
@@ -1042,12 +1234,14 @@ function installCrowd(G) {
     if (entered && time >= nextGroup) {
       const free = POOL - act.length;
       let n = randInt(10, 20);
-      n = Math.min(n, Math.max(10, 56 - act.length));
+      n = Math.min(n, Math.max(10, 56 - (act.length - sitList.length))); // người ngồi chính điện không tính vào cỡ đoàn (còn giới hạn bởi số ô trống)
       if (free < 8) { // bể gần đầy: mời những người ở lâu nhất ra về trước rồi thử lại
         for (let k = 0; k < 8 - free; k++) { const o = oldestStaying(time); if (o) orderLeave(o); }
         nextGroup = time + 10;
       } else { spawnGroup(Math.min(n, free)); nextGroup = time + rand(75, 140); }
     }
+    sitT -= dt;
+    if (sitT <= 0) { sitT = 2; if (G.started) sitterTick(); } // 2 giây một lần: bổ sung người ngồi chính điện nếu thiếu
     regT -= dt;
     if (regT <= 0) { // điều hoà: dư người thì mời người ở lâu nhất ra về (thong thả, không quá 9 người đang ra về)
       regT = 3;
@@ -1058,6 +1252,7 @@ function installCrowd(G) {
     if (disposed) return;
     fV = 1 - Math.exp(-6 * dt); fP = 1 - Math.exp(-10 * dt); fS = 1 - Math.exp(-6 * dt); fPh = 1 - Math.exp(-9 * dt);
     fW = 1 - Math.exp(-8 * dt); fG = 1 - Math.exp(-10 * dt); fSnap = 1 - Math.exp(-5 * dt); fOff = 1 - Math.exp(-8 * dt);
+    wedgeBegin(); // nêm trước máy quay gõ mõ (tắt khi không gõ mõ); đặt trước schedule để chỗ trong nêm bị coi là đã có người
     schedule(dt, time);
     servePaths();
     updateGroups(dt);
@@ -1078,7 +1273,11 @@ function installCrowd(G) {
       p.state = p.mode === M_ACT ? p.act : p.mode === M_GROUP ? 'group' : p.act === 'leave' ? 'leave' : p.mode === M_WAIT ? 'wait' : 'walk';
       anim(p, dt, time);
     }
-    for (let i = 0; i < act.length; i++) writePilgrim(act[i], time);
+    for (let i = 0; i < act.length; i++) {
+      const p = act[i];
+      if (wOn || p.vis < 1) stepVis(p, dt); // một phép kiểm tra rẻ mỗi người mỗi khung, chỉ khi đang gõ mõ (hoặc còn đang hiện lại)
+      writePilgrim(p, time);
+    }
     // đẩy dữ liệu lên GPU; giới hạn số bản vẽ theo ô cao nhất đang dùng
     const n = hi + 1;
     for (let k = 0; k < perPilgrim.length; k++) {
@@ -1099,7 +1298,7 @@ function installCrowd(G) {
   // =====================================================================
   const offs = [];
   offs.push(G.events.on('enter', () => { if (!entered) { entered = true; nextGroup = G.time + 25; } }));
-  offs.push(G.events.on('quality:low', () => { lowQ = true; }));
+  offs.push(G.events.on('quality:low', () => { lowQ = true; trimSitters(); }));
   function dispose() {
     if (disposed) return;
     disposed = true;
@@ -1108,17 +1307,59 @@ function installCrowd(G) {
     for (const k in mats) mats[k].dispose();
     for (const g of ownGeos) g.dispose();
     if (flashPts) flashPts.dispose();
-    act.length = 0; groups.length = 0;
+    act.length = 0; groups.length = 0; sitList.length = 0; heldSeat = -1;
   }
+  // Chỗ ngồi trong chính điện cho người chơi (module 45): chỉ thao tác trên taken.sit, nên đám đông không bao giờ chọn chỗ đang giữ
+  let heldSeat = -1;
+  const seats = {
+    isFree(i) { return i >= 0 && i < KINDS.sit.length && !taken.sit[i]; }, // không có khách (kể cả khách đang đi tới) và không bị giữ
+    hold(i) { // người chơi ngồi vào chỗ i (false nếu đã có người); chỉ giữ một chỗ một lúc — giữ chỗ mới thì nhả chỗ cũ
+      if (!(i >= 0 && i < KINDS.sit.length)) return false;
+      i |= 0;
+      if (heldSeat === i) return true;
+      if (taken.sit[i]) return false;
+      if (heldSeat >= 0 && taken.sit[heldSeat] === HELD) taken.sit[heldSeat] = null;
+      taken.sit[i] = HELD; heldSeat = i;
+      return true;
+    },
+    release(i) { // không truyền i = nhả chỗ đang giữ
+      if (i === undefined) i = heldSeat;
+      if (heldSeat >= 0 && i === heldSeat) { if (taken.sit[i] === HELD) taken.sit[i] = null; heldSeat = -1; }
+    },
+    get held() { return heldSeat; },
+    nearestFree(x, z, maxD) { // chỗ trống gần (x, z) nhất trong maxD mét (mặc định 1,7); không áp luật "xa người chơi" của đám đông
+      const list = KINDS.sit, tk = taken.sit;
+      let best = -1, bd = (maxD === undefined ? 1.7 : maxD) ** 2;
+      for (let i = 0; i < list.length; i++) {
+        if (tk[i]) continue;
+        const dx = list[i].x - x, dz = list[i].z - z, d = dx * dx + dz * dz;
+        if (d <= bd) { bd = d; best = i; }
+      }
+      return best;
+    },
+  };
   G.crowd = {
     count: () => act.length,
     list: act,
     spawnGroup,
     target: () => (lowQ ? LOW_TARGET : BASE_TARGET),
     summary() { const o = {}; for (let i = 0; i < act.length; i++) o[act[i].state] = (o[act[i].state] || 0) + 1; return o; },
+    seats,
+    // người ngồi chính điện: n = đang ngồi (đã vào chỗ), walking = đang đi tới chỗ; tung / thien / lanHat chỉ tính người đang ngồi
+    sitters() {
+      let n = 0, tung = 0, thien = 0, lanHat = 0, walking = 0;
+      for (let i = 0; i < sitList.length; i++) {
+        const p = sitList[i];
+        if (p.mode !== M_ACT || p.a.sit < 0.5) { walking++; continue; }
+        n++;
+        if (p.sitMode === SM_TUNG) tung++; else if (p.sitMode === SM_THIEN) thien++; else lanHat++;
+      }
+      return { n, tung, thien, lanHat, walking, target: lowQ ? SIT_LOW : SIT_N };
+    },
     dispose,
   };
 
   seedInitial();
+  seedSitters();
   G.onUpdate(update, 20);
 }

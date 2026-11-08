@@ -13,6 +13,8 @@ function installFx(G) {
   G.events.on('resize', onResize);
   G.events.on('snapshot:before', (cam, hPx) => refreshScale(hPx, cam.fov));
   G.events.on('snapshot:after', onResize);
+  let _fovSeen = 0; // cam.focus({fov}) đổi góc nhìn từng khung (07-hau-ky / máy quay anh hùng): cỡ hạt phải theo, không chỉ khi đổi cỡ màn hình
+  G.onUpdate(() => { if (G.camera.fov !== _fovSeen) { _fovSeen = G.camera.fov; onResize(); } }, 60);
 
   // ---------- Quầng sáng (cộng màu) ----------
   const glowVS = `attribute float size; attribute float alpha; attribute float phase; attribute vec3 color;
@@ -60,7 +62,7 @@ function installFx(G) {
   nightG.forEach((q, i) => gN.set(i, q.x, q.y, q.z, q.size, q.r, q.g, q.b, 1)); gN.commit();
   const gC = fx.glowPoints(Math.max(1, constG.length), { flicker: 0.8, intensity: 0.75 });
   constG.forEach((q, i) => gC.set(i, q.x, q.y, q.z, q.size, q.r, q.g, q.b, 1)); gC.commit();
-  G.onUpdate(() => { gN.material.uniforms.uIntensity.value = 0.18 + G.tod.night * 0.95; gC.material.uniforms.uIntensity.value = 0.55 + G.tod.night * 0.35; }, 62);
+  G.onUpdate(() => { const gg = G.post && G.post.glowGain != null ? G.post.glowGain : 1; /* 07-hau-ky.js hạ độ sáng khi vẽ qua mục tiêu tuyến tính */ gN.material.uniforms.uIntensity.value = (0.18 + G.tod.night * 0.95) * gg; gC.material.uniforms.uIntensity.value = (0.55 + G.tod.night * 0.35) * gg; }, 62);
 
   // ---------- Khói hương: bể 520 hạt ----------
   const SM = 520;

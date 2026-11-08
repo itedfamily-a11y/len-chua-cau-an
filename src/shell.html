@@ -6,6 +6,13 @@
 <meta name="theme-color" content="#2a170e">
 <meta name="description" content="Lên Chùa Cầu An – trò chơi 3D thư giãn: thắp hương, thỉnh chuông, gõ mõ, viết lời cầu an, xin quẻ đầu năm.">
 <title>Lên Chùa Cầu An</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232a170e'/%3E%3Cpath d='M32 13c6 8 8 16 8 25-5-3-11-3-16 0 0-9 2-17 8-25z' fill='%23e7c375'/%3E%3Cpath d='M13 31c8 1 15 5 19 12-7 1-14-1-19-6zM51 31c-8 1-15 5-19 12 7 1 14-1 19-6z' fill='%23d4a843'/%3E%3Cellipse cx='32' cy='49' rx='15' ry='4' fill='%23b8913f'/%3E%3C/svg%3E"><!-- biểu tượng tab: hoa sen vàng trên nền nâu, vẽ bằng SVG nội tuyến (không tệp ngoài) -->
+<meta property="og:title" content="Lên Chùa Cầu An">
+<meta property="og:description" content="Trò chơi 3D thư giãn: dạo chùa, thắp hương, thỉnh chuông, gõ mõ, ngồi tụng kinh, viết lời cầu an. Không đăng nhập, không quảng cáo.">
+<meta property="og:type" content="website">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 /* ===================== GIAO DIỆN: màu sắc, khung, nút ===================== */
 :root{
@@ -268,7 +275,7 @@ textarea.field{resize:none;min-height:96px;line-height:1.45}
 
 <noscript><p style="position:fixed;inset:0;display:grid;place-items:center;color:#fff">Hãy bật JavaScript để vào chùa.</p></noscript>
 
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js"}}</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script>
 // Nếu thư viện 3D không tải được (mất mạng), báo nhẹ nhàng trên màn chào
 (function(){

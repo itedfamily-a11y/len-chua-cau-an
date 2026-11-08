@@ -3,7 +3,7 @@
 //  trừ bài nhạc nền người chơi tự chọn (11-music.js) — phát qua đường musicBus ở đây.
 //  Mỗi nhóm tiếng đi qua một kênh (CAT) để người chơi bật/tắt, chỉnh to nhỏ trong "Cài đặt âm thanh".
 //  Gồm chuỗi master + vang, âm nền (gió, lá xào xạc, chim, dế, tiếng tụng kinh xa,
-//  chuông xa) và các hiệu ứng: chuông đồng, mõ, hương, xăm, nước, ruy băng, bước chân…
+//  chuông xa) và các hiệu ứng: chuông đồng, khánh, mõ, hương, xăm, nước, ruy băng, bước chân…
 //  G.audio có sẵn ngay sau khi cài; init() được gọi trong cú chạm "Vào chùa".
 // =====================================================================
 function installAudio(G) {
@@ -17,7 +17,7 @@ function installAudio(G) {
   const LV = {
     master: 0.9,
     wind: 0.15, leaves: 0.07, birds: 0.04, crickets: 0.024, chant: 0.28, // âm nền
-    bell: 0.15, bellSoft: 0.15, bowl: 0.17, mo: 0.3, ui: 0.11, chime: 0.15, step: 0.06, // hiệu ứng
+    bell: 0.15, bellSoft: 0.15, bowl: 0.17, mo: 0.3, ui: 0.11, chime: 0.15, step: 0.06, khanh: 0.16, // hiệu ứng
     duck: 0.6, // khi đang làm hoạt động, âm nền còn 60% (hạ ~40%)
     music: 0.23, musicDuck: 0.4, // nhạc nền (bài gốc ~-13 LUFS → ~-26 LUFS); khi làm hoạt động còn 40%
     windChime: 0.045, // chuông gió dưới mái hiên: rất khẽ
@@ -30,7 +30,9 @@ function installAudio(G) {
   let master = null, tone = null, comp = null, sfxBus = null, ambBus = null, sfxRev = null, ambRev = null, musicBus = null;
   let convolver = null, revHP = null, revReturn = null;
   let bufWhite = null, bufPink = null;
-  let muted = !!(G.save && G.save.data && G.save.data.muted), mutedTouched = false;
+  // chạy tự động (Chrome headless / webdriver khi kiểm thử): luôn tắt tiếng — Chrome headless mới vẫn phát âm thanh ra loa máy người dùng
+  const AUTO = !!navigator.webdriver || /HeadlessChrome/i.test(navigator.userAgent || '');
+  let muted = AUTO || !!(G.save && G.save.data && G.save.data.muted), mutedTouched = false;
   let ducked = false, lowQ = false, hiddenSuspended = false;
   let suspendTimer = 0, lookTimer = 0;
   let budget = 160, budgetT = 0; // "ngân sách giọng": chống quá tải khi quá nhiều tiếng phát dồn dập
@@ -44,7 +46,7 @@ function installAudio(G) {
   const CAT = {}; // kênh người chơi chỉnh trong "Cài đặt âm thanh": tên kênh → các nút gain
   const timers = new Set();
   const offs = []; // hàm huỷ đăng ký sự kiện
-  const bells = [], softBells = [], bowls = [];
+  const bells = [], softBells = [], bowls = [], khanhs = [];
   const crickets = [];
 
   // ===== Tiện ích dựng nút Web Audio =====
@@ -58,7 +60,7 @@ function installAudio(G) {
     if (budget < cost && !vital) return false;
     budget -= cost; return true;
   }
-  const COST = { bell: 20, bellSoft: 14, bowlBell: 8, chime: 9, shake: 6, water: 8, incense: 6, ribbon: 5, stickDrop: 6, ui: 3, mo: 6, step: 3, windChime: 6 };
+  const COST = { bell: 20, bellSoft: 14, bowlBell: 8, khanh: 8, chime: 9, shake: 6, water: 8, incense: 6, ribbon: 5, stickDrop: 6, ui: 3, mo: 6, step: 3, windChime: 6 };
   // bao biên độ: lên nhanh rồi tắt dần theo hàm mũ
   function env(p, t, peak, atk, dec) {
     p.setValueAtTime(MIN, t); p.linearRampToValueAtTime(Math.max(peak, MIN * 2), t + atk); p.exponentialRampToValueAtTime(MIN, t + atk + dec);
@@ -308,6 +310,17 @@ function installAudio(G) {
     });
     strike(v.out, t, 3000, 0.35);
     bowls.push(v);
+  };
+
+  // 'khanh': khánh / chuông cầm tay nhỏ, gõ một tiếng sáng và kim loại, ~1320 Hz, ngân ~2,2 s (ba tiếng khép lại một thời kinh hoặc một thời thiền)
+  const KHANH = [[1, 0.9, 2.2, 0.0035], [2.1, 0.46, 1.3, 0.0028], [2.9, 0.26, 0.8, 0]];
+  SFX.khanh = (o, t) => {
+    capVoices(khanhs, 4, t);
+    const v = additive({
+      t, f0: 1320 * rand(0.996, 1.004), parts: KHANH, level: LV.khanh, hi: 1, lp: 7000, atk: 0.002, tgt: SFXT, dry: 1, send: 0.5,
+    });
+    strike(v.out, t, 4200, 0.3);
+    khanhs.push(v);
   };
 
   // 'mo' {accent}: mõ gỗ, tiếng "cộc" ngắn 120–180 ms, độ trễ thấp (xếp lịch ngay tại thời điểm hiện tại)
@@ -797,7 +810,7 @@ function installAudio(G) {
         s.buffer = b; s.connect(ctx.destination); s.start(0);
       } catch (e) {}
       initAt = performance.now();
-      if (!mutedTouched) muted = !!(G.save && G.save.data && G.save.data.muted);
+      if (!mutedTouched) muted = AUTO || !!(G.save && G.save.data && G.save.data.muted);
       buildGraph();
       ready = true; A.ready = true;
       const t = ctx.currentTime;
@@ -821,7 +834,7 @@ function installAudio(G) {
   }
   function setMuted(m) {
     const changed = muted !== !!m;
-    muted = !!m; mutedTouched = true;
+    muted = !!m; mutedTouched = true; // AUTO chỉ quyết định trạng thái ban đầu; người chơi thật (dù trình duyệt báo webdriver) vẫn bật tiếng được
     G.events.emit('audio:mute', muted);
     if (!ready) return;
     if (!changed && !muted) { if (ctx.state !== 'running' && !document.hidden) resumeCtx(); return; } // vẫn đang bật: giữ đường hiện dần lúc vào chùa

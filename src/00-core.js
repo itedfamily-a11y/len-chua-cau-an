@@ -260,6 +260,7 @@ function resize() {
   G.size.w = w; G.size.h = h;
   renderer.setSize(w, h, false);
   camera.aspect = w / h; camera.fov = w < h ? 64 : 52; camera.updateProjectionMatrix();
+  if (G.cam) G.cam.baseFov = camera.fov; // góc nhìn gốc theo tỉ lệ màn hình; cam.focus({fov}) kéo về/đi từ giá trị này
   G.events.emit('resize', w, h);
 }
 window.addEventListener('resize', resize);
@@ -686,8 +687,8 @@ G.input.moveVector = () => {
 const cam = (G.cam = {
   yaw: Math.PI, pitch: 0.42, dist: 7.2, distT: 7.2, blend: 0, blendT: 0, blendDur: 1,
   target: new V3(0, 1.3, 40), focusPos: new V3(), focusLook: new V3(), shakeT: 0, shakeA: 0, shakeD: 0.4,
-  blockers: [], collDist: 99,
-  focus({ pos, look, dur = 1.1 }) { this.focusPos.set(pos[0], pos[1], pos[2]); this.focusLook.set(look[0], look[1], look[2]); this.blendT = 1; this.blendDur = dur; },
+  blockers: [], collDist: 99, baseFov: 52, focusFov: null,
+  focus({ pos, look, dur = 1.1, fov }) { this.focusPos.set(pos[0], pos[1], pos[2]); this.focusLook.set(look[0], look[1], look[2]); this.focusFov = fov > 0 ? fov : null; this.blendT = 1; this.blendDur = dur; },
   release(dur = 0.9) { this.blendT = 0; this.blendDur = dur; },
   shake(a = 0.12, d = 0.4) { this.shakeA = a; this.shakeT = d; this.shakeD = d; },
   snapBehind() { this.yaw = G.player ? G.player.yaw : this.yaw; },
@@ -732,6 +733,9 @@ function updateCamera(dt) {
     _fq.copy(cam.focusPos).sub(cam.focusLook).multiplyScalar(pull).add(cam.focusLook);
     _fp.lerp(_fq, k); _fl.lerp(cam.focusLook, k);
   }
+  // góc nhìn (fov): cùng hệ số pha trộn k với vị trí máy quay; thả máy quay thì về góc nhìn gốc
+  const wantFov = cam.focusFov != null && k > 0 ? cam.baseFov + (cam.focusFov - cam.baseFov) * k : cam.baseFov;
+  if (Math.abs(camera.fov - wantFov) > 1e-4) { camera.fov = wantFov; camera.updateProjectionMatrix(); }
   camera.position.copy(_fp);
   if (cam.shakeT > 0) {
     cam.shakeT -= dt; const a = cam.shakeA * Math.max(0, cam.shakeT / cam.shakeD);
@@ -1062,6 +1066,8 @@ const updaters = [];
 G.onUpdate = (fn, order = 0) => { updaters.push({ fn, order }); updaters.sort((a, b) => a.order - b.order); };
 const errOnce = new Set();
 let frameAcc = 0;
+// vẽ một khung: 07-hau-ky.js thay hàm này để đi qua chuỗi hậu kỳ khi ở trong chính điện; mặc định vẽ thẳng
+G.renderFrame = (cam = camera) => renderer.render(scene, cam);
 function frame() {
   requestAnimationFrame(frame);
   frameAcc += clock.getDelta();
@@ -1079,7 +1085,7 @@ function tick(dt) {
     try { updaters[i].fn(dt, G.time); } catch (e) { if (!errOnce.has(updaters[i].fn)) { errOnce.add(updaters[i].fn); console.error(e); G.errors.push(String(e)); } }
   }
   if (G.started && (nextVisitorTick -= dt) < 0) { nextVisitorTick = U.rand(5, 13); G.stats.add(1); }
-  renderer.render(scene, camera);
+  G.renderFrame(camera);
 }
 G.onUpdate(updateCamera, 50);
 G.onUpdate(() => { if (G.player) updatePoi(); updateBubbles(); }, 80);

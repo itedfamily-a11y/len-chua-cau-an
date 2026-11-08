@@ -1327,6 +1327,18 @@ function installCrowd(G) {
       if (heldSeat >= 0 && i === heldSeat) { if (taken.sit[i] === HELD) taken.sit[i] = null; heldSeat = -1; }
     },
     get held() { return heldSeat; },
+    // Người chơi khác (22-di-chua-chung.js) đang ngồi bồ đoàn i: đánh dấu { remote: key } để khách AI và nút "Ngồi xuống" bỏ qua chỗ đó.
+    // Không đè chỗ người chơi đang giữ hay chỗ khách AI đã nhận (trả về false; module 22 vẫn vẽ người đó ở đúng bồ đoàn). Mỗi key chỉ một chỗ.
+    markRemote(i, key) {
+      if (!(i >= 0 && i < KINDS.sit.length) || !key) return false;
+      i |= 0;
+      const t = taken.sit[i];
+      if (t && !(t.remote && t.remote === key)) return false;
+      this.unmarkRemote(key);
+      taken.sit[i] = { remote: key };
+      return true;
+    },
+    unmarkRemote(key) { const tk = taken.sit; for (let i = 0; i < tk.length; i++) if (tk[i] && tk[i].remote === key) tk[i] = null; },
     nearestFree(x, z, maxD) { // chỗ trống gần (x, z) nhất trong maxD mét (mặc định 1,7); không áp luật "xa người chơi" của đám đông
       const list = KINDS.sit, tk = taken.sit;
       let best = -1, bd = (maxD === undefined ? 1.7 : maxD) ** 2;
@@ -1356,6 +1368,7 @@ function installCrowd(G) {
       }
       return { n, tung, thien, lanHat, walking, target: lowQ ? SIT_LOW : SIT_N };
     },
+    inWedge: (x, z) => wOn && inWedge(x, z), // 22-di-chua-chung.js: true khi nêm trước máy quay gõ mõ đang bật và điểm (x, z) nằm trong nêm → người chơi khác cũng ẩn như khách AI
     dispose,
   };
 

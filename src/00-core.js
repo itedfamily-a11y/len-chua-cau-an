@@ -557,7 +557,7 @@ G.ui.worldToScreen = (v, out = {}) => {
   return out;
 };
 
-// ---- Bong bóng chữ (dùng cho khách hành hương AI) ----
+// ---- Bong bóng chữ (khách hành hương AI; từ 2026-11-08 cả lời người chơi thật gõ trong "Đi chùa chung", 22-di-chua-chung.js — luôn textContent) ----
 const bubblesEl = $('#bubbles');
 const bubblePool = [];
 for (let i = 0; i < 7; i++) { const el = U.el('div', 'bubble'); bubblesEl.appendChild(el); bubblePool.push({ el, target: null, until: 0, y: 1.9, live: false }); }
@@ -916,7 +916,7 @@ $('#btnSound').onclick = () => { if (!G.activity.current && !G.ui.panelOpen) ope
 $('#btnBook').onclick = () => { if (G.activity.current || G.ui.panelOpen) return; G.audio?.play?.('ui'); if (!G.events.m.get('ui:book')?.length) G.ui.toast('Sổ cầu an đang được chuẩn bị.'); G.events.emit('ui:book'); };
 $('#btnShare').onclick = () => { if (G.activity.current || G.ui.panelOpen) return; G.audio?.play?.('ui'); if (!G.events.m.get('ui:share')?.length) G.ui.toast('Tính năng chia sẻ đang được chuẩn bị.'); G.events.emit('ui:share'); };
 
-// ---- Cài đặt âm thanh: mỗi kênh một công tắc + thanh trượt âm lượng ----
+// ---- Cài đặt: mỗi kênh âm thanh một công tắc + thanh trượt; module khác (22-di-chua-chung.js) thêm mục của mình qua sự kiện 'ui:settings' ----
 function openSound() {
   const box = U.el('div', 'col snd');
   // đang tắt tiếng chung (nút loa / phím M): nhắc và cho bật lại ngay tại đây; tự cập nhật khi đổi
@@ -955,10 +955,11 @@ function openSound() {
     paints.push(paint); paint();
   }
   const pan = G.ui.panel({
-    title: 'Cài đặt âm thanh', body: box, onClose: offMute,
-    actions: [{ label: 'Mặc định', onClick: () => { G.sound.reset(); paints.forEach((f) => f()); } }, { label: 'Xong', primary: true }],
+    title: 'Cài đặt', body: box, onClose: offMute,
+    actions: [{ label: 'Đặt lại âm thanh', onClick: () => { G.sound.reset(); paints.forEach((f) => f()); } }, { label: 'Xong', primary: true }],
   });
   pan.el.tabIndex = -1; pan.el.focus({ preventScroll: true }); // đưa bàn phím / trình đọc màn hình vào bảng
+  G.events.emit('ui:settings', box, pan); // các module khác thêm mục cài đặt của mình vào cuối bảng (22-di-chua-chung.js: "Đi chùa cùng mọi người")
 }
 
 // ---- Bản đồ chùa: chạm để tự đi tới ----

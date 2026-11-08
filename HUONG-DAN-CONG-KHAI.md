@@ -3,6 +3,9 @@
 Trò chơi là **một file tĩnh** `index.html` (cộng thư mục `assets/` nếu sau này dùng mô hình ngoài).
 Không cần máy chủ, không cơ sở dữ liệu, không đăng nhập. Người chơi chỉ cần trình duyệt mới và kết nối mạng
 (Three.js và phần phụ trợ hậu kỳ `three/addons/` tải từ CDN jsDelivr; nếu phần phụ trợ không tải được, trò chơi vẫn chạy ở chế độ vẽ thường). Trò chơi không thu thập dữ liệu; tiến trình chơi lưu trong localStorage của trình duyệt người chơi, không gửi đi đâu.
+Chế độ **Đi chùa cùng mọi người** (tắt mặc định) nối thẳng các trình duyệt với nhau bằng WebRTC qua thư viện Trystero (tải từ jsDelivr
+khi bật, dùng mạng Nostr công cộng để tìm nhau) — vẫn không cần máy chủ riêng, nhưng trang phải chạy qua **https** (GitHub Pages / Netlify /
+Cloudflare đều có sẵn) hoặc localhost; mở thẳng tệp `index.html` bằng `file://` thì phần này có thể không hoạt động.
 
 ## Danh sách kiểm trước khi công khai
 
@@ -44,5 +47,11 @@ Tên miền riêng (tuỳ chọn): **Settings → Pages → Custom domain**, ở
 ## Sau khi lên mạng
 
 - Mở địa chỉ trên điện thoại và máy tính, chơi thử một vòng; nếu máy yếu, trò chơi tự hạ chất lượng.
-- Chia sẻ địa chỉ cho mọi người. Trò chơi không thu thập dữ liệu; thứ duy nhất trình duyệt tải từ bên ngoài là thư viện Three.js trên jsDelivr.
+- Chia sẻ địa chỉ cho mọi người. Trò chơi không thu thập dữ liệu; thứ trình duyệt tải từ bên ngoài là thư viện Three.js trên jsDelivr,
+  và chỉ khi người chơi bật *Đi chùa cùng mọi người* thì thêm thư viện Trystero (cũng trên jsDelivr).
+- Muốn thử đi chùa chung: hai người (hoặc hai trình duyệt trên hai máy) cùng mở trang, cùng bật công tắc trong *Cài đặt*; thường vài giây,
+  có lúc tới nửa phút, sẽ thấy nhau. Nhập cùng một mã nhóm để đi riêng (mã không phải mật khẩu: ai biết đều vào được). Nếu một bên không
+  nối được (mạng chặn kết nối trực tiếp), dòng trạng thái trong *Cài đặt* sẽ báo.
+  Lời gõ (Enter hoặc nút *Nói*) hiện cho mọi người cùng phòng; có lọc từ thô, chặn câu có địa chỉ web hoặc dãy số dài, nút *Ẩn người này*
+  và công tắc *Tắt mọi bong bóng chat*.
 - Không thêm quảng cáo, đếm lượt truy cập hay đăng nhập: những thứ đó nằm ngoài quy tắc của dự án.

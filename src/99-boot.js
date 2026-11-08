@@ -24,6 +24,7 @@
     ['hoạt động 4–5', typeof installActivitiesB === 'function' ? installActivitiesB : null],
     ['ngồi bồ đoàn, tụng kinh, thiền', typeof installNgoiTungKinh === 'function' ? installNgoiTungKinh : null], // 45: ngồi lên bồ đoàn trống trong chính điện (E / nút chạm), tụng kinh theo bài, ngồi thiền
     ['hoạt động khu mở rộng', typeof installActivitiesC === 'function' ? installActivitiesC : null],
+    ['đi chùa chung', typeof installDiChuaChung === 'function' ? installDiChuaChung : null], // 22: nhiều người cùng dạo chùa qua kết nối ngang hàng (Trystero), tắt mặc định; chạy sau mọi hoạt động để đọc G.world.seats, G.crowd.seats
   ];
   for (const [name, fn] of steps) {
     if (!fn) continue;

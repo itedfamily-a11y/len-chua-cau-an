@@ -221,7 +221,7 @@ textarea.field{resize:none;min-height:96px;line-height:1.45}
     <div class="brand"><div class="t">Chùa An Lạc</div><div id="visitors">Hôm nay có <b>…</b> người lên chùa cầu an</div></div>
     <div class="tools">
       <button class="ibtn" id="btnMute" aria-label="Tắt / bật tiếng" title="Tắt / bật tiếng (M)"></button>
-      <button class="ibtn" id="btnSound" aria-label="Cài đặt âm thanh" title="Cài đặt âm thanh"></button>
+      <button class="ibtn" id="btnSound" aria-label="Cài đặt" title="Cài đặt (âm thanh, đi chùa cùng mọi người)"></button>
       <button class="ibtn" id="btnMap" aria-label="Bản đồ chùa" title="Bản đồ chùa"></button>
       <button class="ibtn" id="btnBook" aria-label="Sổ cầu an của tôi" title="Sổ cầu an của tôi"></button>
       <button class="ibtn" id="btnShare" aria-label="Chia sẻ" title="Chia sẻ"></button>
@@ -275,7 +275,7 @@ textarea.field{resize:none;min-height:96px;line-height:1.45}
 
 <noscript><p style="position:fixed;inset:0;display:grid;place-items:center;color:#fff">Hãy bật JavaScript để vào chùa.</p></noscript>
 
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/","trystero":"https://cdn.jsdelivr.net/npm/trystero@0.26.0/+esm"}}</script><!-- "trystero": chỉ tải khi bật "Đi chùa cùng mọi người" (22-di-chua-chung.js, import() động); +esm của jsDelivr gói kèm @trystero-p2p/nostr, @trystero-p2p/core, @noble/secp256k1 cùng phiên bản -->
 <script>
 // Nếu thư viện 3D không tải được (mất mạng), báo nhẹ nhàng trên màn chào
 (function(){

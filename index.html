@@ -13260,7 +13260,9 @@ function installDiChuaChung(G) {
     if (isMuted()) { chatStats.muted++; return; }
     const f = filterChat(cleanChat(data.t));
     if (f === null) { chatStats.blocked++; return; }
-    if (p.slot < 0 || !p.got || p.vis <= 0.5 || p.wedged) { chatStats.unseen++; return; } // như 20-crowd: người đang mờ / bị nêm máy quay giấu thì không có lời lơ lửng
+    // như 20-crowd: người bị nêm máy quay giấu, đã im lặng (mờ dần) hay chưa có vị trí thì không có lời lơ lửng. Xét điều kiện "đáng được thấy",
+    // KHÔNG xét độ mờ hiện tại: người vừa xuất hiện còn đang hiện dần (≈ 0,5–1 giây) — câu chào gửi ngay lúc đó trước đây bị bỏ im lặng.
+    if (p.slot < 0 || !p.got || p.wedged || p.gone || t - p.last >= STALE_S) { chatStats.unseen++; return; }
     chatStats.shown++; lastShown = f;
     p.bub = G.ui.bubble(p.getBV, f, bubbleMs(f), 2.35); // hệ bong bóng của khách AI (00-core): textContent, ẩn khi xa máy quay
   }
@@ -13374,6 +13376,67 @@ function installDiChuaChung(G) {
   let lastSent = null, lastSentAt = 0;
   const evlog = []; // nhật ký ngắn (≤ 80 dòng, chỉ trong bộ nhớ) để gỡ lỗi / kiểm tra: { t (giây), ev, id }
   function dbg(ev, id) { evlog.push({ t: Math.round(now() * 1000) / 1000, ev, id: id || '' }); if (evlog.length > 80) evlog.shift(); }
+  // ---------- Chẩn đoán hiện trong Cài đặt ("Chi tiết kết nối"): để người dùng điện thoại chụp màn hình khi không thấy nhau ----------
+  // Chỉ là bộ đếm và lời lỗi ngắn trong bộ nhớ (không địa chỉ IP, không lưu xuống máy): số điểm hẹn đang mở, số lần bắt tay WebRTC
+  // (nối được / hỏng / bỏ dở), lỗi gần nhất của thư viện, phiên bản iOS và việc trang đang mở trong trình duyệt nhúng của một ứng dụng.
+  const diag = { hs: 0, ok: 0, fail: 0, drop: 0, err: [], rej: new Set() }; // rej: điểm hẹn từ chối loại tin của Trystero (vô hại khi các điểm hẹn khác vẫn nhận)
+  function diagErr(m) { m = String(m == null ? '' : m).replace(/\s+/g, ' ').trim().slice(0, 160); if (!m) return;
+    const rj = /relay failure from wss?:\/\/([^\s/]+)/i.exec(m); if (rj) { if (!diag.rej.has(rj[1])) { diag.rej.add(rj[1]); G.events.emit('chung:change'); } return; } if (diag.err[diag.err.length - 1] === m) return; diag.err.push(m); if (diag.err.length > 3) diag.err.shift(); G.events.emit('chung:change'); }
+  const ENV = (() => {
+    const ua = navigator.userAgent || '';
+    const iosDev = /\b(?:iPhone|iPad|iPod)\b/.test(ua);
+    const m = / OS (\d+)_(\d+)/.exec(ua);
+    // trình duyệt nhúng: Facebook / Messenger / Instagram / Zalo / Line / TikTok / ứng dụng Google; WebView Android có "; wv)";
+    // trên iPhone, Safari / Chrome / Firefox / Edge đều có "Safari/" trong UA, còn WKWebView của ứng dụng thì không
+    const inApp = /FBAN|FBAV|FB_IAB|Messenger|Instagram|Zalo|Line\/|TikTok|musical_ly|Bytedance|; wv\)|GSA\//i.test(ua) || (iosDev && !/Safari\//.test(ua));
+    return { ios: iosDev && m ? m[1] + '.' + m[2] : '', inApp, rtc: typeof window.RTCPeerConnection === 'function' };
+  })();
+  let rtcClass = null;
+  function makeRtcClass() { // lớp RTCPeerConnection riêng truyền cho Trystero (tuỳ chọn rtcPolyfill): chỉ ĐẾM trạng thái bắt tay, không đọc địa chỉ
+    if (rtcClass || !ENV.rtc) return rtcClass;
+    const O = window.RTCPeerConnection;
+    rtcClass = class extends O {
+      constructor(...a) {
+        super(...a);
+        let seen = false, done = false;
+        const check = () => {
+          if (!seen && this.remoteDescription) { seen = true; diag.hs++; G.events.emit('chung:change'); }
+          if (!seen || done) return;
+          const c = this.connectionState, i = this.iceConnectionState;
+          if (c === 'connected' || i === 'connected' || i === 'completed') { done = true; diag.ok++; G.events.emit('chung:change'); }
+          else if (c === 'failed' || i === 'failed') { done = true; diag.fail++; G.events.emit('chung:change'); }
+        };
+        this.addEventListener('signalingstatechange', check);
+        this.addEventListener('iceconnectionstatechange', check);
+        this.addEventListener('connectionstatechange', check);
+        this.__chungDone = () => { if (seen && !done) { done = true; diag.drop++; G.events.emit('chung:change'); } };
+      }
+      close() { try { if (this.__chungDone) this.__chungDone(); } catch (e) { /* bỏ qua */ } return super.close(); }
+    };
+    return rtcClass;
+  }
+  let diagHooked = false;
+  function hookDiag() { // một lần: bắt cảnh báo "Trystero…" (relay từ chối, announce hỏng) và lỗi promise không ai bắt trong lúc đang bật
+    if (diagHooked) return; diagHooked = true;
+    const ow = console.warn.bind(console);
+    console.warn = (...a) => { try { if (typeof a[0] === 'string' && /^Trystero/.test(a[0])) diagErr(a.map((x) => (x && x.message) || String(x)).join(' ').replace(/^Trystero:?\s*/, '')); } catch (e) { /* bỏ qua */ } return ow(...a); };
+    const oe = console.error.bind(console);
+    console.error = (...a) => { try { if (typeof a[0] === 'string' && /^Trystero/.test(a[0])) diagErr(a.map((x) => (x && x.message) || String(x)).join(' ').replace(/^Trystero:?\s*/, '')); } catch (e) { /* bỏ qua */ } return oe(...a); };
+    window.addEventListener('unhandledrejection', (e) => { if (status === 'off') return; const r = e && e.reason; diagErr('lỗi: ' + ((r && r.message) || String(r))); });
+  }
+  function relayStats() { let open = 0, total = 0; try { const o = lib && lib.getRelaySockets ? lib.getRelaySockets() : {}; for (const k in o) { total++; if (o[k] && o[k].readyState === 1) open++; } } catch (e) { /* bỏ qua */ } return { open, total }; }
+  function diagText() {
+    if (!isOn() || status === 'off') return '';
+    const r = relayStats();
+    const parts = ['Chi tiết kết nối: điểm hẹn ' + r.open + '/' + (r.total || RELAYS) + (diag.rej.size ? ' (' + diag.rej.size + ' từ chối)' : ''), 'bắt tay ' + diag.hs + ' (nối ' + diag.ok + ', hỏng ' + diag.fail + ', bỏ dở ' + diag.drop + ')'];
+    if (ENV.ios) parts.push('iOS ' + ENV.ios);
+    if (ENV.inApp) parts.push('trình duyệt trong ứng dụng');
+    if (!ENV.rtc) parts.push('không có WebRTC');
+    let t = parts.join(' · ');
+    if (diag.err.length) t += '\nLỗi gần nhất: ' + diag.err[diag.err.length - 1];
+    return t;
+  }
+  const IN_APP_TIP = 'Bạn đang mở trang trong trình duyệt của một ứng dụng (Zalo, Messenger, Facebook…). Nếu không thấy ai, hãy mở bằng Safari hoặc Chrome: bấm nút ⋯ / ⋮ rồi chọn "Mở bằng trình duyệt".';
   function setStatus(s, msg) { status = s; statusMsg = msg || ''; statusMsgAt = statusMsg ? now() : 0; dbg('status:' + s); G.events.emit('chung:change'); }
   // Trystero 0.26: makeAction() trả về { send, onMessage }; bản cũ trả về [send, get] — hỗ trợ cả hai
   const quiet = (r) => { if (r && typeof r.catch === 'function') r.catch(() => { /* người nhận từ chối (quá cỡ) hoặc vừa rời đi: bỏ qua, không văng lỗi ra console */ }); return r; };
@@ -13406,11 +13469,14 @@ function installDiChuaChung(G) {
   async function connect() {
     const g = ++gen;
     dbg('connect', codeOf());
+    diag.hs = diag.ok = diag.fail = diag.drop = 0; diag.err.length = 0; diag.rej.clear();
+    hookDiag();
+    if (!ENV.rtc) { setStatus('error', 'Trình duyệt này không hỗ trợ kết nối ngang hàng (WebRTC). Bạn mở trang bằng Safari hoặc Chrome nhé.'); return; }
     if (!lib) {
       setStatus('loading');
       try { lib = await import('trystero'); dbg('lib:loaded'); }
       catch (e) {
-        console.warn('[đi chùa chung] không tải được thư viện kết nối', e);
+        console.warn('[đi chùa chung] không tải được thư viện kết nối', e); diagErr('không tải được thư viện: ' + ((e && e.message) || e));
         // trình duyệt ghi nhớ import() hỏng suốt đời trang: bật lại không đủ, phải tải lại trang; báo mỗi lần bật
         if (g === gen) { const msg = 'Không tải được phần kết nối. Bạn tải lại trang rồi bật lại nhé.'; setStatus('error', msg); G.ui.toast(msg, 3600); }
         return;
@@ -13422,8 +13488,9 @@ function installDiChuaChung(G) {
     try { if (lib.resumeRelayReconnection) lib.resumeRelayReconnection(); } catch (e) { /* bỏ qua */ }
     const code = codeOf();
     try {
-      room = lib.joinRoom({ appId: APP_ID, maxReceiveBytes: MAX_RECV, relayConfig: { redundancy: RELAYS, warnOnRelayFailure: false } }, ROOM + (code ? '-' + code : ''), {
-        onJoinError: (d) => { console.warn('[đi chùa chung] một người chưa kết nối được', d && d.error); dbg('join:error', d && d.peerId); if (g === gen) setStatus('on', 'Có người chưa kết nối được tới bạn (mạng của một trong hai bên chặn kết nối trực tiếp).'); },
+      const rc = makeRtcClass();
+      room = lib.joinRoom({ appId: APP_ID, maxReceiveBytes: MAX_RECV, relayConfig: { redundancy: RELAYS, warnOnRelayFailure: true }, ...(rc ? { rtcPolyfill: rc } : {}) }, ROOM + (code ? '-' + code : ''), {
+        onJoinError: (d) => { console.warn('[đi chùa chung] một người chưa kết nối được', d && d.error); diagErr(d && d.error); dbg('join:error', d && d.peerId); if (g === gen) setStatus('on', 'Có người chưa kết nối được tới bạn (mạng của một trong hai bên chặn kết nối trực tiếp).'); },
       });
       sendSt = hook(room.makeAction('st'), onState);
       sendGe = hook(room.makeAction('ge'), onGesture);
@@ -13431,7 +13498,7 @@ function installDiChuaChung(G) {
       room.onPeerJoin = (id) => { if (g !== gen) return; dbg('peer:join', id); if (addPeer(id)) maybeSend(true, id); G.events.emit('chung:change'); };
       room.onPeerLeave = (id) => { if (g !== gen) return; dbg('peer:leave', id); const p = peers.get(id); if (p) p.gone = true; G.events.emit('chung:change'); };
     } catch (e) {
-      console.warn('[đi chùa chung] chưa vào được phòng', e); room = null; sendSt = sendGe = sendCh = null;
+      console.warn('[đi chùa chung] chưa vào được phòng', e); diagErr('chưa vào được phòng: ' + ((e && e.message) || e)); room = null; sendSt = sendGe = sendCh = null;
       setStatus('error', 'Chưa kết nối được. Bạn thử lại sau nhé.'); return;
     }
     window.addEventListener('beforeunload', onUnload);
@@ -13457,7 +13524,7 @@ function installDiChuaChung(G) {
     on = !!on;
     const c = cfgWrite();
     const was = c.on; c.on = on; persist();
-    if (on) { if (G.started) connect(); if (!was) G.ui.toast('Đang kết nối với mọi người cùng đi chùa…', 2600); }
+    if (on) { if (G.started) connect(); if (!was) G.ui.toast(ENV.inApp ? IN_APP_TIP : 'Đang kết nối với mọi người cùng đi chùa…', ENV.inApp ? 6000 : 2600); }
     else { disconnect(); if (was) G.ui.toast('Đã tắt đi chùa chung. Không còn gửi gì nữa.', 2600); }
     paintBar(); G.events.emit('chung:change');
   }
@@ -13505,6 +13572,9 @@ function installDiChuaChung(G) {
   .chung-g .l{white-space:nowrap}
   @media (max-width:1120px){.chung-g{padding:0;width:44px}.chung-g .l{display:none}} /* màn hẹp: chỉ biểu tượng (thanh đủ nhãn rộng ≈ 490px) */
   .chung-st{font-size:13px;color:var(--gold2);margin-top:6px;min-height:18px}
+  .chung-dg{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.4;white-space:pre-line;overflow-wrap:anywhere}
+  .chung-dg:empty,.chung-adv.hidden{display:none}
+  .chung-adv{font-size:13px;color:var(--gold2);margin-top:6px;line-height:1.4}
   .chung-ip{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.4}
   .chung-code{display:flex;gap:10px;align-items:center;margin-top:10px}
   .chung-code input{flex:1;min-width:0;text-align:center;font-size:16px;padding:10px 12px}
@@ -13623,6 +13693,8 @@ function installDiChuaChung(G) {
     const ip = U.el('div', 'chung-ip', 'Lưu ý: người cùng phòng là người lạ trên mạng và thấy địa chỉ mạng (IP) của nhau như mọi kết nối ngang hàng; vài điểm hẹn công cộng (relay Nostr, máy chủ STUN của Google và Cloudflare) cũng thấy IP của bạn. Lời họ gõ hiện cho bạn, trò chơi chỉ lọc từ thô và cho bạn ẩn từng người.');
     const more = U.el('div', 'chung-more');
     const st = U.el('div', 'chung-st'); st.id = 'chungStatus';
+    const dg = U.el('div', 'chung-dg'); dg.id = 'chungDiag';
+    const adv = U.el('div', 'chung-adv' + (ENV.inApp ? '' : ' hidden'), IN_APP_TIP); adv.id = 'chungInApp';
     const muteRow = U.el('div', 'snd-h chung-sub'), muteTxt = U.el('div', 'snd-t');
     muteTxt.append(U.el('div', 'snd-l', 'Tắt mọi bong bóng chat'), U.el('div', 'small muted', 'Vẫn thấy mọi người đi lại, chỉ không hiện lời họ gõ (và lời của bạn).'));
     const muteSw = U.el('button', 'snd-sw'); muteSw.type = 'button'; muteSw.id = 'chungMute'; muteSw.setAttribute('role', 'switch'); muteSw.setAttribute('aria-label', 'Tắt mọi bong bóng chat');
@@ -13635,12 +13707,13 @@ function installDiChuaChung(G) {
     codeRow.appendChild(inp);
     const note = U.el('div', 'note', 'Chia sẻ: tên, vị trí, việc đang làm (thắp hương, ngồi thiền…), ba cử chỉ đặt sẵn và lời bạn gõ (tối đa 60 ký tự, một câu mỗi 2 giây; câu có địa chỉ web hoặc dãy số dài bị chặn). Không lưu lịch sử. Để tìm nhau, trình duyệt gọi tới vài điểm hẹn công cộng (relay Nostr, máy chủ STUN của Google và Cloudflare): chúng thấy địa chỉ mạng của bạn, không thấy tên hay vị trí trong chùa. Mã nhóm không phải mật khẩu: ai biết mã đều vào được; để trống là vào phòng chung.');
     note.style.marginTop = '8px';
-    more.append(st, muteRow, people, codeRow, note);
-    row.append(head, ip, more); box.appendChild(row);
+    more.append(st, dg, muteRow, people, codeRow, note);
+    row.append(head, adv, ip, more); box.appendChild(row);
     const paint = () => {
       const on = isOn();
       row.classList.toggle('chung-off', !on); sw.classList.toggle('on', on); sw.setAttribute('aria-checked', String(on));
       st.textContent = statusText();
+      const dt = diagText(); if (dg.textContent !== dt) dg.textContent = dt;
       const mute = isMuted(); muteSw.classList.toggle('on', mute); muteSw.setAttribute('aria-checked', String(mute));
       // danh sách người cùng phòng (textContent) + "Ẩn người này" / "Hiện lại"; chỉ dựng lại khi có thay đổi để không mất nút đang bấm
       let sig = '';
@@ -13743,11 +13816,12 @@ function installDiChuaChung(G) {
       try { const o = lib && lib.getRelaySockets ? lib.getRelaySockets() : {}; const r = {}; for (const k in o) r[k] = o[k] ? o[k].readyState : -1; return r; } catch (e) { return {}; }
     },
     get hiddenIds() { return Array.from(hidden); },
+    get diag() { return { hs: diag.hs, ok: diag.ok, fail: diag.fail, drop: diag.drop, err: diag.err.slice(), rejected: Array.from(diag.rej), relays: relayStats(), env: ENV, text: diagText() }; },
     get chatStats() { return chatStats; },  // { sent, shown, limited, blocked, hiddenDrop, muted, dropped } — chỉ số đếm, không có nội dung
     get stStats() { return stStats; }, get geStats() { return geStats; }, get lastHandlerMs() { return lastHandlerMs; },
     get lastShown() { return lastShown; },  // câu vừa hiện gần nhất (đã lọc) — để kiểm tra
     get muteChat() { return isMuted(); }, set muteChat(v) { cfgWrite().muteChat = !!v; persist(); G.events.emit('chung:change'); },
-    enable, setCode, gesture, statusText, chat, raw, chatRaw: (obj) => raw('ch', obj), inject, openChat, closeChat, hide, cleanChat, filterChat,
+    enable, setCode, gesture, statusText, diagText, chat, raw, chatRaw: (obj) => raw('ch', obj), inject, openChat, closeChat, hide, cleanChat, filterChat,
     GEST, MAX_SHOW, MAX_PEERS, SEND_HZ, STALE_S, DROP_S, CHAT_MAX, CHAT_GAP, LIM,
   };
 }

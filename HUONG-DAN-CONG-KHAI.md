@@ -52,6 +52,9 @@ Tên miền riêng (tuỳ chọn): **Settings → Pages → Custom domain**, ở
 - Muốn thử đi chùa chung: hai người (hoặc hai trình duyệt trên hai máy) cùng mở trang, cùng bật công tắc trong *Cài đặt*; thường vài giây,
   có lúc tới nửa phút, sẽ thấy nhau. Nhập cùng một mã nhóm để đi riêng (mã không phải mật khẩu: ai biết đều vào được). Nếu một bên không
   nối được (mạng chặn kết nối trực tiếp), dòng trạng thái trong *Cài đặt* sẽ báo.
+  Trên điện thoại, hãy mở trang bằng Safari hoặc Chrome, không mở trong trình duyệt của Zalo / Messenger / Facebook (trò chơi tự nhận ra
+  và nhắc). Nếu vẫn không thấy nhau, chụp dòng *Chi tiết kết nối* trong *Cài đặt* (số điểm hẹn đang mở, số lần bắt tay nối được / hỏng,
+  lỗi gần nhất): nó cho biết hỏng ở bước tìm nhau hay ở bước kết nối trực tiếp.
   Lời gõ (Enter hoặc nút *Nói*) hiện cho mọi người cùng phòng; có lọc từ thô, chặn câu có địa chỉ web hoặc dãy số dài, nút *Ẩn người này*
   và công tắc *Tắt mọi bong bóng chat*.
 - Không thêm quảng cáo, đếm lượt truy cập hay đăng nhập: những thứ đó nằm ngoài quy tắc của dự án.

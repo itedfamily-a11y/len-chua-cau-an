@@ -20,6 +20,7 @@ function installAudio(G) {
     bell: 0.15, bellSoft: 0.15, bowl: 0.17, mo: 0.3, ui: 0.11, chime: 0.15, step: 0.06, khanh: 0.16, // hiệu ứng
     duck: 0.6, // khi đang làm hoạt động, âm nền còn 60% (hạ ~40%)
     music: 0.23, musicDuck: 0.4, // nhạc nền (bài gốc ~-13 LUFS → ~-26 LUFS); khi làm hoạt động còn 40%
+    voiceMusicDuck: 0.35, voiceAmbDuck: 0.5, // khi trong nhóm có người đang nói: nhạc còn 35%, âm nền còn 50% (nhân với mức hạ của hoạt động)
     windChime: 0.045, // chuông gió dưới mái hiên: rất khẽ
   };
   const HALL = { x: 0, z: G.frame.xf(0, 0, -20).z }; // tâm chính điện (v4: toạ độ gốc -20 → xf = z −99,7, đúng trục mái −99,75; v3: -16 khi điện còn nông): nơi nghe tụng kinh rõ nhất
@@ -28,12 +29,13 @@ function installAudio(G) {
   // ===== Trạng thái chung =====
   let ctx = null, ready = false, initAt = -1e9;
   let master = null, tone = null, comp = null, sfxBus = null, ambBus = null, sfxRev = null, ambRev = null, musicBus = null;
+  let voiceBus = null; // đích nối giọng nói trong nhóm (module 24): voiceBus → kênh 'voice' → master
   let convolver = null, revHP = null, revReturn = null;
   let bufWhite = null, bufPink = null;
   // chạy tự động (Chrome headless / webdriver khi kiểm thử): luôn tắt tiếng — Chrome headless mới vẫn phát âm thanh ra loa máy người dùng
   const AUTO = !!navigator.webdriver || /HeadlessChrome/i.test(navigator.userAgent || '');
   let muted = AUTO || !!(G.save && G.save.data && G.save.data.muted), mutedTouched = false;
-  let ducked = false, lowQ = false, hiddenSuspended = false;
+  let ducked = false, voiceDucked = false, lowQ = false, hiddenSuspended = false;
   let suspendTimer = 0, lookTimer = 0;
   let budget = 160, budgetT = 0; // "ngân sách giọng": chống quá tải khi quá nhiều tiếng phát dồn dập
   let lastStep = -1, lastUi = -1, stepSide = 1, curVol = 1;
@@ -175,7 +177,8 @@ function installAudio(G) {
     // mỗi kênh một cặp gain khô/vang đổ vào bus chung (bus chung vẫn lo việc hạ âm khi làm hoạt động)
     const pair = (tgt, dry, rev) => { tgt.dry = mkGain(1); tgt.rev = mkGain(1); tgt.dry.connect(dry); tgt.rev.connect(rev); return [tgt.dry, tgt.rev]; };
     const musicG = mkGain(1); musicBus.connect(musicG); musicG.connect(master);
-    CAT.master = [userG]; CAT.music = [musicG];
+    voiceBus = mkGain(1); const voiceG = mkGain(1); voiceBus.connect(voiceG); voiceG.connect(master); // giọng nói trong nhóm: qua cùng bộ lọc và nén với mọi tiếng khác, âm lượng theo kênh 'voice'
+    CAT.master = [userG]; CAT.music = [musicG]; CAT.voice = [voiceG];
     CAT.sfx = pair(SFXT, sfxBus, sfxRev); CAT.amb = pair(AMBT, ambBus, ambRev);
     CAT.chant = pair(CHT, ambBus, ambRev); CAT.chime = pair(WCT, ambBus, ambRev);
     PVT.dry = master; PVT.rev = sfxRev;
@@ -729,6 +732,7 @@ function installAudio(G) {
   }
   // nghe thử một kênh ngay khi chỉnh (bảng cài đặt âm thanh)
   function preview(k) {
+    if (k === 'voice') return; // giọng người cùng nhóm không có tiếng nghe thử
     if (!canPlay() || !chOn(k)) return;
     if (k === 'chime') windChimes(4, true);
     else if (k === 'sfx') play('chime');
@@ -768,14 +772,16 @@ function installAudio(G) {
     if (cricketBus) cricketBus.gain.value = LV.crickets * U.smoothstep(0.15, 0.7, nightS);
   }, 70);
 
-  // hạ âm nền ~40% khi đang làm hoạt động
-  function setDuck(on) {
-    ducked = !!on;
+  // hạ âm nền ~40% khi đang làm hoạt động; thêm lớp hạ khi trong nhóm có người đang nói (voiceDuck). Hai lớp nhân với nhau và chỉ có MỘT đích cho mỗi bus, nên không giằng co.
+  function applyDuck() {
     if (!ready) return;
-    const t = ctx.currentTime, v = ducked ? LV.duck : 1, tc = ducked ? 0.35 : 0.9;
+    const t = ctx.currentTime, low = ducked || voiceDucked, tc = low ? 0.35 : 0.9;
+    const v = (ducked ? LV.duck : 1) * (voiceDucked ? LV.voiceAmbDuck : 1);
     for (const g of [ambBus.gain, ambRev.gain]) { g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.setTargetAtTime(v, t, tc); }
-    const mg = musicBus.gain; mg.cancelScheduledValues(t); mg.setValueAtTime(mg.value, t); mg.setTargetAtTime(LV.music * (ducked ? LV.musicDuck : 1), t, tc);
+    const mg = musicBus.gain; mg.cancelScheduledValues(t); mg.setValueAtTime(mg.value, t); mg.setTargetAtTime(LV.music * (ducked ? LV.musicDuck : 1) * (voiceDucked ? LV.voiceMusicDuck : 1), t, tc);
   }
+  function setDuck(on) { ducked = !!on; applyDuck(); }
+  function voiceDuck(on) { on = !!on; if (on === voiceDucked) return; voiceDucked = on; applyDuck(); }
 
   // bước chân: đá > cỏ về độ to (đá nhỏ hơn), chống dồn dập
   function surfaceAt(p) {
@@ -820,8 +826,9 @@ function installAudio(G) {
       } else {
         master.gain.setValueAtTime(0, t); master.gain.linearRampToValueAtTime(LV.master, t + 1.5); // vào chùa: âm thanh hiện dần
       }
-      if (ducked) setDuck(true);
+      if (ducked || voiceDucked) applyDuck();
       startAmbience();
+      G.events.emit('audio:ready'); // mỗi lần âm thanh sẵn sàng (module 24 nối giọng nói vào voiceIn())
     } catch (e) {
       console.error('[âm thanh] không khởi tạo được', e);
       ready = false; A.ready = false;
@@ -900,8 +907,10 @@ function installAudio(G) {
     init, setMuted, isMuted: () => muted, play, dispose,
     duck: setDuck, // hạ/khôi phục âm nền thủ công
     musicBus: () => musicBus, // đích nối nhạc nền (null khi chưa khởi tạo)
+    voiceIn: () => (ctx && ready ? voiceBus : null), // đích nối giọng nói trong nhóm (GainNode; null khi chưa có âm thanh)
+    voiceDuck, // true: hạ nhạc còn 35% và âm nền còn 50% khi có người nói; false: trả lại
     applyLevels: () => applyLevels(false), // áp lại âm lượng các kênh sau khi người chơi chỉnh
-    preview, // nghe thử một kênh: 'chime' | 'sfx' | 'master' | 'amb'
+    preview, // nghe thử một kênh: 'chime' | 'sfx' | 'master' | 'amb' ('voice' không có tiếng)
     channel: (k) => (CAT[k] ? CAT[k][0] : null), // nút gain của một kênh (để kiểm thử)
     now: () => (ctx ? ctx.currentTime : performance.now() / 1000), // giờ AudioContext (giây) để trò gõ mõ canh nhịp
   });

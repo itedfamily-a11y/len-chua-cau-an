@@ -6,6 +6,7 @@
 //  Mọi lối thoát (nút ×, Escape, Đứng dậy, lỗi) đều dọn sạch và gọi G.activity.end() đúng một lần.
 //  Lưu: G.save.data.kinh = { last, prog: { [id]: { part, i, n, at } }, done: { [id]: số lần } }, G.save.data.kinhCuaToi (chữ),
 //  G.save.data.thien = { lan, phut }. Cần G.kinh (21-kinh-van.js); có G.crowd.seats (20-crowd.js) thì giữ chỗ ngồi để khách AI không ngồi trùng.
+//  G.ngoi.mode = 'tung' | 'thien' | null (màn chữ kinh / vòng thở đang mở) và sự kiện 'ngoi:mode' khi đổi: giọng nói trong nhóm (module 24) tự im theo đó.
 // =====================================================================
 function installNgoiTungKinh(G) {
   const { util: U } = G;
@@ -95,6 +96,8 @@ function installNgoiTungKinh(G) {
   let heldSeat = -1;     // chỗ đang giữ trong G.crowd.seats
   let scr = null;        // màn hình con đang mở (chữ kinh / thiền)
   let bpmSel = 66;       // nhịp mõ tự động đã chọn (nhớ trong lúc chơi)
+  let mode = null;       // màn con đang mở: 'tung' (chữ kinh) | 'thien' (vòng thở) | null
+  function setMode(m) { if (m === mode) return; mode = m; G.events.emit('ngoi:mode', mode); }
 
   function releaseHeld() {
     if (heldSeat < 0) return;
@@ -198,6 +201,7 @@ function installNgoiTungKinh(G) {
     try { if (s.onEnd) s.onEnd(); } catch (e) { console.error(e); }
     for (let i = s.fns.length - 1; i >= 0; i--) { try { s.fns[i](); } catch (e) { console.error(e); } }
     s.fns.length = 0;
+    setMode(null); // newScreen() gọi endScreen() trước, nên khi đổi màn người nghe chỉ cần lấy giá trị cuối trong cùng một nhịp
   }
 
   // ---------- Bảng: một lúc chỉ có một; đóng bằng mã thì không gọi hành động "bỏ qua" ----------
@@ -449,6 +453,7 @@ function installNgoiTungKinh(G) {
         total += n;
       }
       if (!total) { endScreen(); G.ui.toast('Bài này chưa có chữ để tụng.'); showPicker(); return; }
+      setMode('tung');
 
       let pi = 0, li = 0, si = 0, done = 0;     // phần, câu, chữ hiện tại; số chữ đã tụng cả bài
       if (resume && resume.n === total && resume.i > 0 && resume.i < total) {
@@ -650,6 +655,7 @@ function installNgoiTungKinh(G) {
     function startThien(mins) {
       if (r.dead || leaving) return;
       const s = newScreen();
+      setMode('thien');
       const total = mins * 60;
       let el = 0, shown = -1, ended = false, committed = false;
       const layer = mkLayer(s);
@@ -720,5 +726,5 @@ function installNgoiTungKinh(G) {
   }
 
   // Gỡ lỗi / kiểm thử
-  G.ngoi = { poi, camFor, CAM, get seatIdx() { return seatIdx; }, get busy() { return busy; }, start: startNgoi };
+  G.ngoi = { poi, camFor, CAM, get seatIdx() { return seatIdx; }, get busy() { return busy; }, get mode() { return mode; }, start: startNgoi };
 }

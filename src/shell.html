@@ -230,7 +230,7 @@ textarea.field{resize:none;min-height:96px;line-height:1.45}
   </div>
   <div id="poiLabels"></div>
   <div id="bubbles"></div>
-  <div id="toasts"></div>
+  <div id="toasts" role="status" aria-live="polite"></div>
   <div id="joy"><div id="joyHint">Kéo để đi</div><div id="joyKnob"></div></div>
   <button id="actionBtn" aria-live="polite"><span class="ico"></span><span class="lbl">Hành động</span><span class="key">E</span></button>
   <div id="keysHint">W A S D / phím mũi tên để đi · kéo chuột để xoay · E để làm</div>
@@ -262,7 +262,7 @@ textarea.field{resize:none;min-height:96px;line-height:1.45}
     <input id="nameInput" class="field" maxlength="20" autocomplete="off" placeholder="Ví dụ: Minh An" enterkeyhint="go">
     <div id="nameErr"></div>
     <button id="enterBtn" class="btn primary" disabled>Đang mở cổng chùa…</button>
-    <div class="fine">Trò chơi thư giãn. Không đăng nhập, không quảng cáo, không thu thập dữ liệu — mọi thứ chỉ lưu trên máy của bạn.</div>
+    <div class="fine">Trò chơi thư giãn. Không đăng nhập, không quảng cáo, không thu thập dữ liệu; tiến trình chơi chỉ lưu trên máy của bạn. Chế độ đi chùa cùng mọi người bật sẵn: người đang chơi khác thấy tên và nhân vật của bạn; muốn đi một mình thì tắt trong Cài đặt.</div>
   </div>
 </div>
 
@@ -275,7 +275,7 @@ textarea.field{resize:none;min-height:96px;line-height:1.45}
 
 <noscript><p style="position:fixed;inset:0;display:grid;place-items:center;color:#fff">Hãy bật JavaScript để vào chùa.</p></noscript>
 
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/","trystero":"https://cdn.jsdelivr.net/npm/trystero@0.26.0/+esm"}}</script><!-- "trystero": chỉ tải khi bật "Đi chùa cùng mọi người" (22-di-chua-chung.js, import() động); +esm của jsDelivr gói kèm @trystero-p2p/nostr, @trystero-p2p/core, @noble/secp256k1 cùng phiên bản -->
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/","trystero":"https://cdn.jsdelivr.net/npm/trystero@0.26.0/+esm"}}</script><!-- "trystero": chỉ tải khi công tắc "Đi chùa cùng mọi người" đang bật (bật mặc định trên trang công khai, tắt mặc định trên bản chạy ngay trên máy; 22-di-chua-chung.js, import() động); +esm của jsDelivr gói kèm @trystero-p2p/nostr, @trystero-p2p/core, @noble/secp256k1 cùng phiên bản -->
 <script>
 // Nếu thư viện 3D không tải được (mất mạng), báo nhẹ nhàng trên màn chào
 (function(){

@@ -9,16 +9,18 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
 ## Nguyên tắc của trò chơi
 
 - Không đăng nhập, không quảng cáo, không thu thập dữ liệu. Tiến trình chơi lưu trong trình duyệt của bạn.
-- **Đi chùa cùng mọi người — tắt mặc định.** Bật trong *Cài đặt* thì tên bạn đặt, vị trí nhân vật và việc bạn đang làm (thắp hương,
+- **Đi chùa cùng mọi người — bật sẵn trên trang công khai** (bản chạy ngay trên máy thì tắt sẵn). Lần đầu vào, trò chơi báo một câu; muốn đi một mình thì tắt trong *Cài đặt* (đã tắt thì trò chơi nhớ; nút *Xoá dữ liệu trên máy* đưa công tắc về mặc định, tức bật sẵn, và nối lại ngay). Khi bật, tên bạn đặt, vị trí nhân vật và việc bạn đang làm (thắp hương,
   thỉnh chuông, ngồi tụng kinh / thiền trên bồ đoàn nào) cùng ba cử chỉ đặt sẵn (chắp tay, cúi chào, vẫy tay) được gửi thẳng tới những
   người cũng đang bật lúc đó, qua kết nối ngang hàng WebRTC giữa các trình duyệt ([Trystero](https://github.com/dmotz/trystero), dùng mạng
-  Nostr để tìm nhau). Không có máy chủ của trò chơi. Bạn có thể gõ một câu ngắn (tối đa 60 ký tự, một câu mỗi 2 giây) hiện thành bong
+  Nostr để tìm nhau). Không có máy chủ của trò chơi. **Giọng nói chỉ có trong nhóm riêng** (mã nhóm từ 10 chữ hoặc số trở lên, thường qua link mời: *Cài đặt* → *Tạo mã nhóm mới* → *Gửi link mời*): micro luôn tắt cho tới khi bạn tự bấm, giọng nói đi thẳng giữa các máy như một cuộc gọi nhóm (khi hai máy không nối thẳng được thì đi qua máy chủ chuyển tiếp nếu chủ trò chơi đã khai nó, vẫn được mã hoá nên máy chủ không nghe được), trò chơi không ghi âm và không lưu; giọng nói không lọc được như chữ, người trong nhóm vẫn có thể tự ghi âm, và sau khi bạn cho phép micro họ có thể thấy thêm địa chỉ mạng nội bộ của bạn. Phòng chung không có giọng nói; trẻ em nên chơi cùng người lớn. Bạn có thể gõ một câu ngắn (tối đa 60 ký tự, một câu mỗi 2 giây) hiện thành bong
   bóng trên đầu nhân vật cho mọi người cùng phòng: trò chơi không kiểm duyệt được lời người khác, chỉ lọc từ thô (thay bằng •••), chặn câu
   có địa chỉ web hoặc dãy số dài, và cho bạn ẩn từng người hoặc tắt mọi bong bóng. Không lưu lịch sử chat xuống máy; trong lúc chơi chỉ
   giữ vài bộ đếm và một nhật ký ngắn trong bộ nhớ để gỡ lỗi, mất khi tải lại trang. Để tìm nhau, trình duyệt gọi tới vài điểm hẹn công
-  cộng (8 trong 29 relay Nostr có sẵn trong Trystero, máy chủ STUN của Google và Cloudflare): chúng thấy địa chỉ mạng (IP) của bạn,
+  cộng (8 trong 29 relay Nostr có sẵn trong Trystero, máy chủ STUN của Google và Cloudflare, và máy chủ chuyển tiếp ExpressTURN khi chủ
+  trò chơi đã khai nó trong `TURN_SERVERS`: máy chủ này thấy IP của mọi người đang nối và chỉ chuyển dữ liệu đã mã hoá lúc hai máy không
+  nối thẳng được, ví dụ một máy 5G với một máy Wi-Fi): chúng thấy địa chỉ mạng (IP) của bạn,
   không thấy tên hay vị trí trong chùa; người cùng phòng là người lạ và thấy IP của nhau như mọi kết nối ngang hàng. Tắt công tắc là
-  ngừng ngay và đóng luôn kết nối tới relay. Mã nhóm riêng không phải mật khẩu: ai biết mã đều vào được.
+  ngừng ngay và đóng luôn kết nối tới relay. Mã nhóm riêng không phải mật khẩu: ai biết mã (hoặc có link mời) đều vào được và nghe được.
 - Không thắng thua, không xếp hạng, không mua bán hay quyên góp.
 - Tôn trọng đạo Phật: không khẳng định lời cầu nguyện chắc chắn linh nghiệm; quẻ xin chỉ mang tính giải trí.
 - Toàn bộ chữ trong trò chơi là tiếng Việt có dấu.
@@ -31,10 +33,14 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
 - Hậu kỳ trong chính điện: khử răng cưa MSAA, GTAO, bloom, đường cong màu mềm; tự hạ mức trên máy yếu
   hoặc khi trình duyệt không hỗ trợ, và vẫn chạy ở chế độ vẽ thường nếu phần phụ trợ không tải được.
 - Yêu cầu trình duyệt: Chrome / Edge 89+, Safari 16.4+, Firefox 108+ (cần import map và WebGL2).
-- Chế độ đi chùa chung dùng [Trystero](https://github.com/dmotz/trystero) 0.26.0 (MIT) tải từ jsDelivr **chỉ khi** người chơi bật công tắc;
-  đây là ngoại lệ duy nhất của luật "không tài sản ngoài". Cần trang chạy qua https (GitHub Pages có sẵn) hoặc localhost. Không có máy chủ
-  TURN nên hai người sau mạng khắt khe (NAT đối xứng) có thể không nối được với nhau — trò chơi báo trong *Cài đặt*. Hai người thường
-  thấy nhau sau vài giây, có lúc tới nửa phút.
+- Chế độ đi chùa chung dùng [Trystero](https://github.com/dmotz/trystero) 0.26.0 (MIT) tải từ jsDelivr khi công tắc đang bật (bật sẵn trên trang
+  công khai, nên mỗi người vào chùa tải thêm khoảng 70 kB trừ khi đã tắt; bản chạy ngay trên máy tắt sẵn);
+  đây là ngoại lệ duy nhất của luật "không tài sản ngoài". Cần trang chạy qua https (GitHub Pages có sẵn) hoặc localhost. Hai người sau
+  mạng khắt khe (NAT đối xứng, thường gặp ở 4G/5G) chỉ nối được qua máy chủ chuyển tiếp TURN, khai trong `TURN_SERVERS`
+  (`src/22-di-chua-chung.js`, cách khai ở `HUONG-DAN-CONG-KHAI.md`); khi danh sách còn trống họ có thể không nối được với nhau. Dữ liệu qua
+  máy chủ chuyển tiếp vẫn mã hoá; máy chủ đó thấy IP của mọi người đang nối. Dòng "Chi tiết kết nối" trong *Cài đặt* cho biết có bao nhiêu
+  người nối qua máy chủ chuyển tiếp. Hai người thường
+  thấy nhau sau vài giây, có lúc tới nửa phút. Giọng nói dùng chính phần media của Trystero (WebRTC) và Web Audio của trình duyệt, không thêm thư viện nào; trình duyệt chỉ cho dùng micro ở trang https hoặc localhost, và trong trình duyệt của Zalo / Messenger / Facebook thì chưa dùng được micro. Khi hai máy không nối thẳng được, giọng nói đi qua cùng máy chủ chuyển tiếp TURN như dữ liệu, nhưng chỉ khi chủ trò chơi đã khai `TURN_SERVERS` (vẫn mã hoá đầu-cuối, máy chủ không nghe được); chưa khai thì hai máy như vậy không nghe được nhau.
 
 ## Chạy trên máy
 

@@ -2,3 +2,5 @@ Thumbs.db
 .DS_Store
 *.log
 .claude/settings.local.json
+docs/superpowers/plans/
+tests-local/

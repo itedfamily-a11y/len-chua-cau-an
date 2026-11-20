@@ -230,7 +230,7 @@ textarea.field{resize:none;min-height:96px;line-height:1.45}
   </div>
   <div id="poiLabels"></div>
   <div id="bubbles"></div>
-  <div id="toasts"></div>
+  <div id="toasts" role="status" aria-live="polite"></div>
   <div id="joy"><div id="joyHint">Kéo để đi</div><div id="joyKnob"></div></div>
   <button id="actionBtn" aria-live="polite"><span class="ico"></span><span class="lbl">Hành động</span><span class="key">E</span></button>
   <div id="keysHint">W A S D / phím mũi tên để đi · kéo chuột để xoay · E để làm</div>
@@ -262,7 +262,7 @@ textarea.field{resize:none;min-height:96px;line-height:1.45}
     <input id="nameInput" class="field" maxlength="20" autocomplete="off" placeholder="Ví dụ: Minh An" enterkeyhint="go">
     <div id="nameErr"></div>
     <button id="enterBtn" class="btn primary" disabled>Đang mở cổng chùa…</button>
-    <div class="fine">Trò chơi thư giãn. Không đăng nhập, không quảng cáo, không thu thập dữ liệu — mọi thứ chỉ lưu trên máy của bạn.</div>
+    <div class="fine">Trò chơi thư giãn. Không đăng nhập, không quảng cáo, không thu thập dữ liệu; tiến trình chơi chỉ lưu trên máy của bạn. Chế độ đi chùa cùng mọi người bật sẵn: người đang chơi khác thấy tên và nhân vật của bạn; muốn đi một mình thì tắt trong Cài đặt.</div>
   </div>
 </div>
 
@@ -275,7 +275,7 @@ textarea.field{resize:none;min-height:96px;line-height:1.45}
 
 <noscript><p style="position:fixed;inset:0;display:grid;place-items:center;color:#fff">Hãy bật JavaScript để vào chùa.</p></noscript>
 
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/","trystero":"https://cdn.jsdelivr.net/npm/trystero@0.26.0/+esm"}}</script><!-- "trystero": chỉ tải khi bật "Đi chùa cùng mọi người" (22-di-chua-chung.js, import() động); +esm của jsDelivr gói kèm @trystero-p2p/nostr, @trystero-p2p/core, @noble/secp256k1 cùng phiên bản -->
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/","trystero":"https://cdn.jsdelivr.net/npm/trystero@0.26.0/+esm"}}</script><!-- "trystero": chỉ tải khi công tắc "Đi chùa cùng mọi người" đang bật (bật mặc định trên trang công khai, tắt mặc định trên bản chạy ngay trên máy; 22-di-chua-chung.js, import() động); +esm của jsDelivr gói kèm @trystero-p2p/nostr, @trystero-p2p/core, @noble/secp256k1 cùng phiên bản -->
 <script>
 // Nếu thư viện 3D không tải được (mất mạng), báo nhẹ nhàng trên màn chào
 (function(){
@@ -449,6 +449,7 @@ const SOUND_CATS = [
   ['amb', 'Âm thanh xung quanh', 'Gió, lá xào xạc, chim hót, dế kêu'],
   ['chant', 'Tụng kinh & chuông xa', 'Tiếng tụng kinh trong điện, chuông chùa ngân xa'],
   ['sfx', 'Hiệu ứng', 'Thỉnh chuông, gõ mõ, thắp hương, bước chân, nút bấm'],
+  ['voice', 'Âm lượng giọng nói', 'Tiếng người cùng nhóm nói chuyện'], // giọng nói trong nhóm riêng (modules 22–25)
 ];
 const SOUND_DEF = () => Object.fromEntries(SOUND_CATS.map(([k]) => [k, { on: true, v: 70 }]));
 const DEF_SAVE = () => ({
@@ -1236,7 +1237,7 @@ function openSound() {
     head.append(txt, sw);
     const line = U.el('div', 'snd-line');
     const r = document.createElement('input');
-    r.type = 'range'; r.min = '0'; r.max = '100'; r.step = '1'; r.setAttribute('aria-label', k === 'master' ? label : 'Âm lượng ' + label.toLowerCase());
+    r.type = 'range'; r.min = '0'; r.max = '100'; r.step = '1'; r.setAttribute('aria-label', /^Âm lượng/.test(label) ? label : 'Âm lượng ' + label.toLowerCase());
     const val = U.el('span', 'snd-v');
     line.append(r, val); row.append(head, line); box.appendChild(row);
     const paint = () => {
@@ -4123,6 +4124,7 @@ function installAudio(G) {
     bell: 0.15, bellSoft: 0.15, bowl: 0.17, mo: 0.3, ui: 0.11, chime: 0.15, step: 0.06, khanh: 0.16, // hiệu ứng
     duck: 0.6, // khi đang làm hoạt động, âm nền còn 60% (hạ ~40%)
     music: 0.23, musicDuck: 0.4, // nhạc nền (bài gốc ~-13 LUFS → ~-26 LUFS); khi làm hoạt động còn 40%
+    voiceMusicDuck: 0.35, voiceAmbDuck: 0.5, // khi trong nhóm có người đang nói: nhạc còn 35%, âm nền còn 50% (nhân với mức hạ của hoạt động)
     windChime: 0.045, // chuông gió dưới mái hiên: rất khẽ
   };
   const HALL = { x: 0, z: G.frame.xf(0, 0, -20).z }; // tâm chính điện (v4: toạ độ gốc -20 → xf = z −99,7, đúng trục mái −99,75; v3: -16 khi điện còn nông): nơi nghe tụng kinh rõ nhất
@@ -4131,12 +4133,13 @@ function installAudio(G) {
   // ===== Trạng thái chung =====
   let ctx = null, ready = false, initAt = -1e9;
   let master = null, tone = null, comp = null, sfxBus = null, ambBus = null, sfxRev = null, ambRev = null, musicBus = null;
+  let voiceBus = null; // đích nối giọng nói trong nhóm (module 24): voiceBus → kênh 'voice' → master
   let convolver = null, revHP = null, revReturn = null;
   let bufWhite = null, bufPink = null;
   // chạy tự động (Chrome headless / webdriver khi kiểm thử): luôn tắt tiếng — Chrome headless mới vẫn phát âm thanh ra loa máy người dùng
   const AUTO = !!navigator.webdriver || /HeadlessChrome/i.test(navigator.userAgent || '');
   let muted = AUTO || !!(G.save && G.save.data && G.save.data.muted), mutedTouched = false;
-  let ducked = false, lowQ = false, hiddenSuspended = false;
+  let ducked = false, voiceDucked = false, lowQ = false, hiddenSuspended = false;
   let suspendTimer = 0, lookTimer = 0;
   let budget = 160, budgetT = 0; // "ngân sách giọng": chống quá tải khi quá nhiều tiếng phát dồn dập
   let lastStep = -1, lastUi = -1, stepSide = 1, curVol = 1;
@@ -4278,7 +4281,8 @@ function installAudio(G) {
     // mỗi kênh một cặp gain khô/vang đổ vào bus chung (bus chung vẫn lo việc hạ âm khi làm hoạt động)
     const pair = (tgt, dry, rev) => { tgt.dry = mkGain(1); tgt.rev = mkGain(1); tgt.dry.connect(dry); tgt.rev.connect(rev); return [tgt.dry, tgt.rev]; };
     const musicG = mkGain(1); musicBus.connect(musicG); musicG.connect(master);
-    CAT.master = [userG]; CAT.music = [musicG];
+    voiceBus = mkGain(1); const voiceG = mkGain(1); voiceBus.connect(voiceG); voiceG.connect(master); // giọng nói trong nhóm: qua cùng bộ lọc và nén với mọi tiếng khác, âm lượng theo kênh 'voice'
+    CAT.master = [userG]; CAT.music = [musicG]; CAT.voice = [voiceG];
     CAT.sfx = pair(SFXT, sfxBus, sfxRev); CAT.amb = pair(AMBT, ambBus, ambRev);
     CAT.chant = pair(CHT, ambBus, ambRev); CAT.chime = pair(WCT, ambBus, ambRev);
     PVT.dry = master; PVT.rev = sfxRev;
@@ -4832,6 +4836,7 @@ function installAudio(G) {
   }
   // nghe thử một kênh ngay khi chỉnh (bảng cài đặt âm thanh)
   function preview(k) {
+    if (k === 'voice') return; // giọng người cùng nhóm không có tiếng nghe thử
     if (!canPlay() || !chOn(k)) return;
     if (k === 'chime') windChimes(4, true);
     else if (k === 'sfx') play('chime');
@@ -4871,14 +4876,16 @@ function installAudio(G) {
     if (cricketBus) cricketBus.gain.value = LV.crickets * U.smoothstep(0.15, 0.7, nightS);
   }, 70);
 
-  // hạ âm nền ~40% khi đang làm hoạt động
-  function setDuck(on) {
-    ducked = !!on;
+  // hạ âm nền ~40% khi đang làm hoạt động; thêm lớp hạ khi trong nhóm có người đang nói (voiceDuck). Hai lớp nhân với nhau và chỉ có MỘT đích cho mỗi bus, nên không giằng co.
+  function applyDuck() {
     if (!ready) return;
-    const t = ctx.currentTime, v = ducked ? LV.duck : 1, tc = ducked ? 0.35 : 0.9;
+    const t = ctx.currentTime, low = ducked || voiceDucked, tc = low ? 0.35 : 0.9;
+    const v = (ducked ? LV.duck : 1) * (voiceDucked ? LV.voiceAmbDuck : 1);
     for (const g of [ambBus.gain, ambRev.gain]) { g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.setTargetAtTime(v, t, tc); }
-    const mg = musicBus.gain; mg.cancelScheduledValues(t); mg.setValueAtTime(mg.value, t); mg.setTargetAtTime(LV.music * (ducked ? LV.musicDuck : 1), t, tc);
+    const mg = musicBus.gain; mg.cancelScheduledValues(t); mg.setValueAtTime(mg.value, t); mg.setTargetAtTime(LV.music * (ducked ? LV.musicDuck : 1) * (voiceDucked ? LV.voiceMusicDuck : 1), t, tc);
   }
+  function setDuck(on) { ducked = !!on; applyDuck(); }
+  function voiceDuck(on) { on = !!on; if (on === voiceDucked) return; voiceDucked = on; applyDuck(); }
 
   // bước chân: đá > cỏ về độ to (đá nhỏ hơn), chống dồn dập
   function surfaceAt(p) {
@@ -4923,8 +4930,9 @@ function installAudio(G) {
       } else {
         master.gain.setValueAtTime(0, t); master.gain.linearRampToValueAtTime(LV.master, t + 1.5); // vào chùa: âm thanh hiện dần
       }
-      if (ducked) setDuck(true);
+      if (ducked || voiceDucked) applyDuck();
       startAmbience();
+      G.events.emit('audio:ready'); // mỗi lần âm thanh sẵn sàng (module 24 nối giọng nói vào voiceIn())
     } catch (e) {
       console.error('[âm thanh] không khởi tạo được', e);
       ready = false; A.ready = false;
@@ -5003,8 +5011,10 @@ function installAudio(G) {
     init, setMuted, isMuted: () => muted, play, dispose,
     duck: setDuck, // hạ/khôi phục âm nền thủ công
     musicBus: () => musicBus, // đích nối nhạc nền (null khi chưa khởi tạo)
+    voiceIn: () => (ctx && ready ? voiceBus : null), // đích nối giọng nói trong nhóm (GainNode; null khi chưa có âm thanh)
+    voiceDuck, // true: hạ nhạc còn 35% và âm nền còn 50% khi có người nói; false: trả lại
     applyLevels: () => applyLevels(false), // áp lại âm lượng các kênh sau khi người chơi chỉnh
-    preview, // nghe thử một kênh: 'chime' | 'sfx' | 'master' | 'amb'
+    preview, // nghe thử một kênh: 'chime' | 'sfx' | 'master' | 'amb' ('voice' không có tiếng)
     channel: (k) => (CAT[k] ? CAT[k][0] : null), // nút gain của một kênh (để kiểm thử)
     now: () => (ctx ? ctx.currentTime : performance.now() / 1000), // giờ AudioContext (giây) để trò gõ mõ canh nhịp
   });
@@ -12913,12 +12923,14 @@ function installKinhVan(G) {
 // ----- 22-di-chua-chung.js -----
 // =====================================================================
 //  ĐI CHÙA CHUNG (module 22): nhiều người cùng dạo chùa, cùng ngồi thiền qua kết nối NGANG HÀNG (WebRTC).
-//  Thư viện: Trystero 0.26.0 (MIT, import map "trystero" → jsDelivr +esm, ghim đúng phiên bản; chỉ tải khi người chơi BẬT công tắc,
-//  tắt mặc định nên người không dùng không tải thêm byte nào). Đây là NGOẠI LỆ duy nhất của luật "không tài sản ngoài" (xem src/API.md).
+//  Thư viện: Trystero 0.26.0 (MIT, import map "trystero" → jsDelivr +esm, ghim đúng phiên bản; tải khi công tắc đang BẬT. Trang công khai BẬT MẶC ĐỊNH từ
+//  2026-11-09 (chủ trò chơi quyết định: ai vào cũng thấy mọi người; ai đã tự tắt thì giữ tắt), nên mỗi người vào chùa tải thêm khoảng 70 kB trừ khi đã tắt;
+//  bản chạy ngay trên máy (localhost, 127.0.0.1, [::1], *.localhost, file://) TẮT mặc định (xem DEF_ON). Đây là NGOẠI LỆ duy nhất của luật "không tài sản ngoài" (xem src/API.md).
 //  Chiến lược tìm nhau: NOSTR (mặc định của Trystero). Lý do: không cần khoá API hay tài khoản (Supabase / Firebase cần), không cần máy chủ
 //  riêng (ws-relay cần); Trystero 0.26 kèm danh sách 29 relay công cộng, trò chơi dùng 8 relay cùng lúc (RELAYS, chọn theo appId); relay chỉ chuyển "lời mời
 //  kết nối" đã mã hoá (AES-GCM, khoá suy từ appId + tên phòng) rồi hai trình duyệt nói chuyện thẳng với nhau qua WebRTC. ICE: STUN mặc định
-//  của Trystero (stun.l.google.com / stun1 / stun2 và stun.cloudflare.com), KHÔNG có TURN. Không có máy chủ nào của trò chơi.
+//  của Trystero (stun.l.google.com / stun1 / stun2 và stun.cloudflare.com) cộng máy chủ chuyển tiếp TURN trong TURN_SERVERS (khi chủ trò chơi đã khai; dùng lúc hai bên không
+//  nối thẳng được, ví dụ một máy 5G và một máy Wi-Fi: nhà mạng di động dùng NAT khắt khe). Không có máy chủ nào của trò chơi.
 //  Chia sẻ: tên hiển thị (≤ 20 ký tự, đã lọc), vị trí x/z + độ cao + hướng, tư thế / hoạt động đang làm (thắp hương, thỉnh chuông, gõ mõ,
 //  ngồi tụng kinh / thiền + chỉ số bồ đoàn), 3 cử chỉ đặt sẵn (chắp tay, cúi chào, vẫy tay) — 10 lần/giây khi có thay đổi — và LỜI NÓI
 //  gõ tự do (người dùng quyết định 2026-11-08): ≤ 60 ký tự Unicode, 1 câu / 2 giây (áp ở CẢ phía gửi lẫn phía nhận), lọc từ thô → "•••"
@@ -12927,7 +12939,8 @@ function installKinhVan(G) {
 //  Phía nhận là hàng rào thật: gói sai kiểu / quá dài bị bỏ trước mọi xử lý, hạn mức theo từng người (trạng thái 25/giây, cử chỉ 2/giây,
 //  lời 1 / 2 giây, đổi tên 1 / 30 giây), tối đa 48 người theo dõi, Trystero nhận tối đa 16 KiB một gói (maxReceiveBytes).
 //  Không lưu lịch sử chat; chỉ giữ bộ đếm và một nhật ký ngắn (≤ 80 dòng) trong bộ nhớ để gỡ lỗi — không ghi xuống máy, mất khi tải lại.
-//  Lưu: G.save.data.chung = { on, code, muteChat } (chỉ tạo khi người chơi bật hoặc nhập mã). API: G.chung (cuối tệp). Bảng cài đặt: 'ui:settings'.
+//  Giọng nói trong nhóm riêng (modules 23–25) bám vào đây qua cờ vo trong gói st, các sự kiện chung:* / ui:chung-* và API G.chung (cuối tệp); module này không tự mở micro.
+//  Lưu: G.save.data.chung = { on, code, muteChat, voice, voiceQuiet } (chỉ tạo khi người chơi đổi công tắc / mã / tắt chữ, hoặc khi câu báo mặc định hiện lần đầu: noticeOnce; voice / voiceQuiet đọc bằng !== false nên bản lưu cũ mặc định là bật). API: G.chung (cuối tệp). Bảng cài đặt: 'ui:settings'.
 // =====================================================================
 function installDiChuaChung(G) {
   const { THREE, util: U, scene } = G;
@@ -12944,6 +12957,14 @@ function installDiChuaChung(G) {
   const MAX_SHOW = 16;                        // số người hiển thị tối đa
   const MAX_PEERS = 48;                       // số người theo dõi tối đa (quá thì bỏ qua gói của người mới)
   const MAX_RECV = 16384;                     // Trystero: gói nhận tối đa (byte) — cũng là trần cho gói "signal" nội bộ (SDP vài KB), nên không đặt nhỏ hơn
+  // Máy chủ chuyển tiếp TURN (tài khoản ExpressTURN miễn phí của chủ trò chơi). Rỗng = chỉ STUN: hai máy sau NAT khắt khe (4G/5G với Wi-Fi) có thể không nối được.
+  // CÁCH KHAI (sửa đúng dòng khai báo bên dưới, giữ trên MỘT dòng, không dấu chấm phẩy trong dấu ngoặc vuông): lấy "username" và "credential" của TURN trong bảng
+  // điều khiển ExpressTURN (KHÔNG phải mật khẩu tài khoản); "urls" chép đúng các địa chỉ trang đó liệt kê, nhớ có địa chỉ TCP (và địa chỉ TLS / cổng 443 nếu có) vì
+  // nhiều mạng chặn UDP 3478. Mẫu một phần tử: urls: ['turn:MÁY-CHỦ:3478?transport=udp', 'turn:MÁY-CHỦ:3478?transport=tcp'], username: 'TÊN', credential: 'MÃ'
+  // Tên và mã nằm công khai trong mã nguồn trang (ai cũng đọc được, với loại dịch vụ này là bình thường): theo dõi hạn mức, đổi mã nếu bị lạm dụng. Dữ liệu qua TURN vẫn
+  // mã hoá đầu-cuối (DTLS): máy chủ thấy địa chỉ IP và lưu lượng, không đọc được nội dung. Khai sai (thiếu username / credential, địa chỉ hỏng…) thì turnList() bỏ cả danh sách và
+  // ghi lỗi vào "Chi tiết kết nối"; trò chơi vẫn chạy bằng STUN. Chữ về riêng tư trong Cài đặt tự nhắc tới máy chủ chuyển tiếp khi danh sách dùng được.
+  const TURN_SERVERS = [];
   const RELAYS = 8;                           // số relay Nostr dùng cùng lúc (mặc định 5 trong danh sách 29): thêm điểm hẹn chung để hai bên tìm thấy nhau sớm hơn
   const SEND_HZ = 10, HEARTBEAT = 1.0;        // gửi khi có thay đổi (≤ 10 lần/giây), ít nhất 1 lần/giây để báo còn đó
   const ST_RATE = 25, GE_GAP = 0.5;           // phía nhận: trạng thái > 25 gói/giây → bỏ; cử chỉ cách nhau < 0,5 giây → bỏ
@@ -12960,19 +12981,44 @@ function installDiChuaChung(G) {
   const seats = (G.world && G.world.seats) || (G.spots && G.spots.hallSeats) || [];
   const tutOpen = () => { const t = document.getElementById('tut'); return !!t && !t.classList.contains('hidden'); };
 
-  // ---------- Cài đặt lưu trên máy: ĐỌC không tạo khoá (người chưa từng bật không có gì thêm trong save), GHI mới tạo ----------
+  // ---------- Cài đặt lưu trên máy: ĐỌC không tạo khoá, GHI mới tạo (cfgWrite: khi người chơi đổi công tắc / mã / tắt chữ, hoặc khi câu báo mặc định hiện lần đầu) ----------
   const cleanCode = (s) => G.text.strip(String(s || '')).toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24);
-  const DEF_CHUNG = Object.freeze({ on: false, code: '', muteChat: false });
+  // Mặc định của công tắc: trang công khai BẬT (từ 2026-11-09, ai tự tắt thì save giữ on:false); bản chạy ngay trên máy (localhost, 127.0.0.1, [::1], *.localhost, file://)
+  // TẮT, để bản thử và bản xem trước không bao giờ tự vào phòng chung có người thật. Bài kiểm thử đặt window.__chungLocalDefaultOn = true (trước khi trang chạy)
+  // để thử đúng mặc định thật, và chỉ sau một WebSocket giả không bao giờ mở.
+  const LOCAL = location.protocol === 'file:' || /^(localhost|127(\.\d{1,3}){3}|\[::1\])$/.test(location.hostname) || /\.localhost$/.test(location.hostname);
+  const DEF_ON = !LOCAL || window.__chungLocalDefaultOn === true;
+  const DEF_CHUNG = Object.freeze({ on: DEF_ON, code: '', muteChat: false, voice: true, voiceQuiet: true });
   function cfgRead() { const c = G.save.data.chung; return c && typeof c === 'object' ? c : DEF_CHUNG; }
-  const isOn = () => !!cfgRead().on, codeOf = () => cleanCode(cfgRead().code), isMuted = () => !!cfgRead().muteChat;
+  const onOf = (c) => (typeof c.on === 'boolean' ? c.on : DEF_CHUNG.on);
+  const chose = () => { const c = G.save.data.chung; return !!c && typeof c === 'object' && typeof c.on === 'boolean'; }; // đã từng tự bật / tắt
+  const isOn = () => onOf(cfgRead()), codeOf = () => cleanCode(cfgRead().code), isMuted = () => !!cfgRead().muteChat;
   function cfgWrite() {
     const d = G.save.data;
-    if (!d.chung || typeof d.chung !== 'object') d.chung = { on: false, code: '', muteChat: false };
-    const c = d.chung; c.on = !!c.on; c.code = cleanCode(c.code); c.muteChat = !!c.muteChat;
+    if (!d.chung || typeof d.chung !== 'object') d.chung = { on: DEF_CHUNG.on, code: '', muteChat: false, voice: true, voiceQuiet: true };
+    const c = d.chung; c.on = onOf(c); c.code = cleanCode(c.code); c.muteChat = !!c.muteChat;
+    c.voice = c.voice !== false; c.voiceQuiet = c.voiceQuiet !== false; // chỉ false thật mới tắt: bản lưu cũ chưa có hai khoá này đọc là bật
     return c;
   }
   const persist = () => { try { G.save.persist(); } catch (e) { /* không lưu được thì thôi */ } };
   const myName = () => G.text.cleanName(P.name || G.save.data.name) || 'Phật tử';
+  // ---------- Móc cho giọng nói nhóm (modules 23–25) ----------
+  const ALNUM_MIN = 10;                       // mã nhóm cần ít nhất ngần này chữ hoặc số (không tính dấu gạch) mới dùng được giọng nói: mã ngắn người lạ dễ đoán
+  const voiceEligible = () => codeOf().replace(/[^a-z0-9]/g, '').length >= ALNUM_MIN;
+  function voiceCfg() { const c = cfgRead(); return { voice: c.voice !== false, voiceQuiet: c.voiceQuiet !== false }; }
+  function setVoiceCfg(patch) { // gộp vào save.chung (cfgWrite chuẩn hoá), lưu, báo chung:change; trả về cấu hình mới
+    const c = cfgWrite();
+    if (patch && typeof patch === 'object') {
+      if (patch.voice !== undefined) c.voice = !!patch.voice;
+      if (patch.voiceQuiet !== undefined) c.voiceQuiet = !!patch.voiceQuiet;
+    }
+    cfgWrite(); persist(); G.events.emit('chung:change');
+    return voiceCfg();
+  }
+  function voFlags() { try { return G.voice && G.voice.flags ? (G.voice.flags() | 0) & 3 : 0; } catch (e) { return 0; } } // bit 1: đang nghe, bit 2: đang mở micro (module 24)
+  let relistN = 0;                            // tăng mỗi lần relist(): đổi chữ ký danh sách người nên lần vẽ sau dựng lại
+  const relist = () => { relistN++; };
+  const isLive = (p) => !!(p && p.got && !p.gone && now() - p.last < STALE_S); // đang hiện diện: có vị trí, chưa rời, tin còn mới
 
   // =====================================================================
   //  LỜI NÓI: làm sạch, lọc từ thô, chặn địa chỉ web / dãy số — áp ở CẢ phía gửi (người gõ thấy ngay) lẫn phía nhận (hàng rào thật)
@@ -13108,6 +13154,7 @@ function installDiChuaChung(G) {
     g.clearRect(0, 0, w, h);
     g.font = '700 54px system-ui, "Segoe UI", Roboto, Arial, sans-serif';
     const tw = Math.min(w - 20, g.measureText(n).width + 56), x0 = (w - tw) / 2;
+    t.half = (t.sprite.scale.x * tw) / (2 * w); // nửa bề ngang tấm tên thật (mét): module giọng nói đặt dấu sóng sát mép trái tấm
     g.fillStyle = 'rgba(24,40,30,0.8)'; g.strokeStyle = 'rgba(121,184,147,0.9)'; g.lineWidth = 4;
     const r = 40; g.beginPath(); g.moveTo(x0 + r, 8); g.arcTo(x0 + tw, 8, x0 + tw, h - 8, r); g.arcTo(x0 + tw, h - 8, x0, h - 8, r); g.arcTo(x0, h - 8, x0, 8, r); g.arcTo(x0, 8, x0 + tw, 8, r); g.closePath(); g.fill(); g.stroke();
     g.fillStyle = '#eaf6ee'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(n, w / 2, h / 2 + 2, w - 60);
@@ -13125,7 +13172,7 @@ function installDiChuaChung(G) {
   let lastHandlerMs = 0;     // thời gian xử lý gói 'st' gần nhất (ms) — kiểm tra
   function mkPeer(id) {
     const p = {
-      id, slot: -1, name: 'Phật tử', nameRaw: null, nameAt: 0, got: false,
+      id, slot: -1, name: 'Phật tử', nameRaw: null, nameAt: 0, got: false, vo: 0, // vo: cờ giọng nói người kia tự khai (bit 1 nghe, bit 2 đang mở micro)
       tx: 0, tz: 0, tyaw: PI, h: 0, hGot: false, x: 0, z: 0, y: 0, gy: 0, yaw: PI, px: 0, pz: 0, speed: 0, phase: 0, walkAmt: 0, ph: Math.random() * TAU,
       pose: 'idle', poseT: 0, act: '', seat: -1, seatMarked: -1, markTry: 0, gest: '', gestT: 0, lastGe: -9,
       last: now(), gone: false, vis: 0, visT: 1, wedged: false, said: false, heard: false, lastChat: -9, stN: 0, stWin: 0, bv: new V3(), getBV: null, bub: null, // last = lúc vào phòng: không bị coi là im lặng 30 giây rồi gỡ ngay khi vừa nối
@@ -13158,6 +13205,7 @@ function installDiChuaChung(G) {
     dbg('peer:remove', p.id);
     unmarkSeat(p);
     freeSlot(p);
+    G.events.emit('chung:peer-remove', p.id); // bản ghi còn nằm trong danh sách lúc phát
     peers.delete(p.id);
     const i = plist.indexOf(p); if (i >= 0) plist.splice(i, 1);
   }
@@ -13233,6 +13281,8 @@ function installDiChuaChung(G) {
     if (typeof data.n === 'string') setName(p, data.n);
     if (!p.heard) { p.heard = true; dbg('peer:first-state', peerId); }
     p.last = t; p.gone = false;
+    const vo = (data.vo | 0) & 3; // cờ giọng nói do người kia tự khai; giá trị lạ hay thiếu → một số 0–3
+    if (vo !== p.vo) { p.vo = vo; G.events.emit('chung:vo', peerId, vo); }
     lastHandlerMs = performance.now() - t0;
   }
   function onGesture(data, peerId) {
@@ -13288,6 +13338,7 @@ function installDiChuaChung(G) {
     const p = peers.get(peerId);
     if (p) { if (on) unmarkSeat(p); else p.markTry = 0; }
     G.events.emit('chung:change');
+    G.events.emit('chung:hide', peerId, on);
     return on;
   }
 
@@ -13362,16 +13413,27 @@ function installDiChuaChung(G) {
     if (t.name !== p.name) drawTag(t, p.name);
     t.sprite.position.set(p.x, vy + 1.95, p.z);
     p.bv.set(p.x, vy, p.z); // điểm gắn bong bóng lời nói (G.ui.bubble đọc qua p.getBV)
-    _tv.set(p.x, vy + 1, p.z);
-    const d = _tv.distanceTo(G.camera.position);
-    const op = p.vis * clamp((40 - d) / 8, 0, 1);
+    const op = tagK(p, vy);
     t.sprite.material.opacity = op; t.sprite.visible = op > 0.02;
+  }
+  // độ hiện của bảng tên: độ hiện của người × mờ dần theo khoảng cách tới máy quay (rõ trong 32 m, hết ở 40 m)
+  function tagK(p, vy) {
+    _tv.set(p.x, vy + 1, p.z);
+    return p.vis * clamp((40 - _tv.distanceTo(G.camera.position)) / 8, 0, 1);
+  }
+  // Điểm neo bảng tên (module giọng nói đặt dấu sóng nói bên cạnh): tâm bảng tên trong thế giới, k = độ hiện đúng bằng độ mờ của bảng tên, half = nửa bề ngang tấm tên (mét); null khi người này chưa có ô vẽ
+  function anchor(p) {
+    if (!p || !built || p.slot < 0) return null;
+    const t = tags[p.slot], vy = p.bv.y;
+    return { x: p.x, y: vy + 1.95, z: p.z, k: tagK(p, vy), half: t && t.half ? t.half : 0.625 };
   }
 
   // =====================================================================
   //  KẾT NỐI: Trystero (tải động khi bật), một phòng cố định (+ mã nhóm riêng), ba "hành động": st (trạng thái), ge (cử chỉ), ch (lời nói)
   // =====================================================================
   let lib = null, room = null, sendSt = null, sendGe = null, sendCh = null, gen = 0, sendTimer = 0;
+  let roomCode = ''; // mã nhóm của phòng đang vào ('' = phòng chung)
+  let held = false, enterHeld = false, noticeDue = false; // giữ phòng mặc định (holdDefault); enterHeld: 'enter' đã đến lúc đang giữ; noticeDue: lúc đó người chơi chưa từng chọn công tắc
   let status = 'off', statusMsg = '', statusMsgAt = 0; // off | loading | connecting | on | error; statusMsg (từ onJoinError) tự xoá sau 30 giây hoặc khi có người mới gửi trạng thái
   let lastSent = null, lastSentAt = 0;
   const evlog = []; // nhật ký ngắn (≤ 80 dòng, chỉ trong bộ nhớ) để gỡ lỗi / kiểm tra: { t (giây), ev, id }
@@ -13379,7 +13441,7 @@ function installDiChuaChung(G) {
   // ---------- Chẩn đoán hiện trong Cài đặt ("Chi tiết kết nối"): để người dùng điện thoại chụp màn hình khi không thấy nhau ----------
   // Chỉ là bộ đếm và lời lỗi ngắn trong bộ nhớ (không địa chỉ IP, không lưu xuống máy): số điểm hẹn đang mở, số lần bắt tay WebRTC
   // (nối được / hỏng / bỏ dở), lỗi gần nhất của thư viện, phiên bản iOS và việc trang đang mở trong trình duyệt nhúng của một ứng dụng.
-  const diag = { hs: 0, ok: 0, fail: 0, drop: 0, err: [], rej: new Set() }; // rej: điểm hẹn từ chối loại tin của Trystero (vô hại khi các điểm hẹn khác vẫn nhận)
+  const diag = { hs: 0, ok: 0, fail: 0, drop: 0, relay: 0, err: [], rej: new Set() }; // rej: điểm hẹn từ chối loại tin của Trystero (vô hại khi các điểm hẹn khác vẫn nhận)
   function diagErr(m) { m = String(m == null ? '' : m).replace(/\s+/g, ' ').trim().slice(0, 160); if (!m) return;
     const rj = /relay failure from wss?:\/\/([^\s/]+)/i.exec(m); if (rj) { if (!diag.rej.has(rj[1])) { diag.rej.add(rj[1]); G.events.emit('chung:change'); } return; } if (diag.err[diag.err.length - 1] === m) return; diag.err.push(m); if (diag.err.length > 3) diag.err.shift(); G.events.emit('chung:change'); }
   const ENV = (() => {
@@ -13387,11 +13449,38 @@ function installDiChuaChung(G) {
     const iosDev = /\b(?:iPhone|iPad|iPod)\b/.test(ua);
     const m = / OS (\d+)_(\d+)/.exec(ua);
     // trình duyệt nhúng: Facebook / Messenger / Instagram / Zalo / Line / TikTok / ứng dụng Google; WebView Android có "; wv)";
-    // trên iPhone, Safari / Chrome / Firefox / Edge đều có "Safari/" trong UA, còn WKWebView của ứng dụng thì không
-    const inApp = /FBAN|FBAV|FB_IAB|Messenger|Instagram|Zalo|Line\/|TikTok|musical_ly|Bytedance|; wv\)|GSA\//i.test(ua) || (iosDev && !/Safari\//.test(ua));
+    // trên iPhone, Safari / Chrome / Firefox / Edge đều có "Safari/" trong UA, còn WKWebView của ứng dụng thì không; web app trên Màn hình chính (navigator.standalone) cũng không có "Safari/" nhưng KHÔNG phải trình duyệt nhúng
+    const inApp = /FBAN|FBAV|FB_IAB|Messenger|Instagram|Zalo|Line\/|TikTok|musical_ly|Bytedance|; wv\)|GSA\//i.test(ua) || (iosDev && !/Safari\//.test(ua) && navigator.standalone !== true);
     return { ios: iosDev && m ? m[1] + '.' + m[2] : '', inApp, rtc: typeof window.RTCPeerConnection === 'function' };
   })();
   let rtcClass = null;
+  let turnMemo = null, turnBad = '';
+  function turnList() { // danh sách máy chủ chuyển tiếp DÙNG THẬT: trình duyệt kiểm MỘT lần; sai thì bỏ cả danh sách (và ghi lỗi) để trang vẫn nối bằng STUN
+    if (turnMemo) return turnMemo;
+    let list = [];
+    if (TURN_SERVERS.length && typeof window.RTCPeerConnection === 'function') {
+      try { new window.RTCPeerConnection({ iceServers: TURN_SERVERS }).close(); list = TURN_SERVERS; }
+      catch (e) { turnBad = 'Danh sách máy chủ chuyển tiếp (TURN_SERVERS) sai nên đã bỏ qua: ' + ((e && e.message) || e); diagErr(turnBad); }
+    }
+    return (turnMemo = list);
+  }
+  function viaRelay(pc) { // nối xong: cặp ứng viên đang dùng có đi qua TURN không (đọc candidateType, không đọc địa chỉ); không có danh sách thì không cặp nào đi qua
+    if (!turnList().length) return;
+    let tries = 0;
+    const look = () => {
+      if (pc.connectionState === 'closed') return;
+      let stats; try { stats = pc.getStats(); } catch (e) { return; }
+      stats.then((rep) => {
+        let pair = null;
+        rep.forEach((s) => { if (s.type === 'transport' && s.selectedCandidatePairId) pair = rep.get(s.selectedCandidatePairId) || pair; });
+        if (!pair) rep.forEach((s) => { if (!pair && s.type === 'candidate-pair' && s.state === 'succeeded' && s.nominated) pair = s; });
+        if (!pair) { if (++tries < 5) setTimeout(look, 1000); return; }
+        const l = rep.get(pair.localCandidateId), r = rep.get(pair.remoteCandidateId);
+        if ((l && l.candidateType === 'relay') || (r && r.candidateType === 'relay')) { diag.relay++; G.events.emit('chung:change'); }
+      }).catch(() => { /* bỏ qua */ });
+    };
+    setTimeout(look, 300);
+  }
   function makeRtcClass() { // lớp RTCPeerConnection riêng truyền cho Trystero (tuỳ chọn rtcPolyfill): chỉ ĐẾM trạng thái bắt tay, không đọc địa chỉ
     if (rtcClass || !ENV.rtc) return rtcClass;
     const O = window.RTCPeerConnection;
@@ -13403,7 +13492,7 @@ function installDiChuaChung(G) {
           if (!seen && this.remoteDescription) { seen = true; diag.hs++; G.events.emit('chung:change'); }
           if (!seen || done) return;
           const c = this.connectionState, i = this.iceConnectionState;
-          if (c === 'connected' || i === 'connected' || i === 'completed') { done = true; diag.ok++; G.events.emit('chung:change'); }
+          if (c === 'connected' || i === 'connected' || i === 'completed') { done = true; diag.ok++; G.events.emit('chung:change'); viaRelay(this); }
           else if (c === 'failed' || i === 'failed') { done = true; diag.fail++; G.events.emit('chung:change'); }
         };
         this.addEventListener('signalingstatechange', check);
@@ -13428,12 +13517,14 @@ function installDiChuaChung(G) {
   function diagText() {
     if (!isOn() || status === 'off') return '';
     const r = relayStats();
-    const parts = ['Chi tiết kết nối: điểm hẹn ' + r.open + '/' + (r.total || RELAYS) + (diag.rej.size ? ' (' + diag.rej.size + ' từ chối)' : ''), 'bắt tay ' + diag.hs + ' (nối ' + diag.ok + ', hỏng ' + diag.fail + ', bỏ dở ' + diag.drop + ')'];
+    const parts = ['Chi tiết kết nối: điểm hẹn ' + r.open + '/' + (r.total || RELAYS) + (diag.rej.size ? ' (' + diag.rej.size + ' từ chối)' : ''), 'bắt tay ' + diag.hs + ' (nối ' + diag.ok + (diag.relay ? ', qua máy chủ chuyển tiếp ' + diag.relay : '') + ', hỏng ' + diag.fail + ', bỏ dở ' + diag.drop + ')'];
+    if (!turnList().length) parts.push('chưa có máy chủ chuyển tiếp');
     if (ENV.ios) parts.push('iOS ' + ENV.ios);
     if (ENV.inApp) parts.push('trình duyệt trong ứng dụng');
     if (!ENV.rtc) parts.push('không có WebRTC');
     let t = parts.join(' · ');
     if (diag.err.length) t += '\nLỗi gần nhất: ' + diag.err[diag.err.length - 1];
+    if (turnBad && diag.err[diag.err.length - 1] !== turnBad) t += '\n' + turnBad; // khai sai máy chủ chuyển tiếp: lý do không bị lỗi khác che (diag.err chỉ giữ 3 dòng)
     return t;
   }
   const IN_APP_TIP = 'Bạn đang mở trang trong trình duyệt của một ứng dụng (Zalo, Messenger, Facebook…). Nếu không thấy ai, hãy mở bằng Safari hoặc Chrome: bấm nút ⋯ / ⋮ rồi chọn "Mở bằng trình duyệt".';
@@ -13450,12 +13541,12 @@ function installDiChuaChung(G) {
     let seat = -1;
     if (act === 'ngoi' && G.crowd && G.crowd.seats) seat = G.crowd.seats.held;
     const r2 = (v) => Math.round(v * 100) / 100;
-    return { v: 1, n: myName(), x: r2(P.pos.x), z: r2(P.pos.z), h: r2(P.pos.y), y: r2(P.yaw), p: P.pose, a: act, s: seat };
+    return { v: 1, n: myName(), x: r2(P.pos.x), z: r2(P.pos.z), h: r2(P.pos.y), y: r2(P.yaw), p: P.pose, a: act, s: seat, vo: voFlags() };
   }
   function maybeSend(force, target) {
     if (!room || !sendSt || !G.started) return;
     const st = myState(), t = now();
-    const changed = force || !lastSent || st.x !== lastSent.x || st.z !== lastSent.z || st.h !== lastSent.h || st.y !== lastSent.y || st.p !== lastSent.p || st.a !== lastSent.a || st.s !== lastSent.s || st.n !== lastSent.n || t - lastSentAt > HEARTBEAT;
+    const changed = force || !lastSent || st.x !== lastSent.x || st.z !== lastSent.z || st.h !== lastSent.h || st.y !== lastSent.y || st.p !== lastSent.p || st.a !== lastSent.a || st.s !== lastSent.s || st.n !== lastSent.n || st.vo !== lastSent.vo || t - lastSentAt > HEARTBEAT;
     if (!changed) return;
     if (!target) { lastSent = st; lastSentAt = t; }
     try { sendSt(st, target); } catch (e) { /* mất kết nối thì bỏ qua, lần sau gửi lại */ }
@@ -13467,9 +13558,11 @@ function installDiChuaChung(G) {
     try { const o = lib.getRelaySockets ? lib.getRelaySockets() : {}; for (const k in o) { try { if (o[k] && o[k].readyState < 2) o[k].close(); } catch (e) { /* bỏ qua */ } } } catch (e) { /* bỏ qua */ }
   }
   async function connect() {
+    held = enterHeld = noticeDue = false; // kết nối nào cũng kết thúc việc giữ phòng mặc định (holdDefault)
     const g = ++gen;
     dbg('connect', codeOf());
-    diag.hs = diag.ok = diag.fail = diag.drop = 0; diag.err.length = 0; diag.rej.clear();
+    diag.hs = diag.ok = diag.fail = diag.drop = diag.relay = 0; diag.err.length = 0; diag.rej.clear();
+    turnList(); if (turnBad) diagErr(turnBad); // lỗi danh sách máy chủ chuyển tiếp (nếu có) hiện lại sau khi xoá bộ đếm
     hookDiag();
     if (!ENV.rtc) { setStatus('error', 'Trình duyệt này không hỗ trợ kết nối ngang hàng (WebRTC). Bạn mở trang bằng Safari hoặc Chrome nhé.'); return; }
     if (!lib) {
@@ -13477,8 +13570,8 @@ function installDiChuaChung(G) {
       try { lib = await import('trystero'); dbg('lib:loaded'); }
       catch (e) {
         console.warn('[đi chùa chung] không tải được thư viện kết nối', e); diagErr('không tải được thư viện: ' + ((e && e.message) || e));
-        // trình duyệt ghi nhớ import() hỏng suốt đời trang: bật lại không đủ, phải tải lại trang; báo mỗi lần bật
-        if (g === gen) { const msg = 'Không tải được phần kết nối. Bạn tải lại trang rồi bật lại nhé.'; setStatus('error', msg); G.ui.toast(msg, 3600); }
+        // trình duyệt ghi nhớ import() hỏng suốt đời trang: thử lại không đủ, phải tải lại trang; báo mỗi lần thử nối
+        if (g === gen) { const msg = 'Không tải được phần đi chùa cùng mọi người. Bạn tải lại trang để thử lại nhé.'; setStatus('error', msg); G.ui.toast(msg, 3600); }
         return;
       }
     }
@@ -13486,25 +13579,33 @@ function installDiChuaChung(G) {
     ensureMeshes();
     setStatus('connecting');
     try { if (lib.resumeRelayReconnection) lib.resumeRelayReconnection(); } catch (e) { /* bỏ qua */ }
-    const code = codeOf();
+    const code = codeOf(); roomCode = code;
     try {
       const rc = makeRtcClass();
-      room = lib.joinRoom({ appId: APP_ID, maxReceiveBytes: MAX_RECV, relayConfig: { redundancy: RELAYS, warnOnRelayFailure: true }, ...(rc ? { rtcPolyfill: rc } : {}) }, ROOM + (code ? '-' + code : ''), {
+      room = lib.joinRoom({ appId: APP_ID, maxReceiveBytes: MAX_RECV, relayConfig: { redundancy: RELAYS, warnOnRelayFailure: true }, ...(turnList().length ? { turnConfig: turnList() } : {}), ...(rc ? { rtcPolyfill: rc } : {}) }, ROOM + (code ? '-' + code : ''), {
         onJoinError: (d) => { console.warn('[đi chùa chung] một người chưa kết nối được', d && d.error); diagErr(d && d.error); dbg('join:error', d && d.peerId); if (g === gen) setStatus('on', 'Có người chưa kết nối được tới bạn (mạng của một trong hai bên chặn kết nối trực tiếp).'); },
       });
       sendSt = hook(room.makeAction('st'), onState);
       sendGe = hook(room.makeAction('ge'), onGesture);
       sendCh = hook(room.makeAction('ch'), onChat);
-      room.onPeerJoin = (id) => { if (g !== gen) return; dbg('peer:join', id); if (addPeer(id)) maybeSend(true, id); G.events.emit('chung:change'); };
-      room.onPeerLeave = (id) => { if (g !== gen) return; dbg('peer:leave', id); const p = peers.get(id); if (p) p.gone = true; G.events.emit('chung:change'); };
+      room.onPeerJoin = (id) => { if (g !== gen) return; dbg('peer:join', id); if (addPeer(id)) maybeSend(true, id); G.events.emit('chung:peer-join', id); G.events.emit('chung:change'); };
+      room.onPeerLeave = (id) => {
+        if (g !== gen) return;
+        dbg('peer:leave', id);
+        const p = peers.get(id);
+        if (p) { p.gone = true; if (p.vo) { p.vo = 0; G.events.emit('chung:vo', id, 0); } } // rời nhóm thì không còn nghe hay nói nữa
+        G.events.emit('chung:peer-leave', id);
+        G.events.emit('chung:change');
+      };
     } catch (e) {
       console.warn('[đi chùa chung] chưa vào được phòng', e); diagErr('chưa vào được phòng: ' + ((e && e.message) || e)); room = null; sendSt = sendGe = sendCh = null;
       setStatus('error', 'Chưa kết nối được. Bạn thử lại sau nhé.'); return;
     }
-    window.addEventListener('beforeunload', onUnload);
+    window.addEventListener('beforeunload', onUnload); window.addEventListener('pagehide', onUnload); // điện thoại hay bỏ qua beforeunload
     setStatus('on');
     clearInterval(sendTimer);
     sendTimer = setInterval(() => maybeSend(false), 1000 / SEND_HZ); // đồng hồ riêng (không theo khung hình): ≤ 10 lần/giây khi đổi, ≥ 1 lần/giây để báo "còn đó" kể cả khi thẻ bị ẩn
+    G.events.emit('chung:room', { room, code }); // module giọng nói gắn onPeerStream vào phòng mới trước khi gói trạng thái đầu tiên (mang cờ vo) được gửi
     maybeSend(true);
     paintBar();
   }
@@ -13512,11 +13613,13 @@ function installDiChuaChung(G) {
     gen++;
     dbg('disconnect');
     clearInterval(sendTimer); sendTimer = 0;
-    window.removeEventListener('beforeunload', onUnload);
+    window.removeEventListener('beforeunload', onUnload); window.removeEventListener('pagehide', onUnload);
+    const had = !!room; // tắt công tắc gọi disconnect() hai lần (lần đầu qua sự kiện 'save'): chỉ báo khi thật sự có phòng để rời
     if (room) { try { room.leave(); } catch (e) { /* bỏ qua */ } }
     room = null; sendSt = sendGe = sendCh = null; lastSent = null;
     closeRelays();
     for (let i = 0; i < plist.length; i++) plist[i].gone = true; // mờ dần rồi gỡ
+    if (had) G.events.emit('chung:room', { room: null, code: codeOf() }); // module giọng nói đóng micro và dọn kết nối trước khi bảng trạng thái vẽ lại
     setStatus('off');
     closeChat();
   }
@@ -13532,11 +13635,44 @@ function installDiChuaChung(G) {
     const nc = cleanCode(code);
     if (nc === codeOf()) return; // không đổi thì không tạo khoá trong save
     const c = cfgWrite(); c.code = nc; persist();
-    if (c.on && room) { disconnect(); connect(); }
+    if (c.on && room && roomCode !== nc) { disconnect(); connect(); } // sự kiện "save" có thể đã vào lại đúng phòng
     G.events.emit('chung:change');
   }
-  G.events.on('enter', () => { if (isOn()) connect(); paintBar(); });
-  G.events.on('save', () => { if (!isOn() && room) disconnect(); }); // "Xoá dữ liệu trên máy" tắt luôn công tắc
+  // Câu báo MỘT lần trên mỗi máy cho người chưa từng tự chọn công tắc (kể cả trong trình duyệt nhúng); báo xong ghi on vào save để lần sau không báo nữa.
+  // Không báo khi kết nối không khởi động được (status 'error', ví dụ không có WebRTC): lúc đó câu "đang đi chùa cùng mọi người" không đúng.
+  const NOTICE = 'Bạn đang đi chùa cùng mọi người: người khác thấy tên và nhân vật của bạn. Muốn đi một mình thì tắt trong Cài đặt.';
+  function noticeOnce() {
+    if (status === 'error' || chose()) return;
+    G.ui.toast(NOTICE, 5200); cfgWrite(); persist();
+  }
+  // Giữ phòng mặc định: module 23 gọi holdDefault() khi link mời có mã nhóm khác mã đang lưu, để người được mời không đi qua phòng chung lúc vào chùa.
+  // Đang giữ thì 'enter' không nối phòng, không báo và không ghi gì vào save (IN_APP_TIP vẫn hiện); nó chỉ nhớ enterHeld và noticeDue (lúc đó người chơi chưa từng chọn?),
+  // vì sau đó họ có thể đổi cài đặt giọng nói hay mã trong lúc giữ, khiến chose() thành true trước khi câu báo kịp hiện. connect() bất kỳ hay releaseDefault() kết thúc việc giữ.
+  function holdDefault() { held = true; }
+  function releaseDefault() { // làm đúng việc 'enter' đã bỏ qua: nối phòng từ cài đặt đã lưu và báo một lần nếu lúc 'enter' họ chưa từng chọn; không giữ thì không làm gì
+    if (!held) return;
+    const had = enterHeld, due = noticeDue; // connect() xoá hai cờ, nên đọc trước
+    held = enterHeld = noticeDue = false;
+    if (had && isOn() && !room) {
+      connect();
+      if (due && status !== 'error') { G.ui.toast(NOTICE, 5200); cfgWrite(); persist(); } // không gọi noticeOnce(): nó hỏi chose(), mà cài đặt có thể đã được ghi trong lúc giữ
+    }
+  }
+  G.events.on('enter', () => {
+    if (isOn()) {
+      if (held) { enterHeld = true; noticeDue = !chose(); }
+      else { connect(); noticeOnce(); }
+      if (ENV.inApp) G.ui.toast(IN_APP_TIP, 6000);
+    }
+    paintBar();
+  });
+  let saveObj = G.save.data; // "Xoá dữ liệu trên máy" thay CẢ đối tượng save (G.save.reset), nên so sánh đối tượng để nhận ra nó
+  G.events.on('save', () => { // tắt thì ngắt; đổi phòng thì vào lại; reset về mặc định (bật) mà chưa nối thì nối và báo (người đã tắt rồi xoá dữ liệu cũng được báo)
+    const wasReset = G.save.data !== saveObj; saveObj = G.save.data;
+    if (!isOn()) { if (room) disconnect(); }
+    else if (room && roomCode !== codeOf()) { disconnect(); connect(); }
+    else if (wasReset && isOn() && !room && G.started) { connect(); noticeOnce(); }
+  });
   G.events.on('activity:start', () => { maybeSend(true); closeChat(); });
   G.events.on('activity:end', () => maybeSend(true));
 
@@ -13674,6 +13810,7 @@ function installDiChuaChung(G) {
   // ---------- Mục trong bảng "Cài đặt" (00-core phát 'ui:settings' với hộp nội dung) ----------
   function statusText() {
     if (!isOn()) return 'Đang tắt: không gửi gì đi, không nhận gì về.';
+    if (status === 'off') return 'Chưa kết nối.';
     if (status === 'loading') return 'Đang tải phần kết nối…';
     if (status === 'connecting') return 'Đang nối tới điểm hẹn…';
     if (status === 'error') return statusMsg || 'Chưa kết nối được.';
@@ -13681,16 +13818,28 @@ function installDiChuaChung(G) {
     const base = n === 0 ? 'Đã kết nối. Chưa thấy ai khác đang bật.' : 'Đang có ' + U.fmt(n) + ' người cùng đi chùa với bạn.';
     return statusMsg ? base + ' ' + statusMsg : base;
   }
+  // Dòng gợi ý của danh sách đổi theo việc có mã nhóm ("phòng" → "nhóm") và mã có đủ dài để có giọng nói (paint() chọn); lời lưu ý về IP (IP_PUBLIC / IP_GROUP) dựng trong 'ui:settings' vì có chữ máy chủ chuyển tiếp
+  const HINT_PUBLIC = 'Người đang cùng phòng — "Ẩn người này" giấu nhân vật và lời của họ cho tới khi bạn tải lại trang.';
+  const HINT_GROUP = 'Người đang cùng nhóm — "Ẩn người này" giấu nhân vật và lời của họ cho tới khi bạn tải lại trang.';
+  const HINT_VOICE = 'Người đang cùng nhóm: "Ẩn người này" giấu nhân vật, lời và giọng nói của họ; "Tắt giọng" chỉ tắt giọng nói. Cả hai giữ tới khi bạn tải lại trang.';
   G.events.on('ui:settings', (box) => {
     if (!box || !box.appendChild) return;
+    const relay = turnList().length > 0; // chữ về riêng tư đổi theo việc đã khai (và kiểm được) máy chủ chuyển tiếp hay chưa
+    const SEEN_BY = 'vài điểm hẹn công cộng (relay Nostr, máy chủ STUN của Google và Cloudflare' + (relay ? ', máy chủ chuyển tiếp ExpressTURN' : '') + ') cũng thấy IP của bạn'
+      + (relay ? '; máy chủ chuyển tiếp chỉ chuyển dữ liệu, đã mã hoá, khi hai máy không nối thẳng được' : '');
+    // Lời lưu ý về IP (luôn hiện): phòng chung / nhóm riêng (paint() chọn); dựng ở đây, không lúc cài đặt module, vì chữ đổi theo việc đã khai máy chủ chuyển tiếp hay chưa
+    const IP_PUBLIC = 'Lưu ý: người cùng phòng là người lạ trên mạng và thấy địa chỉ mạng (IP) của nhau như mọi kết nối ngang hàng; ' + SEEN_BY + '. Lời họ gõ hiện cho bạn, trò chơi chỉ lọc từ thô và cho bạn ẩn từng người.';
+    const IP_GROUP = 'Lưu ý: người cùng nhóm thấy địa chỉ mạng (IP) của nhau như mọi kết nối ngang hàng, và ai biết mã nhóm đều vào được; ' + SEEN_BY + '. Lời họ gõ hiện cho bạn, trò chơi chỉ lọc từ thô và cho bạn ẩn từng người; giọng nói thì không lọc được.';
     const row = U.el('div', 'snd-row');
     const head = U.el('div', 'snd-h'), txt = U.el('div', 'snd-t');
     txt.append(U.el('div', 'snd-l', 'Đi chùa cùng mọi người'),
-      U.el('div', 'small muted', 'Khi bật, tên bạn đặt, vị trí nhân vật, việc bạn đang làm và lời bạn gõ được gửi thẳng tới những người cũng đang bật — kết nối ngang hàng giữa các trình duyệt, không qua máy chủ của trò chơi. Tắt là ngừng ngay.'));
+      U.el('div', 'small muted', relay
+        ? 'Khi bật, tên bạn đặt, vị trí nhân vật, việc bạn đang làm và lời bạn gõ được gửi tới những người cũng đang bật qua kết nối ngang hàng giữa các trình duyệt (khi hai máy không nối thẳng được thì qua máy chủ chuyển tiếp, vẫn được mã hoá), không qua máy chủ của trò chơi. Trong nhóm riêng, giọng nói chỉ đi khi bạn tự bấm micro, cũng theo cách đó và được mã hoá. Tắt là ngừng ngay.'
+        : 'Khi bật, tên bạn đặt, vị trí nhân vật, việc bạn đang làm và lời bạn gõ được gửi thẳng tới những người cũng đang bật — kết nối ngang hàng giữa các trình duyệt, không qua máy chủ của trò chơi. Trong nhóm riêng, giọng nói chỉ đi khi bạn tự bấm micro, cũng theo cách đó và được mã hoá. Tắt là ngừng ngay.'));
     const sw = U.el('button', 'snd-sw'); sw.type = 'button'; sw.id = 'chungSw'; sw.setAttribute('role', 'switch'); sw.setAttribute('aria-label', 'Đi chùa cùng mọi người');
     head.append(txt, sw);
     // luôn hiện (kể cả khi đang tắt): điều cần biết trước khi bật
-    const ip = U.el('div', 'chung-ip', 'Lưu ý: người cùng phòng là người lạ trên mạng và thấy địa chỉ mạng (IP) của nhau như mọi kết nối ngang hàng; vài điểm hẹn công cộng (relay Nostr, máy chủ STUN của Google và Cloudflare) cũng thấy IP của bạn. Lời họ gõ hiện cho bạn, trò chơi chỉ lọc từ thô và cho bạn ẩn từng người.');
+    const ip = U.el('div', 'chung-ip', IP_PUBLIC); // paint() đổi sang IP_GROUP khi có mã nhóm
     const more = U.el('div', 'chung-more');
     const st = U.el('div', 'chung-st'); st.id = 'chungStatus';
     const dg = U.el('div', 'chung-dg'); dg.id = 'chungDiag';
@@ -13705,7 +13854,7 @@ function installDiChuaChung(G) {
     const inp = document.createElement('input'); inp.className = 'field'; inp.id = 'chungCode'; inp.maxLength = 24; inp.autocomplete = 'off'; inp.spellcheck = false;
     inp.placeholder = 'Mã nhóm riêng (tuỳ chọn)'; inp.setAttribute('aria-label', 'Mã nhóm riêng'); inp.value = codeOf();
     codeRow.appendChild(inp);
-    const note = U.el('div', 'note', 'Chia sẻ: tên, vị trí, việc đang làm (thắp hương, ngồi thiền…), ba cử chỉ đặt sẵn và lời bạn gõ (tối đa 60 ký tự, một câu mỗi 2 giây; câu có địa chỉ web hoặc dãy số dài bị chặn). Không lưu lịch sử. Để tìm nhau, trình duyệt gọi tới vài điểm hẹn công cộng (relay Nostr, máy chủ STUN của Google và Cloudflare): chúng thấy địa chỉ mạng của bạn, không thấy tên hay vị trí trong chùa. Mã nhóm không phải mật khẩu: ai biết mã đều vào được; để trống là vào phòng chung.');
+    const note = U.el('div', 'note', 'Chia sẻ: tên, vị trí, việc đang làm (thắp hương, ngồi thiền…), ba cử chỉ đặt sẵn, lời bạn gõ (tối đa 60 ký tự, một câu mỗi 2 giây; câu có địa chỉ web hoặc dãy số dài bị chặn) và, chỉ trong nhóm riêng khi bạn tự bấm micro, giọng nói của bạn (đi giữa các máy, được mã hoá, không ghi âm, không lưu). Không lưu lịch sử. Để tìm nhau, trình duyệt gọi tới vài điểm hẹn công cộng (relay Nostr, máy chủ STUN của Google và Cloudflare' + (relay ? ', máy chủ chuyển tiếp ExpressTURN' : '') + '): chúng thấy địa chỉ mạng của bạn, không thấy tên hay vị trí trong chùa. Mã nhóm không phải mật khẩu: ai biết mã đều vào được; để trống là vào phòng chung.');
     note.style.marginTop = '8px';
     more.append(st, dg, muteRow, people, codeRow, note);
     row.append(head, adv, ip, more); box.appendChild(row);
@@ -13716,11 +13865,14 @@ function installDiChuaChung(G) {
       const dt = diagText(); if (dg.textContent !== dt) dg.textContent = dt;
       const mute = isMuted(); muteSw.classList.toggle('on', mute); muteSw.setAttribute('aria-checked', String(mute));
       // danh sách người cùng phòng (textContent) + "Ẩn người này" / "Hiện lại"; chỉ dựng lại khi có thay đổi để không mất nút đang bấm
+      const ipT = codeOf() ? IP_GROUP : IP_PUBLIC; if (ip.textContent !== ipT) ip.textContent = ipT;
       let sig = '';
-      for (let i = 0; i < plist.length; i++) if (!plist[i].gone) sig += plist[i].id + (hidden.has(plist[i].id) ? '!' : '') + plist[i].name + '|';
-      if (sig !== peopleSig) {
-        peopleSig = sig; people.textContent = '';
-        if (sig) people.appendChild(U.el('div', 'small muted', 'Người đang cùng phòng — "Ẩn người này" giấu nhân vật và lời của họ cho tới khi bạn tải lại trang.'));
+      for (let i = 0; i < plist.length; i++) if (!plist[i].gone) sig += plist[i].id + (hidden.has(plist[i].id) ? '!' : '') + (plist[i].vo & 2 ? '+' : '') + plist[i].name + '|'; // '+': đang mở micro (module 25 vẽ dấu 🎙 theo bit này)
+      const voiceGroup = !!codeOf() && voiceEligible();
+      const full = (!codeOf() ? 'P' : voiceGroup ? 'V' : 'N') + relistN + ':' + sig; // kiểu danh sách + số lần relist() đứng trước, để đổi mã hay relist() cũng dựng lại
+      if (full !== peopleSig) {
+        peopleSig = full; people.textContent = '';
+        if (sig) people.appendChild(U.el('div', 'small muted', !codeOf() ? HINT_PUBLIC : voiceGroup ? HINT_VOICE : HINT_GROUP));
         for (let i = 0; i < plist.length; i++) {
           const q = plist[i]; if (q.gone) continue;
           const isOff = hidden.has(q.id);
@@ -13728,6 +13880,7 @@ function installDiChuaChung(G) {
           const b = U.el('button', 'chip', isOff ? 'Hiện lại' : 'Ẩn người này'); b.type = 'button';
           b.onclick = () => { G.audio?.play?.('ui'); hide(q.id); paint(); };
           rowP.append(U.el('b', null, q.name), b); people.appendChild(rowP);
+          G.events.emit('ui:chung-person', { peer: q, row: rowP }); // module 25 thêm nút "Tắt giọng" và dấu 🎙 vào hàng này
         }
       }
     };
@@ -13738,6 +13891,7 @@ function installDiChuaChung(G) {
     const off = G.events.on('chung:change', paint);
     const tick = setInterval(() => { if (!row.isConnected) { clearInterval(tick); off(); return; } paint(); }, 1000);
     paint();
+    G.events.emit('ui:chung-settings', { block: row, more }); // module 23 chèn hàng mời bạn vào block (dưới công tắc); module 25 thêm khối giọng nói vào more
   });
 
   // =====================================================================
@@ -13804,6 +13958,8 @@ function installDiChuaChung(G) {
   // =====================================================================
   G.chung = {
     get on() { return isOn(); },
+    get defaultOn() { return DEF_CHUNG.on; },  // mặc định của công tắc trên địa chỉ này (bản công khai true; bản chạy trên máy false trừ khi window.__chungLocalDefaultOn === true)
+    get relay() { return turnList().length > 0; }, // có danh sách máy chủ chuyển tiếp dùng được (đã kiểm) hay không
     get code() { return codeOf(); },
     get status() { return status; },
     get statusMsg() { return statusMsg; },
@@ -13816,14 +13972,1066 @@ function installDiChuaChung(G) {
       try { const o = lib && lib.getRelaySockets ? lib.getRelaySockets() : {}; const r = {}; for (const k in o) r[k] = o[k] ? o[k].readyState : -1; return r; } catch (e) { return {}; }
     },
     get hiddenIds() { return Array.from(hidden); },
-    get diag() { return { hs: diag.hs, ok: diag.ok, fail: diag.fail, drop: diag.drop, err: diag.err.slice(), rejected: Array.from(diag.rej), relays: relayStats(), env: ENV, text: diagText() }; },
+    get diag() { return { hs: diag.hs, ok: diag.ok, fail: diag.fail, drop: diag.drop, relay: diag.relay, turn: turnList().length, err: diag.err.slice(), rejected: Array.from(diag.rej), relays: relayStats(), env: ENV, text: diagText() }; },
     get chatStats() { return chatStats; },  // { sent, shown, limited, blocked, hiddenDrop, muted, dropped } — chỉ số đếm, không có nội dung
     get stStats() { return stStats; }, get geStats() { return geStats; }, get lastHandlerMs() { return lastHandlerMs; },
     get lastShown() { return lastShown; },  // câu vừa hiện gần nhất (đã lọc) — để kiểm tra
     get muteChat() { return isMuted(); }, set muteChat(v) { cfgWrite().muteChat = !!v; persist(); G.events.emit('chung:change'); },
     enable, setCode, gesture, statusText, diagText, chat, raw, chatRaw: (obj) => raw('ch', obj), inject, openChat, closeChat, hide, cleanChat, filterChat,
     GEST, MAX_SHOW, MAX_PEERS, SEND_HZ, STALE_S, DROP_S, CHAT_MAX, CHAT_GAP, LIM,
+    // ---- cho giọng nói nhóm (modules 23–25) ----
+    isHidden: (id) => hidden.has(id),        // người này đang bị bạn ẩn (theo phiên)
+    isLive,                                  // đang hiện diện: có vị trí, chưa rời, tin còn mới (< STALE_S)
+    get voiceEligible() { return voiceEligible(); }, ALNUM_MIN, // mã nhóm đủ dài (≥ ALNUM_MIN chữ hoặc số) để dùng giọng nói
+    cleanCode,
+    get inApp() { return ENV.inApp && navigator.standalone !== true; }, // trình duyệt nhúng của ứng dụng; web app trên Màn hình chính iPhone (standalone) không tính
+    get ios() { return !!ENV.ios; },
+    IN_APP_TIP, diagErr, relist, anchor,
+    holdDefault, releaseDefault,            // module 23: giữ phòng mặc định tới khi trả lời bảng lời mời (xem 'enter' ở trên)
+    get voiceCfg() { return voiceCfg(); }, setVoiceCfg, // { voice, voiceQuiet }, mỗi khoá mặc định bật
   };
+}
+
+// ----- 23-loi-moi.js -----
+// =====================================================================
+//  LỜI MỜI VÀO NHÓM (module 23): mã nhóm ngẫu nhiên, link mời, bảng "Lời mời vào nhóm".
+//  Chạy sau module 22 (đi chùa chung) và dùng API G.chung của nó: setCode, enable, cleanCode, isLive, inApp, IN_APP_TIP và sự kiện 'ui:chung-settings'.
+//  - "Tạo mã nhóm mới": 3 nhóm × 4 ký tự từ bảng 31 ký tự (bỏ i, l, o, 0, 1), lấy bằng crypto.getRandomValues có loại mẫu lệch (byte ≥ 248 bị bỏ).
+//    Chưa bật "Đi chùa cùng mọi người" thì đặt mã TRƯỚC rồi mới bật: người chơi không bao giờ đi qua phòng chung có người lạ.
+//    Đang giữ phòng mặc định (có lời mời chưa trả lời) thì nút này còn kết thúc việc giữ bằng G.chung.releaseDefault(): vào thẳng nhóm mới, đúng một lần connect().
+//  - "Gửi link mời": navigator.share (địa chỉ nằm trong text), rồi chép vào bộ nhớ tạm, cuối cùng là ô chữ chọn sẵn.
+//  - Link mời có dạng <trang>#nhom=<mã>. Đọc lúc cài đặt, giữ nguyên cho tới khi người chơi trả lời bảng (trình duyệt nhúng thì không bao giờ gỡ,
+//    để "Mở bằng trình duyệt" mang lời mời sang). Bảng hiện nhiều nhất một lần mỗi lần tải trang, không bao giờ đè lên bảng khác, hoạt động hay hướng dẫn.
+//  - Đi chùa chung BẬT mặc định: link mời có mã khác mã đang lưu thì lúc cài đặt gọi G.chung.holdDefault(), để người được mời không đi qua phòng chung lúc vào chùa
+//    và qua hướng dẫn. Mọi cách trả lời bảng (Vào nhóm, Để sau, ✕, Escape, chạm nền) kết thúc bằng G.chung.releaseDefault(): nối phòng theo cài đặt đã lưu nếu chưa vào phòng nào.
+//    Dòng "Bạn sẽ rời …" của bảng chỉ hiện khi có gì để rời: nhóm đã lưu (mã khác rỗng) hay phòng chung đang ở; đang giữ mà chưa vào phòng nào thì không có dòng đó.
+//  Mã nhóm là chìa khoá: ai có link đều vào được. Module này không lưu gì ngoài việc đặt mã qua G.chung.setCode (module 22 tự lưu).
+//  API: G.loiMoi (cuối tệp).
+// =====================================================================
+function installLoiMoi(G) {
+  const { util: U } = G;
+  const C = G.chung;
+  if (!C || !U || !G.ui || !G.events || !G.save || !G.activity) return; // thiếu module 22 thì không có nhóm nào để mời vào
+
+  // ---------- Hằng số ----------
+  const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789'; // 31 ký tự, bỏ i, l, o, 0, 1 vì dễ nhầm khi đọc cho nhau nghe
+  const GROUPS = 3, PER = 4;                           // 3 nhóm × 4 ký tự = 12 ký tự ≈ 59 bit
+  const BYTE_LIMIT = Math.floor(256 / ALPHABET.length) * ALPHABET.length; // 248: byte ≥ 248 bị bỏ, nên byte % 31 chia đều cho 31 ký tự
+  const LINK_MIN = 10, LINK_MAX = 24;                  // số chữ hoặc số (không tính dấu gạch) của mã trong link mời; 10 cũng là mức tối thiểu để có giọng nói
+  const POLL_MS = 500, EARLIEST_MS = 3600;             // hỏi mỗi 500 ms; không hiện bảng sớm hơn 3,6 giây sau 'enter' (lời chào và hướng dẫn hiện lúc 3,3 giây)
+
+  // ---------- Câu chữ (đúng từng chữ theo thiết kế, mục 3.1) ----------
+  const TEXT = {
+    newCode: 'Tạo mã nhóm mới',
+    invite: 'Gửi link mời',
+    shareTitle: 'Lên Chùa Cầu An',
+    shareText: 'Mời bạn cùng đi chùa trong nhóm của mình: ',
+    copied: 'Đã chép link mời. Dán vào Zalo hoặc Messenger để gửi cho bạn bè.',
+    fieldLabel: 'Chép link này để gửi cho bạn bè:',
+    fieldPanel: 'Link mời vào nhóm',
+    done: 'Xong',
+    created: 'Đã tạo mã nhóm mới. Bấm "Gửi link mời" để mời bạn bè.',
+    confirmTitle: 'Tạo nhóm mới?',
+    confirmBody: 'Bạn sẽ rời nhóm hiện tại và sang một nhóm mới chỉ có mình bạn. Những người đang cùng nhóm vẫn ở lại nhóm cũ.',
+    confirmYes: 'Tạo nhóm mới',
+    confirmNo: 'Thôi',
+    bad: 'Link mời này không dùng được. Bạn nhờ người gửi tạo link mới nhé.',
+    same: 'Bạn đang ở nhóm này rồi.',
+    panelTitle: 'Lời mời vào nhóm',
+    line2: 'Khi vào nhóm, trò chơi bật "Đi chùa cùng mọi người": tên, vị trí, việc bạn đang làm và lời bạn gõ được gửi tới những người trong nhóm. Giọng nói chỉ gửi đi khi bạn tự bấm mở micro.',
+    leaveGroup: 'Bạn sẽ rời nhóm hiện tại.',
+    leavePublic: 'Bạn sẽ rời phòng chung.',
+    join: 'Vào nhóm',
+    later: 'Để sau',
+    laterToast: 'Muốn vào nhóm sau, bạn mở lại link mời nhé.',
+  };
+  const line1 = (code) => 'Bạn được mời vào nhóm riêng "' + code + '". Chỉ vào nếu bạn biết người gửi lời mời.';
+  const joinedToast = (code) => 'Đã vào nhóm "' + code + '".';
+
+  const alnum = (s) => String(s == null ? '' : s).replace(/[^a-z0-9]/gi, '').length; // chỉ đếm chữ và số
+  const canMake = () => typeof crypto !== 'undefined' && !!crypto && typeof crypto.getRandomValues === 'function';
+  const shareable = (code) => alnum(code) >= LINK_MIN; // mã ngắn gõ tay không đi qua được link mời (người nhận bị từ chối ở bước đọc link)
+
+  // ---------- Mã nhóm ngẫu nhiên và link ----------
+  function makeCode() { // '' khi thiết bị không có crypto.getRandomValues (nút ẩn, và chỗ gọi không bao giờ đặt mã rỗng vì mã rỗng là phòng chung)
+    if (!canMake()) return '';
+    const need = GROUPS * PER, out = [], buf = new Uint8Array(32);
+    while (out.length < need) {
+      crypto.getRandomValues(buf);
+      for (let i = 0; i < buf.length && out.length < need; i++) if (buf[i] < BYTE_LIMIT) out.push(ALPHABET[buf[i] % ALPHABET.length]);
+    }
+    const parts = [];
+    for (let g = 0; g < GROUPS; g++) parts.push(out.slice(g * PER, (g + 1) * PER).join(''));
+    return parts.join('-');
+  }
+  const linkFor = (code) => location.href.split(/[?#]/)[0] + '#nhom=' + code;
+
+  // { code } hợp lệ, { bad: true } có khoá nhom nhưng không dùng được, null khi không có khoá nhom
+  function parseHash(hash) {
+    try {
+      const v = new URLSearchParams(String(hash == null ? '' : hash).replace(/^#/, '')).get('nhom');
+      if (v === null) return null;
+      const m = /^[A-Za-z0-9-]+/.exec(v.replace(/^\s+/, '')); // đoạn đầu gồm chữ, số, gạch: bỏ phần các ứng dụng chat nối thêm (?zarsrc=…, khoảng trắng, …)
+      const n = m ? alnum(m[0]) : 0;
+      if (n < LINK_MIN || n > LINK_MAX) return { bad: true };
+      const code = C.cleanCode(m[0]);
+      return alnum(code) >= LINK_MIN ? { code } : { bad: true }; // cleanCode cắt ở 24 ký tự: dãy gạch quá dài có thể làm mất chữ
+    } catch (e) { return null; }
+  }
+
+  // ---------- Link mời đang chờ trả lời (đọc một lần lúc cài đặt) ----------
+  let hashInfo = null;
+  try { hashInfo = parseHash(location.hash); } catch (e) { hashInfo = null; }
+  let pendingCode = hashInfo && hashInfo.code ? hashInfo.code : null;
+  let badLink = !!(hashInfo && hashInfo.bad);
+  if (pendingCode && pendingCode !== C.code) C.holdDefault(); // link hỏng hay cùng mã đang lưu thì không giữ: đi chùa chung vào phòng như thường
+  function clearHash() { // trình duyệt nhúng: không bao giờ gỡ, để "Mở bằng trình duyệt" mang lời mời sang
+    if (!hashInfo || C.inApp) return;
+    try { history.replaceState(history.state, '', location.pathname + location.search); } catch (e) { /* bỏ qua */ }
+  }
+
+  // ---------- Ô chữ chứa link (chỗ cuối cùng khi không chia sẻ và không chép được) ----------
+  function makeFieldBox() {
+    const box = U.el('div', 'invite-field hidden');
+    const lab = U.el('label', 'small muted', TEXT.fieldLabel);
+    const field = document.createElement('input');
+    field.id = 'inviteField'; field.className = 'field'; field.readOnly = true; field.spellcheck = false; field.autocomplete = 'off';
+    lab.htmlFor = 'inviteField';
+    box.append(lab, field);
+    const select = () => { try { field.focus({ preventScroll: true }); field.select(); field.setSelectionRange(0, field.value.length); } catch (e) { /* bỏ qua */ } };
+    return {
+      box, field, forCode: '',
+      show(link, code) { this.forCode = code; field.value = link; box.classList.remove('hidden'); select(); },
+      hide() { this.forCode = ''; box.classList.add('hidden'); },
+    };
+  }
+  let live = null; // hàng mời đang có trong bảng Cài đặt (null khi chưa mở bảng)
+  function showField(link, code) {
+    if (live && live.row.isConnected) { live.fb.show(link, code); return; }
+    const fb = makeFieldBox(); // gọi share() khi bảng Cài đặt không mở: mở một bảng nhỏ chứa ô link
+    G.ui.panel({ title: TEXT.fieldPanel, body: fb.box, actions: [{ label: TEXT.done, primary: true }] });
+    fb.show(link, code);
+  }
+
+  // "Gửi link mời": 'shared' | 'copied' | 'field' | 'cancel'
+  async function share(code) {
+    code = C.cleanCode(code == null ? C.code : code);
+    if (!code) return 'cancel';
+    const link = linkFor(code);
+    if (typeof navigator.share === 'function') { // gọi ngay trong cú chạm của người dùng (chưa có await nào đứng trước)
+      try { await navigator.share({ title: TEXT.shareTitle, text: TEXT.shareText + link }); return 'shared'; } // địa chỉ chỉ nằm trong text: không ứng dụng nào bỏ mất hay lặp lại nó
+      catch (e) { if (e && e.name === 'AbortError') return 'cancel'; } // người chơi tự đóng khung chia sẻ: không làm gì thêm
+    }
+    try { await navigator.clipboard.writeText(link); G.ui.toast(TEXT.copied, 5000); return 'copied'; }
+    catch (e) { showField(link, code); return 'field'; }
+  }
+
+  // ---------- "Tạo mã nhóm mới" ----------
+  function createGroup() {
+    if (!canMake()) return;
+    const go = () => {
+      const code = makeCode();
+      if (!code) return; // không bao giờ đặt mã rỗng: đó là phòng chung
+      C.setCode(code);
+      if (!C.on) C.enable(true); // đặt mã trước rồi mới bật: không qua phòng chung
+      C.releaseDefault(); // đang giữ phòng mặc định (lời mời chưa trả lời): vào thẳng nhóm mới bằng một lần connect(); không giữ thì không làm gì
+      G.ui.toast(TEXT.created, 6000);
+    };
+    if (C.list.some((p) => C.isLive(p))) {
+      G.ui.panel({
+        title: TEXT.confirmTitle, body: U.el('div', null, TEXT.confirmBody),
+        actions: [{ label: TEXT.confirmYes, primary: true, onClick: (close) => { close(); go(); } }, { label: TEXT.confirmNo }],
+      });
+    } else go();
+  }
+
+  // ---------- Hàng mời trong bảng Cài đặt, ngay dưới công tắc "Đi chùa cùng mọi người" (ngoài .chung-more nên luôn hiện) ----------
+  G.ui.addStyle(`
+  #inviteRow{margin:8px 0 6px}
+  .invite-btns{display:flex;gap:8px;flex-wrap:wrap}
+  .invite-btns .btn{flex:1 1 150px;min-height:44px;font-size:15px;padding:8px 12px}
+  .invite-field{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+  .invite-field .field{font-size:14px;padding:10px 12px}
+  `);
+  G.events.on('ui:chung-settings', (o) => {
+    const block = o && o.block;
+    if (!block || !block.insertBefore) return;
+    const row = U.el('div'); row.id = 'inviteRow';
+    const btns = U.el('div', 'invite-btns');
+    const bNew = U.el('button', 'btn', TEXT.newCode); bNew.type = 'button'; bNew.id = 'btnNewCode';
+    const bInv = U.el('button', 'btn', TEXT.invite); bInv.type = 'button'; bInv.id = 'btnInvite';
+    btns.append(bNew, bInv);
+    const fb = makeFieldBox();
+    row.append(btns, fb.box);
+    const head = block.querySelector('.snd-h'); // hàng công tắc
+    block.insertBefore(row, head && head.parentNode === block ? head.nextSibling : block.firstChild);
+    bNew.onclick = () => { G.audio?.play?.('ui'); createGroup(); };
+    bInv.onclick = () => { G.audio?.play?.('ui'); share(C.code); };
+    const paint = () => {
+      const code = C.code;
+      bNew.classList.toggle('hidden', !canMake());
+      bInv.classList.toggle('hidden', !shareable(code));
+      btns.classList.toggle('hidden', !canMake() && !shareable(code));
+      if (fb.forCode && fb.forCode !== code) fb.hide(); // mã đã đổi: link cũ trong ô không còn đúng
+      const inp = block.querySelector('#chungCode'); // ô mã của module 22 chỉ cập nhật khi người chơi tự gõ: nối nó với mã vừa tạo hay vừa nhận
+      if (inp && document.activeElement !== inp && inp.value !== code) inp.value = code;
+    };
+    live = { row, fb };
+    paint();
+    const off = G.events.on('chung:change', () => { if (!row.isConnected) { off(); return; } paint(); });
+  });
+
+  // ---------- Bảng "Lời mời vào nhóm" ----------
+  function joinGroup(code) {
+    C.setCode(code);
+    if (!C.on) C.enable(true);
+    G.ui.toast(joinedToast(code), 4000);
+  }
+  function openInvite(code) {
+    let joined = false;
+    const body = U.el('div', 'col');
+    body.appendChild(U.el('div', null, line1(code)));
+    body.appendChild(U.el('div', 'small muted', TEXT.line2));
+    if (C.on) { // dòng "rời": chỉ khi có gì để rời (nhóm đã lưu, hay phòng chung đang ở); đang giữ phòng mặc định mà chưa vào phòng nào thì không có dòng này
+      if (C.code) body.appendChild(U.el('div', 'small', TEXT.leaveGroup));
+      else if (C.room) body.appendChild(U.el('div', 'small', TEXT.leavePublic));
+    }
+    if (C.inApp) body.appendChild(U.el('div', 'small', C.IN_APP_TIP));
+    G.ui.panel({
+      title: TEXT.panelTitle, body,
+      actions: [
+        { label: TEXT.join, primary: true, onClick: (close) => { joined = true; joinGroup(code); close(); } },
+        { label: TEXT.later },
+      ],
+      onClose: () => { pendingCode = null; if (!joined) G.ui.toast(TEXT.laterToast, 4000); clearHash(); C.releaseDefault(); }, // ✕, Escape, chạm nền, "Để sau" và "Vào nhóm" (sau setCode / enable) đều qua đây; việc cuối cùng: nối phòng nếu 'enter' đã bị giữ
+    });
+  }
+  function present() {
+    if (badLink) { badLink = false; G.ui.toast(TEXT.bad, 5000); clearHash(); return; }
+    const code = pendingCode;
+    if (!code) return;
+    if (C.on && C.code === code) { pendingCode = null; G.ui.toast(TEXT.same, 4000); clearHash(); C.releaseDefault(); return; } // releaseDefault: nếu người chơi tự đặt đúng mã này trong lúc đang giữ
+    openInvite(code);
+  }
+  const tutHidden = () => { const t = document.getElementById('tut'); return !t || t.classList.contains('hidden'); };
+  const canShow = () => G.started && !G.ui.panelOpen && tutHidden() && !!G.save.data.tutorialDone && !G.activity.current;
+  G.events.on('enter', () => {
+    if (!pendingCode && !badLink) return;
+    const t0 = performance.now();
+    const timer = setInterval(() => {
+      if (performance.now() - t0 < EARLIEST_MS || !canShow()) return;
+      clearInterval(timer); // chỉ một lần mỗi lần tải trang
+      present();
+    }, POLL_MS);
+  });
+
+  // =====================================================================
+  //  API CÔNG KHAI (G.loiMoi) — cũng dùng để kiểm tra headless
+  // =====================================================================
+  G.loiMoi = {
+    ALPHABET, makeCode, linkFor, parseHash,
+    get pending() { return pendingCode; }, // mã trong link mời đang chờ trả lời, hoặc null
+    share,
+  };
+}
+
+// ----- 24-giong-noi.js -----
+// =====================================================================
+//  GIỌNG NÓI TRONG NHÓM (động cơ): mở / tắt micro, gửi giọng tới từng người nghe, nhận và phát giọng của người khác.
+//  Chỉ chạy trong nhóm riêng (mã đủ dài) của "đi chùa chung" (module 22). Chữ hiển thị đều ở module 25 (ở đây chỉ có câu chẩn đoán
+//  'không tìm thấy sender' cho dòng "Chi tiết kết nối"): các câu báo đi ra dưới dạng mã qua sự kiện 'voice:notice'. API: G.voice (cuối tệp).
+//  Quy tắc gửi (đã đo trên Chrome): mỗi kết nối chỉ gọi room.addStream MỘT lần, sau đó mọi lần đổi track là RTCRtpSender.replaceTrack
+//  trên sender đã lưu. Không bao giờ dùng room.replaceTrack / room.removeStream / room.onPeerTrack, không dùng addStream(stream, id).
+//  Không bao giờ stop() một track còn nằm trên sender sống: chuyển sang track im lặng (silent) trước, đợi xong rồi mới dừng micro.
+// =====================================================================
+function installGiongNoi(G) {
+  const C = G.chung;
+  if (!C || !G.events || !G.save || !G.sound) return;
+
+  // ---------- Hằng số ----------
+  const SPEAK_RMS = 0.02;                     // ngưỡng "đang nói" (RMS 0–1)
+  const MAX_OPEN = 6;                         // số micro mở tối đa trong nhóm (kiểm tra lịch sự: cờ vo do người kia tự khai)
+  const MAX_LISTENERS = 7;                    // số người đang nghe tối đa (không tính mình) khi mình mở micro
+  const MAX_NODES = 8;                        // số luồng giọng phát cùng lúc
+  const METER_HZ = 15, ATTACK_S = 0.05, RELEASE_S = 0.4; // vòng đo mức: lên nhanh 0,05 s, xuống chậm 0,4 s
+  const RAMP = 0.08;                          // setTargetAtTime của gain từng người
+  const DUCK_HOLD_MS = 1500;                  // hạ nhạc kéo dài thêm 1,5 giây sau tiếng nói cuối cùng nghe được
+  const GUM_ERRORS = new Set(['NotAllowedError', 'SecurityError', 'NotFoundError', 'OverconstrainedError', 'NotReadableError', 'AbortError']); // tên lỗi getUserMedia có câu báo riêng; lỗi khác → 'err-other'
+  const REFUSALS = new Set(['in-app', 'no-devices', 'cap', 'group']); // bốn lý do từ chối mở micro; blockReason mang đúng các giá trị này (nút micro vẫn hiện, chỉ mờ đi)
+  const shut = (reason) => closeMic(reason).catch((e) => fail('close', e)); // đóng micro từ các nơi không chờ kết quả
+  const META = { v: 1, k: 'voice' };          // nhãn đi kèm luồng: người nhận bỏ qua luồng không có k = 'voice'
+  const GUM = { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false };
+  const emit = (n, ...a) => G.events.emit(n, ...a);
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const errMsg = (e) => String((e && ((e.name ? e.name + ': ' : '') + (e.message || ''))) || e).slice(0, 120);
+  const fail = (what, e) => { stats.errors++; try { C.diagErr('voice ' + what + ': ' + errMsg(e)); } catch (x) { /* bỏ qua */ } };
+
+  // ---------- Trạng thái ----------
+  let state = 'off';                          // 'off' | 'opening' | 'open'
+  let room = null, roomCode = '', roomGen = 0; // phòng Trystero hiện tại (module 22 báo qua 'chung:room'); roomGen tăng mỗi lần đổi phòng
+  let openTok = 0, closing = false;           // openTok đổi mỗi lần mở / đóng / dọn phòng: lần mở đang chờ getUserMedia thấy số khác thì tự bỏ
+  let vctx = null, silent = null;             // AudioContext riêng của giọng nói + track im lặng (giữ dòng RTP không bao giờ khô sau lần mở đầu)
+  let mic = null, out = null;                 // track micro hiện tại; MediaStream gửi đi luôn đúng MỘT track (micro khi mở, silent khi không)
+  let ownSrc = null, ownAn = null, ownMute = null, own = 0; // đo mức giọng của chính mình
+  const sentTo = new Map();                   // id → { pc, sender, want, p }: đường gửi đã có tới người đó (theo kết nối, không chỉ theo id)
+  const adds = new Map();                     // id → Promise của addStream đang chạy (chặn gọi addStream lần hai trên cùng kết nối)
+  const tries = new Map();                    // id → { pc, n }: số lần không tìm thấy sender sau addStream (tối đa 3 mỗi kết nối)
+  const streams = new Map();                  // id → MediaStream nhận được; giữ cả khi chưa phát (Trystero không phát lại)
+  const nodes = new Map();                    // id → nút phát { id, stream, route, el, src, an, gain, lvl }
+  const levels = new Map();                   // id → { raw, heard }
+  const muted = new Set();                    // id bị mình "Tắt giọng" (chỉ trong phiên)
+  let quiet = 1;                              // hệ số giọng đến: 1, 0,25 (tụng kinh) hoặc 0 (ngồi thiền)
+  let route = 'graph';                        // 'graph' (Path A, qua Web Audio của trò chơi) | 'element' (Path B)
+  let silenceMs = 120000;                     // bao lâu không nghe thấy mình nói thì tự tắt micro
+  let openWaitMs = 30000;                     // chờ getUserMedia tối đa bao lâu thì bỏ (Firefox: bấm "Not now" thì lời hứa không bao giờ được trả lời)
+  let meterT = 0, tickT = 0, lastMeter = 0, mbuf = null;
+  let lastOwnSpeak = 0, lastHeard = -1e9, duckOn = false, quietT = 0, sessionPrev = null; // lần cuối mình nói / nghe thấy ai nói (ms), đang hạ nhạc, hẹn giờ quy tắc im, kiểu audioSession cũ
+  let firstOpenDone = false, mutedGameDone = false, firstVoiceDone = false; // các câu báo chỉ hiện một lần mỗi lần tải trang
+  const stats = { opens: 0, autoClosed: 0, refusedCap: 0, refusedGroup: 0, errors: 0, silentFallback: 0 };
+
+  const peerById = (id) => { const l = C.list; for (let i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; };
+  const pcMap = () => { try { return (room && room.getPeers()) || {}; } catch (e) { return {}; } }; // id → RTCPeerConnection
+
+  // ---------- Điều kiện: ai được nghe, ai được nói ----------
+  function baseReason() { // vì sao nút micro không hiện ('' = hiện); chưa tính trạng thái micro
+    if (!C.on) return 'off';
+    if (!C.code) return 'public';
+    if (!C.voiceEligible) return 'short-code';
+    if (!C.voiceCfg.voice) return 'switch-off';
+    return '';
+  }
+  const available = () => baseReason() === '';
+  function liveWith(bit, skipHidden) { // số người đang hiện diện có cờ vo này (tự khai); skipHidden: bỏ người mình đã ẩn
+    let n = 0; const l = C.list;
+    for (let i = 0; i < l.length; i++) { const p = l[i]; if (!p.gone && C.isLive(p) && (p.vo & bit) && !(skipHidden && C.isHidden(p.id))) n++; }
+    return n;
+  }
+  function refusal() { // lý do không mở được micro lúc này, theo đúng thứ tự của đặc tả ('' = mở được); không ai bị hỏi quyền micro chỉ để bị từ chối
+    if (C.inApp) return 'in-app';
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return 'no-devices';
+    if (liveWith(2, false) >= MAX_OPEN) return 'cap'; // người bị ẩn hay bị tắt giọng vẫn đang gửi nên vẫn được đếm
+    if (liveWith(1, true) > MAX_LISTENERS) return 'group'; // người mình đã ẩn không nhận giọng của mình nên không tính
+    return '';
+  }
+  const blockReason = () => baseReason() || (state === 'off' ? refusal() : ''); // đang mở thì nút luôn bấm được để tắt
+  function refuse(why) { // đếm và báo lý do từ chối; không bao giờ gọi getUserMedia
+    if (why === 'cap') stats.refusedCap++; else if (why === 'group') stats.refusedGroup++;
+    emit('voice:notice', why);
+  }
+  const modeNow = () => (G.ngoi && G.ngoi.mode) || null; // 'thien' | 'tung' | null (module 45)
+  const quietFactor = () => (C.voiceCfg.voiceQuiet ? (modeNow() === 'thien' ? 0 : modeNow() === 'tung' ? 0.25 : 1) : 1);
+  const quietHold = () => quietFactor() < 1; // đang ngồi thiền / tụng kinh với "Tự im" bật: micro không được mở
+  const listening = () => available() && G.sound.gain('voice') > 0; // công tắc bật, mã đủ dài, đang bật đi chùa chung, kênh giọng nói > 0
+  const flags = () => (listening() ? 1 : 0) | (state === 'open' ? 2 : 0); // bit 1: đang nghe, bit 2: đang mở micro (gói st của module 22)
+
+  // Báo "voice:change" khi thứ giao diện cần vẽ lại đổi; luôn đồng bộ lại nút phát và đường gửi trước khi báo
+  let sig = '';
+  const signature = () => [listening() ? 1 : 0, available() ? 1 : 0, blockReason(), quiet, Array.from(muted).sort().join(',')].join('|');
+  function refresh() {
+    const q = quietFactor();
+    if (q !== quiet) { quiet = q; applyGains(); } // ngồi thiền → 0, tụng kinh → 0,25, xong → 1 (cũng đổi khi bật / tắt "Tự im" giữa chừng)
+    if (!available() && state !== 'off') shut(''); // công tắc nghe hoặc đi chùa chung tắt: đóng micro, không báo
+    const s = signature();
+    if (s === sig) return;
+    sig = s;
+    syncAll(); reconcile();
+    emit('voice:change');
+  }
+  function setState(s) { if (s === state) return; state = s; emit('voice:state', s); updateDuck(); refresh(); }
+
+  // ---------- AudioContext riêng + track im lặng ----------
+  function ensureVctx() { // PHẢI chạy đồng bộ trong cú chạm, trước mọi await: iOS chỉ cho AudioContext bắt đầu ngay trong cú chạm
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!vctx || vctx.state === 'closed') { vctx = new AC(); silent = null; }
+      const r = vctx.resume(); if (r && r.catch) r.catch(() => { /* chưa được phép thì thôi */ });
+      if (!silent) {
+        const osc = vctx.createOscillator(), g = vctx.createGain(), dest = vctx.createMediaStreamDestination();
+        g.gain.value = 0; osc.connect(g); g.connect(dest); osc.start(); // im lặng tuyệt đối
+        silent = dest.stream.getAudioTracks()[0] || null;
+      }
+    } catch (e) { fail('vctx', e); }
+  }
+  function swapOut(t) { // out luôn đúng một track (không có track nào khi không có silent)
+    if (!out) return;
+    for (const o of out.getTracks()) if (o !== t) out.removeTrack(o);
+    if (t && !out.getTracks().includes(t)) out.addTrack(t);
+  }
+  function killMic(m) { if (!m) return; try { m.enabled = false; m.stop(); } catch (e) { /* đã dừng */ } }
+  const stopStream = (s) => { try { for (const t of s.getTracks()) killMic(t); } catch (e) { /* bỏ qua */ } };
+  function sessionSet() { // iOS 16.4+: cho phép vừa thu vừa phát; nhớ kiểu cũ để trả lại khi tắt micro
+    try { const a = navigator.audioSession; if (a && 'type' in a) { if (sessionPrev === null) sessionPrev = a.type; a.type = 'play-and-record'; } } catch (e) { fail('audioSession', e); }
+  }
+  function sessionRestore() {
+    try { const a = navigator.audioSession; if (a && sessionPrev !== null) a.type = sessionPrev; } catch (e) { fail('audioSession', e); }
+    sessionPrev = null;
+  }
+
+  // ---------- Gửi: một đường (sender) cho mỗi người nghe, đổi track bằng sender.replaceTrack ----------
+  function wantFor(p) { // track mong muốn trên đường tới người này: micro nếu đủ bốn điều kiện, ngược lại silent
+    return state === 'open' && mic && C.isLive(p) && (p.vo & 1) && !C.isHidden(p.id) ? mic : silent;
+  }
+  function findSender(pc) { try { return pc.getSenders().find((s) => s.track && (s.track === mic || s.track === silent)) || null; } catch (e) { return null; } }
+  const mkEntry = (pc, sender) => ({ pc, sender, want: sender.track, p: null });
+  function setTrack(e, want) {
+    if (e.want === want) return e.p;
+    e.want = want;
+    e.p = e.sender.replaceTrack(want).catch((err) => { e.want = e.sender.track; fail('replaceTrack', err); });
+    return e.p;
+  }
+  function noteTry(id, pc) {
+    const t = tries.get(id);
+    if (t && t.pc === pc) t.n++; else tries.set(id, { pc, n: 1 });
+    fail('addStream', 'không tìm thấy sender');
+  }
+  function addTo(id, pc) { // đúng MỘT addStream cho mỗi kết nối, luôn kèm target trong đối tượng tuỳ chọn
+    if (!pc || !out || adds.has(id)) return;
+    const t = tries.get(id);
+    if (t && t.pc === pc && t.n >= 3) return;
+    const known = findSender(pc);
+    if (known) { sentTo.set(id, mkEntry(pc, known)); return; } // đã có sẵn đường gửi: không gọi addStream lần hai
+    const g0 = roomGen;
+    let ps;
+    try { ps = [].concat(room.addStream(out, { target: id, metadata: META })); } catch (e) { fail('addStream', e); return; }
+    const settled = Promise.allSettled(ps).then(() => {
+      if (adds.get(id) === settled) adds.delete(id);
+      if (g0 !== roomGen || !room) return;
+      const cur = sentTo.get(id);
+      if (cur && cur.pc === pc) return;
+      const s = findSender(pc);
+      if (s && pcMap()[id] === pc) { sentTo.set(id, mkEntry(pc, s)); reconcile(); } else noteTry(id, pc);
+    });
+    adds.set(id, settled);
+    const s0 = findSender(pc); // sát sau lệnh gọi (nếu Trystero đã gắn track ngay); lần tìm thứ hai là sau khi promise xong
+    if (s0) sentTo.set(id, mkEntry(pc, s0));
+  }
+  function reconcile() {
+    if (!room) return;
+    const pcs = pcMap();
+    for (const [id, e] of sentTo) {
+      const p = peerById(id);
+      if (!p || p.gone || pcs[id] !== e.pc) { sentTo.delete(id); continue; } // người đã đi, hoặc nối lại bằng kết nối mới (cùng id, pc khác)
+      setTrack(e, wantFor(p));
+    }
+    if (state === 'open' && mic) {
+      const l = C.list;
+      for (let i = 0; i < l.length; i++) { const p = l[i]; if (!p.gone && !sentTo.has(p.id) && wantFor(p) === mic) addTo(p.id, pcs[p.id]); } // người chỉ cần im lặng thì không tạo đường gửi
+    }
+  }
+  async function settleAll() { // đợi mọi đường gửi (kể cả addStream đang chạy) xong và đã chuyển sang silent
+    const want = silent || null;
+    for (let i = 0; i < 3; i++) {
+      reconcile();
+      const ps = [];
+      for (const e of sentTo.values()) if (e.p) ps.push(e.p);
+      for (const p of adds.values()) ps.push(p);
+      if (ps.length) await Promise.race([Promise.allSettled(ps), sleep(2000)]);
+      if (!adds.size && Array.from(sentTo.values()).every((e) => e.sender.track === want)) return;
+    }
+  }
+
+  // ---------- Đo mức ----------
+  function buildOwn() { // đo giọng của chính mình trên vctx: nguồn micro → máy phân tích → gain 0 → đích (nguồn gắn với track nên dựng lại mỗi lần mở)
+    dropOwn();
+    if (!vctx || !mic) return;
+    try {
+      ownSrc = vctx.createMediaStreamSource(new MediaStream([mic]));
+      ownAn = vctx.createAnalyser(); ownAn.fftSize = 2048; ownAn.smoothingTimeConstant = 0;
+      ownMute = vctx.createGain(); ownMute.gain.value = 0;
+      ownSrc.connect(ownAn); ownAn.connect(ownMute); ownMute.connect(vctx.destination);
+    } catch (e) { fail('own-level', e); dropOwn(); return; }
+    startMeter();
+  }
+  function dropOwn() {
+    for (const n of [ownSrc, ownAn, ownMute]) { try { n && n.disconnect(); } catch (e) { /* bỏ qua */ } }
+    ownSrc = ownAn = ownMute = null; own = 0;
+  }
+  function rms(an) { an.getFloatTimeDomainData(mbuf); let s = 0; for (let i = 0; i < mbuf.length; i++) s += mbuf[i] * mbuf[i]; return Math.sqrt(s / mbuf.length); }
+  const smooth = (prev, x, dt) => prev + (x - prev) * (1 - Math.exp(-dt / (x > prev ? ATTACK_S : RELEASE_S)));
+  function meter() {
+    const t = performance.now(), dt = Math.min(0.5, Math.max(0.001, (t - lastMeter) / 1000)); lastMeter = t;
+    const ac = G.audio && G.audio.ctx;
+    const hear = !!ac && ac.state === 'running' && !document.hidden; // ngữ cảnh của trò chơi tạm dừng (tắt tiếng, ẩn thẻ) → máy phân tích đứng yên → mức 0
+    for (const [id, n] of nodes) {
+      n.lvl = hear && n.an ? smooth(n.lvl, rms(n.an), dt) : 0;
+      let lv = levels.get(id); if (!lv) { lv = { raw: 0, heard: 0 }; levels.set(id, lv); }
+      lv.raw = n.lvl; lv.heard = n.lvl * gainOf(id);
+      if (lv.heard > SPEAK_RMS) lastHeard = t; // giọng thật sự nghe được (đã nhân mức đích): người bị tắt giọng, bị ẩn hay đang im không hạ nhạc
+    }
+    own = ownAn ? smooth(own, rms(ownAn), dt) : 0;
+    if (state === 'open') {
+      if (own >= SPEAK_RMS) lastOwnSpeak = t; // đang nói thì đồng hồ im lặng chạy lại từ đầu
+      else if (t - lastOwnSpeak > silenceMs) { stats.autoClosed++; shut('silence'); }
+    }
+    updateDuck();
+    if (!nodes.size && !ownAn) stopMeter();
+  }
+  function startMeter() { if (meterT) return; if (!mbuf) mbuf = new Float32Array(2048); lastMeter = performance.now(); meterT = setInterval(meter, 1000 / METER_HZ); }
+  function stopMeter() { clearInterval(meterT); meterT = 0; own = 0; lastHeard = -1e9; updateDuck(); }
+  function updateDuck() { // hạ nhạc (×0,35) và âm nền (×0,5) khi micro của mình đang mở hoặc vừa có giọng nghe được trong 1,5 giây qua
+    const on = state === 'open' || performance.now() - lastHeard < DUCK_HOLD_MS;
+    if (on === duckOn) return;
+    duckOn = on;
+    try { if (G.audio && G.audio.voiceDuck) G.audio.voiceDuck(on); } catch (e) { fail('duck', e); }
+  }
+
+  // ---------- Nhận: mỗi người một nút phát (Path A: Web Audio của trò chơi) ----------
+  function gainOf(id) { return muted.has(id) ? 0 : quiet; } // mức đích của một người
+  const gameMuted = () => !!(G.audio && G.audio.isMuted && G.audio.isMuted());
+  const elementMuted = (id) => gainOf(id) < 1 || gameMuted(); // Path B không chỉnh được to nhỏ: chỉ tắt hẳn (tắt giọng, tụng kinh, thiền, hoặc trò chơi đang tắt tiếng)
+  function applyGains() {
+    for (const n of nodes.values()) {
+      if (n.gain) { try { n.gain.gain.setTargetAtTime(gainOf(n.id), n.gain.context.currentTime, RAMP); } catch (e) { /* bỏ qua */ } }
+      else if (n.route === 'element' && n.el) n.el.muted = elementMuted(n.id);
+    }
+  }
+  function routeKind() { // 'graph' (Path A) | 'element' (Path B) | 'defer' (âm thanh của trò chơi chưa khởi tạo: đợi 'audio:ready')
+    const bus = G.audio && G.audio.voiceIn && G.audio.voiceIn();
+    if (bus && route === 'graph') return 'graph';
+    if (!bus && G.audio && !G.started && route === 'graph') return 'defer'; // âm thanh được khởi tạo ngay trong cú chạm "Vào chùa"
+    return 'element'; // khởi tạo hỏng, hoặc đã chọn route = 'element' sau khi thử trên máy thật
+  }
+  function freshStream(id) { // track đã 'ended' → dựng lại luồng từ bộ nhận (receiver) âm thanh của chính kết nối đó
+    const s = streams.get(id);
+    if (!s || !s.getAudioTracks().some((t) => t.readyState === 'ended')) return s;
+    try {
+      const pc = pcMap()[id];
+      const r = pc && pc.getReceivers().find((x) => x.track && x.track.kind === 'audio' && x.track.readyState !== 'ended');
+      if (r) { const ns = new MediaStream([r.track]); streams.set(id, ns); return ns; }
+    } catch (e) { fail('receiver', e); }
+    return s;
+  }
+  function buildGraph(id, stream) {
+    const bus = G.audio.voiceIn(), ac = bus.context;
+    const n = { id, stream, route: 'graph', el: null, src: null, an: null, gain: null, lvl: 0 };
+    try {
+      n.el = document.createElement('audio'); n.el.muted = true; n.el.setAttribute('playsinline', ''); n.el.srcObject = stream; // Chrome chỉ cấp mẫu cho Web Audio khi có phần tử giữ luồng; Safari cần play() rõ ràng
+      const pl = n.el.play(); if (pl && pl.catch) pl.catch(() => { /* chưa được phép phát thì thôi */ });
+      n.src = ac.createMediaStreamSource(stream);
+      n.an = ac.createAnalyser(); n.an.fftSize = 2048; n.an.smoothingTimeConstant = 0;
+      n.gain = ac.createGain(); n.gain.gain.value = gainOf(id);
+      n.src.connect(n.an); n.src.connect(n.gain); n.gain.connect(bus);
+    } catch (e) { fail('node', e); freeNode(n); return; }
+    nodes.set(id, n);
+    startMeter();
+  }
+  function buildElement(id, stream) { // Path B: phần tử <audio> không tắt tiếng phát thẳng; máy phân tích (nếu có ngữ cảnh) chỉ để đo mức, đầu ra gain 0
+    const n = { id, stream, route: 'element', el: null, src: null, an: null, gain: null, tap: null, lvl: 0 };
+    try {
+      n.el = document.createElement('audio'); n.el.setAttribute('playsinline', ''); n.el.srcObject = stream; n.el.muted = elementMuted(id);
+      const pl = n.el.play(); if (pl && pl.catch) pl.catch(() => { /* chưa được phép phát thì thôi */ });
+    } catch (e) { fail('node', e); freeNode(n); return; }
+    const ac = (G.audio && G.audio.ctx) || vctx;
+    if (ac) {
+      try {
+        n.src = ac.createMediaStreamSource(stream);
+        n.an = ac.createAnalyser(); n.an.fftSize = 2048; n.an.smoothingTimeConstant = 0;
+        n.tap = ac.createGain(); n.tap.gain.value = 0;
+        n.src.connect(n.an); n.an.connect(n.tap); n.tap.connect(ac.destination);
+      } catch (e) { fail('tap', e); } // đo mức hỏng thì chỉ mất dấu sóng và hạ nhạc, tiếng vẫn phát
+    }
+    nodes.set(id, n);
+    startMeter();
+  }
+  function freeNode(n) {
+    for (const x of [n.src, n.an, n.gain, n.tap]) { try { x && x.disconnect(); } catch (e) { /* bỏ qua */ } }
+    if (n.el) { try { n.el.pause(); n.el.srcObject = null; } catch (e) { /* bỏ qua */ } }
+  }
+  function dropNode(id) {
+    const n = nodes.get(id);
+    if (!n) return;
+    nodes.delete(id); levels.delete(id);
+    freeNode(n);
+  }
+  const wantNode = (id) => listening() && streams.has(id) && !C.isHidden(id) && (nodes.has(id) || nodes.size < MAX_NODES); // tối đa MAX_NODES luồng phát cùng lúc; luồng dư được giữ và phát khi có chỗ
+  function syncNodes(id) { // nút phát của một người chỉ tồn tại khi: đang nghe, người đó không bị ẩn, có luồng
+    const n = nodes.get(id);
+    if (!wantNode(id)) { if (n) dropNode(id); return; }
+    const kind = routeKind();
+    if (kind === 'defer') { if (n) dropNode(id); return; }
+    const s = freshStream(id);
+    if (n && n.stream === s && n.route === kind) return;
+    if (n) dropNode(id);
+    if (kind === 'graph') buildGraph(id, s); else buildElement(id, s);
+  }
+  function syncAll() { for (const id of Array.from(streams.keys())) syncNodes(id); }
+  function onStream(stream, id, meta) {
+    if (!stream || typeof id !== 'string' || !meta || meta.k !== 'voice') return; // chỉ nhận luồng giọng nói của trò chơi
+    dropNode(id); // luồng mới thay luồng cũ của cùng người
+    streams.set(id, stream); // giữ trước mọi kiểm tra nghe / ẩn: Trystero không phát lại luồng đã tới
+    syncNodes(id);
+    checkNotices();
+  }
+  function forget(id) { // người đi hoặc bị gỡ: bỏ nút, luồng và đường gửi
+    dropNode(id); streams.delete(id); sentTo.delete(id); adds.delete(id); tries.delete(id); levels.delete(id);
+    reconcile(); syncAll(); // chỗ trống thì luồng đang chờ được phát
+  }
+  function checkNotices() { // mỗi câu một lần mỗi lần tải trang; theo cờ vo + luồng đã có, KHÔNG theo mức âm
+    if (!room || !listening()) return;
+    const gm = gameMuted(), l = C.list;
+    for (let i = 0; i < l.length; i++) {
+      const p = l[i];
+      if (p.gone || !C.isLive(p) || !(p.vo & 2) || !streams.has(p.id)) continue;
+      if (gm) { if (!mutedGameDone) { mutedGameDone = true; emit('voice:notice', 'muted-game'); } }
+      else if (!firstVoiceDone && nodes.has(p.id) && gainOf(p.id) > 0) { firstVoiceDone = true; emit('voice:notice', 'first-voice'); }
+    }
+  }
+
+  // ---------- Mở / tắt micro ----------
+  async function openMic() {
+    if (state !== 'off' || closing || !available() || !room || quietHold()) return false; // đang ngồi thiền / tụng kinh với "Tự im" bật: không mở
+    const why = refusal();
+    if (why) { refuse(why); return false; }
+    const tok = ++openTok, g0 = roomGen;
+    ensureVctx(); // 1. đồng bộ trong cú chạm
+    sessionSet(); // 2.
+    setState('opening');
+    const wd = setTimeout(() => { if (tok === openTok && state === 'opening') { openTok++; sessionRestore(); setState('off'); } }, openWaitMs); // getUserMedia không trả lời: về "off"; trả lời muộn thì rơi vào nhánh "stale" bên dưới (dừng track, không báo gì)
+    let stream = null;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(GUM); // 3. gọi ngay trong cú chạm
+    } catch (e) {
+      clearTimeout(wd);
+      fail('getUserMedia', e);
+      if (tok === openTok) { sessionRestore(); setState('off'); emit('voice:notice', GUM_ERRORS.has(e && e.name) ? 'err-' + e.name : 'err-other'); }
+      return false;
+    }
+    clearTimeout(wd);
+    const track = stream.getAudioTracks()[0];
+    const stale = tok !== openTok || g0 !== roomGen || !room || !track; // đóng / đổi phòng trong lúc chờ
+    const why2 = stale ? '' : !available() || document.hidden || quietHold() ? 'blocked' : refusal(); // điều kiện mở có còn đúng không, kể cả hạn mức: kiểm tra lại sau khi có micro
+    if (stale || why2) { // dừng track mới ngay và ở yên trạng thái tắt
+      stopStream(stream);
+      if (tok === openTok) { sessionRestore(); setState('off'); if (REFUSALS.has(why2)) refuse(why2); }
+      return false;
+    }
+    mic = track; // 4. đưa micro vào out
+    if (!out) out = new MediaStream();
+    swapOut(mic);
+    const onEnd = () => { if (mic === track && state === 'open') shut('ended'); }; // cuộc gọi, ứng dụng khác, đổi tai nghe...
+    track.addEventListener('ended', onEnd); track.addEventListener('mute', onEnd);
+    buildOwn(); // 5.
+    stats.opens++;
+    lastOwnSpeak = performance.now();
+    setState('open'); // 6.
+    reconcile();
+    if (!C.list.some((p) => !p.gone && C.isLive(p))) emit('voice:notice', 'alone'); // mở được, nhưng chưa ai trong nhóm để nghe
+    if (!firstOpenDone) { firstOpenDone = true; emit('voice:notice', 'first-open'); }
+    return true;
+  }
+  async function closeMic(reason) {
+    if (state === 'opening') { openTok++; sessionRestore(); setState('off'); return; } // lần mở đang chờ getUserMedia tự dừng track khi nó xong
+    if (state !== 'open' || closing) return;
+    closing = true;
+    const m = mic, g0 = roomGen;
+    if (m) m.enabled = false; // track tắt tiếng ngay: dù replaceTrack chậm, giọng không còn tới người nghe (killMic nhả hẳn sau settleAll)
+    state = 'off'; swapOut(silent); // 1. cờ vo bit 2 tắt ngay ở gói st kế tiếp; out chỉ còn silent
+    if (!silent) stats.silentFallback++;
+    try { await settleAll(); } catch (e) { fail('close', e); } // 2. mọi sender chuyển sang silent và đã xong
+    killMic(m); // 3. rồi mới nhả micro (tắt chỉ báo của hệ điều hành)
+    if (g0 === roomGen) { mic = null; dropOwn(); sessionRestore(); } // 4. và 5.
+    closing = false;
+    emit('voice:state', 'off'); // 6.
+    if (reason) emit('voice:notice', reason);
+    updateDuck();
+    refresh();
+  }
+
+  // ---------- Phòng: gắn / dọn theo sự kiện 'chung:room' của module 22 ----------
+  function teardownRoom() { // các kết nối sắp bị Trystero đóng: dừng micro ngay, không cần chuyển sang silent
+    openTok++;
+    const m = mic; mic = null; killMic(m);
+    out = null; sentTo.clear(); adds.clear(); tries.clear();
+    for (const id of Array.from(nodes.keys())) dropNode(id);
+    streams.clear(); levels.clear();
+    clearInterval(tickT); tickT = 0;
+    if (state !== 'off') { state = 'off'; emit('voice:state', 'off'); }
+    dropOwn(); sessionRestore(); stopMeter();
+  }
+  function onRoom(info) {
+    const nr = (info && info.room) || null;
+    if (nr === room) return; // lặp lại cùng phòng: bỏ qua
+    const wasOpen = state === 'open', prevCode = roomCode;
+    teardownRoom();
+    if (wasOpen && info && String(info.code || '') !== prevCode) emit('voice:notice', 'code-change'); // đổi mã nhóm khi đang mở micro (tắt đi chùa chung giữ nguyên mã nên không báo)
+    room = nr; roomCode = nr ? String(info.code || '') : '';
+    roomGen++;
+    if (nr) {
+      const g = roomGen;
+      nr.onPeerStream = (s, id, meta) => { if (g === roomGen) onStream(s, id, meta); };
+      tickT = setInterval(() => { reconcile(); syncAll(); checkNotices(); refresh(); }, 1000); // kiểm tra người im quá lâu, kết nối đổi, luồng hỏng, số người nói / nghe
+    }
+    refresh();
+  }
+
+  // ---------- Đăng ký sự kiện ----------
+  function limits() { // nhóm đông hơn MAX_LISTENERS người nghe khi mình đang nói: micro tạm tắt
+    if (state === 'open' && liveWith(1, true) > MAX_LISTENERS) shut('group-close');
+  }
+  G.events.on('chung:room', onRoom);
+  G.events.on('chung:vo', () => { reconcile(); limits(); checkNotices(); refresh(); });
+  G.events.on('chung:hide', (id, on) => { if (on) dropNode(id); else syncNodes(id); reconcile(); syncAll(); limits(); refresh(); });
+  G.events.on('chung:peer-leave', forget);
+  G.events.on('chung:peer-remove', forget);
+  G.events.on('chung:change', refresh);
+  G.events.on('sound:change', refresh);
+  G.events.on('audio:ready', () => syncAll());
+  G.events.on('audio:mute', () => { applyGains(); checkNotices(); });
+  G.events.on('ngoi:mode', () => { // vào / ra thiền hay tụng kinh: chỉ áp giá trị cuối cùng của nhịp này (newScreen() gọi endScreen() trước)
+    clearTimeout(quietT);
+    quietT = setTimeout(() => {
+      refresh();
+      if (!quietHold()) return;
+      if (state === 'open') shut(modeNow() === 'thien' ? 'quiet-thien' : 'quiet-tung');
+      else if (state === 'opening') { openTok++; sessionRestore(); setState('off'); }
+    }, 0);
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) shut(''); }); // ẩn thẻ: tắt micro, không báo
+  window.addEventListener('pagehide', () => shut(''));
+  sig = signature();
+
+  // ---------- API công khai ----------
+  function mutePeer(id, on) {
+    if (typeof id !== 'string') return;
+    if (on) muted.add(id); else muted.delete(id);
+    applyGains();
+    try { C.relist(); } catch (e) { /* bỏ qua */ }
+    emit('chung:change'); // module 25 vẽ lại danh sách người; refresh() chạy qua sự kiện này
+    refresh();
+  }
+  const trackKind = (t) => (t == null ? 'null' : t === mic ? 'mic' : t === silent ? 'silent' : 'other');
+  G.voice = {
+    SPEAK_RMS, MAX_OPEN, MAX_LISTENERS, MAX_NODES,
+    flags,
+    get listening() { return listening(); },
+    get state() { return state; },
+    get available() { return available(); },
+    get blockReason() { return blockReason(); },
+    get levels() { return levels; },
+    get ownLevel() { return own; },
+    get quiet() { return quiet; },
+    get stats() { return Object.assign({ sentTo: sentTo.size, streams: streams.size, activeNodes: nodes.size }, stats); },
+    openMic, closeMic, mutePeer,
+    isMuted: (id) => muted.has(id),
+    gainOf,
+    analyserOf: (id) => { const n = nodes.get(id); return n && n.an ? n.an : null; },
+    debug() {
+      const pcs = pcMap();
+      return {
+        sentTo: Array.from(sentTo, ([id, e]) => ({ id, track: trackKind(e.sender.track), pcOk: pcs[id] === e.pc })),
+        streams: Array.from(streams.keys()),
+        nodes: Array.from(nodes.values(), (n) => ({ id: n.id, gain: gainOf(n.id), route: n.route })),
+        vctx: vctx ? vctx.state : null, room: !!room, roomGen,
+      };
+    },
+    get route() { return route; }, set route(v) { route = v === 'element' ? 'element' : 'graph'; syncAll(); },
+    get silenceMs() { return silenceMs; }, set silenceMs(v) { const n = +v; if (n > 0) silenceMs = n; },
+    get openWaitMs() { return openWaitMs; }, set openWaitMs(v) { const n = +v; if (n > 0) openWaitMs = n; },
+  };
+}
+
+// ----- 25-giong-noi-giao-dien.js -----
+// =====================================================================
+//  GIAO DIỆN GIỌNG NÓI (module 25): nút micro ở thanh dưới màn hình, phím V, nút "Micro đang mở · Tắt" khi đang làm hoạt động,
+//  khối "giọng nói" trong Cài đặt, nút "Tắt giọng" và chữ "đang nói" trong danh sách người, dấu sóng vàng cạnh bảng tên, và mọi câu báo.
+//  Động cơ (module 24, G.voice) không có chữ: nó phát 'voice:notice' kèm mã; ở đây đổi mã thành câu (G.voiceUI.TEXT) và hiện bằng G.ui.toast.
+//  Chạy sau module 22 (G.chung: sự kiện 'ui:chung-settings', 'ui:chung-person', G.chung.anchor) và module 24 (G.voice).
+//  Chữ của người khác chỉ vào qua textContent hoặc canvas. innerHTML chỉ dùng cho hình SVG tĩnh của chính mã này.
+//  API: G.voiceUI (cuối tệp).
+// =====================================================================
+function installGiongNoiUI(G) {
+  const { THREE, util: U, scene } = G;
+  const C = G.chung, V = G.voice;
+  if (!C || !V || !THREE || !U || !G.ui || !G.events || !G.save) return; // thiếu module 22 hay 24 thì không có giọng nói để điều khiển
+  const clamp = U.clamp;
+
+  // ---------- Câu chữ (đúng từng chữ theo thiết kế, mục 3) ----------
+  const TEXT = { // câu báo theo mã của 'voice:notice'
+    'first-open': 'Nên đeo tai nghe để mọi người không nghe thấy tiếng vọng. Nút loa và phím M chỉ tắt tiếng trò chơi, không tắt micro.',
+    'alone': 'Chưa có ai khác trong nhóm. Khi có người vào, họ sẽ nghe bạn.',
+    'cap': 'Đã có 6 người đang mở micro. Bạn vẫn nghe được; khi có người tắt micro thì thử lại nhé.',
+    'group': 'Nhóm đang có hơn 8 người nên chưa mở được micro. Bạn vẫn nghe được.',
+    'group-close': 'Nhóm đã hơn 8 người nên micro tạm tắt. Bạn vẫn nghe được.',
+    'silence': 'Micro đã tự tắt vì 2 phút không nghe thấy bạn nói.',
+    'ended': 'Micro bị ngắt (có thể do cuộc gọi, ứng dụng khác hoặc đổi tai nghe). Bấm micro để mở lại.',
+    'code-change': 'Micro đã tắt vì bạn đổi nhóm.',
+    'quiet-thien': 'Micro đã tắt vì bạn đang ngồi thiền.',
+    'quiet-tung': 'Micro đã tắt vì bạn đang tụng kinh.',
+    'in-app': 'Micro chưa dùng được trong trình duyệt của Zalo, Messenger, Facebook… Bấm nút ⋯ / ⋮ rồi chọn "Mở bằng trình duyệt".',
+    'no-devices': 'Trình duyệt này không mở được micro. Bạn thử Safari hoặc Chrome nhé.',
+    'err-NotAllowedError': 'Bạn chưa cho phép dùng micro. Bấm biểu tượng ổ khóa cạnh địa chỉ trang → Micro → Cho phép, rồi bấm micro lần nữa.',
+    'err-SecurityError': 'Trang này chưa được phép dùng micro. Bạn mở trang trực tiếp bằng Safari hoặc Chrome nhé.',
+    'err-NotFoundError': 'Không tìm thấy micro trên máy này.',
+    'err-OverconstrainedError': 'Không tìm thấy micro trên máy này.',
+    'err-NotReadableError': 'Micro đang bị ứng dụng khác dùng.',
+    'err-AbortError': 'Micro đang bị ứng dụng khác dùng.',
+    'err-other': 'Chưa mở được micro, bạn thử lại nhé.',
+    'muted-game': 'Trò chơi đang tắt tiếng nên bạn chưa nghe được giọng nói. Bấm nút loa để bật lại.',
+    'first-voice': 'Có người trong nhóm đang nói. Muốn nhỏ tiếng hoặc tắt giọng một người, mở Cài đặt.',
+  };
+  const IOS_DENIED = 'Bạn chưa cho phép dùng micro. Trên iPhone: bấm aA trên thanh địa chỉ → Cài đặt trang web → Micro → Cho phép.'; // thay cho TEXT['err-NotAllowedError'] trên iPhone / iPad
+  const UI = { // chữ cố định của nút, danh sách và khối cài đặt (không phải câu báo)
+    // nút micro, nút nổi, danh sách người
+    micLabel: 'Micro', micAria: 'Micro nói chuyện', micTitle: 'Bật/tắt micro', micKey: ' (phím V)',
+    pill: '🎙 Micro đang mở · Tắt', pillAria: 'Micro đang mở. Bấm để tắt micro',
+    dimInApp: 'Micro chưa dùng được trong trình duyệt này', dimNoDevices: 'Trình duyệt này không mở được micro',
+    dimCap: 'Đang đủ 6 người nói', dimGroup: 'Nhóm đang có hơn 8 người nên chưa mở được micro',
+    mute: 'Tắt giọng', unmute: 'Nghe lại', speaking: '· đang nói', mark: '🎙', markAria: 'đang mở micro',
+    // khối trong Cài đặt
+    listenL: 'Nghe giọng nói trong nhóm', listenD: 'Nghe người cùng nhóm nói chuyện. Muốn nói thì bấm nút micro ở dưới màn hình.',
+    quietL: 'Tự im khi ngồi thiền / tụng kinh', quietD: 'Khi bạn ngồi thiền hoặc tụng kinh, micro của bạn tự tắt; tiếng trong nhóm im hẳn khi thiền và nhỏ lại khi tụng kinh. Xong bạn bấm micro nếu muốn nói tiếp.',
+    shortHint: 'Mã nhóm này ngắn nên người lạ dễ đoán. Bấm "Tạo mã nhóm mới" để dùng giọng nói.',
+    // Ghi chú riêng tư (thiết kế 3.6, rev 4): chọn LÚC VẼ khối theo G.chung.relay (có danh sách máy chủ chuyển tiếp dùng được hay không); phần sau giống nhau
+    noteRelay: 'Giọng nói đi thẳng giữa các máy trong nhóm; khi hai máy không nối thẳng được thì đi qua máy chủ chuyển tiếp, vẫn được mã hoá nên máy chủ không nghe được. Trò chơi không ghi âm và không lưu. Người trong nhóm vẫn có thể tự ghi âm, và lời nói không được lọc như chữ, nên chỉ nói chuyện với người bạn tin. Ai có link mời cũng vào nhóm và nghe được. Sau khi bạn cho phép micro, người cùng nhóm có thể thấy thêm địa chỉ mạng nội bộ (trong nhà) của bạn. Trẻ em nên chơi cùng người lớn. Giọng nói dùng tốt nhất khi nhóm có tối đa 8 người.',
+    notePlain: 'Giọng nói đi thẳng giữa các máy trong nhóm; trò chơi không ghi âm và không lưu. Người trong nhóm vẫn có thể tự ghi âm, và lời nói không được lọc như chữ, nên chỉ nói chuyện với người bạn tin. Ai có link mời cũng vào nhóm và nghe được. Sau khi bạn cho phép micro, người cùng nhóm có thể thấy thêm địa chỉ mạng nội bộ (trong nhà) của bạn. Trẻ em nên chơi cùng người lớn. Giọng nói dùng tốt nhất khi nhóm có tối đa 8 người.',
+    routeNote: 'Trên máy này chưa chỉnh được âm lượng giọng nói.',
+    voiceRow: 'Âm lượng giọng nói',
+  };
+  const DUR = { // thời gian hiện câu báo (ms); mã không có trong bảng: 5 giây
+    'first-open': 6000, 'alone': 4000, 'cap': 5000, 'group': 5000, 'group-close': 5000, 'silence': 5000, 'ended': 6000, 'code-change': 4000,
+    'quiet-thien': 4000, 'quiet-tung': 4000, 'in-app': 6000, 'no-devices': 6000, 'err-NotAllowedError': 6000, 'err-SecurityError': 6000,
+    'err-NotFoundError': 6000, 'err-OverconstrainedError': 6000, 'err-NotReadableError': 6000, 'err-AbortError': 6000, 'err-other': 6000,
+    'muted-game': 5000, 'first-voice': 5000,
+  };
+  function textFor(code, extra) { // 'err-NotAllowedError' có hai câu: iPhone / iPad và máy khác
+    if (code === 'err-NotAllowedError') return C.ios ? IOS_DENIED : TEXT['err-NotAllowedError'];
+    return Object.prototype.hasOwnProperty.call(TEXT, code) && typeof TEXT[code] === 'string' ? TEXT[code] : '';
+  }
+  const durFor = (code) => (Object.prototype.hasOwnProperty.call(DUR, code) ? DUR[code] : 5000);
+  G.events.on('voice:notice', (code, extra) => {
+    const t = textFor(code, extra);
+    if (t) G.ui.toast(t, durFor(code));
+  });
+
+  const tutOpen = () => { const t = document.getElementById('tut'); return !!t && !t.classList.contains('hidden'); };
+  const pathB = () => V.route === 'element' || (!!G.started && !!G.audio && typeof G.audio.voiceIn === 'function' && !G.audio.voiceIn()); // Path B: người chơi chọn, hoặc âm thanh của trò chơi không khởi tạo được
+
+  // ---------- Kiểu dáng ----------
+  G.ui.addStyle(`
+  #chungMic.dim{opacity:.5}
+  #chungMic[aria-busy="true"]{opacity:.65}
+  #chungMic.on{background:linear-gradient(180deg,#f6cf7c,#e0a344);border-color:#fff0c8;color:var(--ink);box-shadow:0 0 0 calc(2px + var(--lv,0) * 9px) rgba(247,215,147,.55),var(--shadow)}
+  #chungMic.on svg{stroke:var(--ink)}
+  @media (max-width:359px){#chungBar{gap:4px}} /* 320px: sáu nút vừa khít, chừa lề hai bên */
+  #voicePill{position:fixed;z-index:45;top:calc(10px + var(--st));right:calc(64px + var(--sr));height:40px;max-width:calc(100vw - 76px - var(--sr));padding:0 14px;border-radius:20px;border:2px solid #fff3cf;
+    background:linear-gradient(180deg,#f6cf7c,#e0a344);color:var(--ink);font-size:13.5px;font-weight:800;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center}
+  #voicePill:active{transform:scale(.96)}
+  @media (max-width:560px){#voicePill{font-size:12.5px;padding:0 10px}body.voice-pill-on .brand{visibility:hidden}} /* hàng trên cùng chật: nút nổi che tên chùa nên tạm giấu tên */
+  .voice-block .snd-h{margin-top:10px}
+  .voice-short{margin-top:10px}
+  .chung-person.vg{flex-wrap:wrap} /* màn hẹp: hai nút xuống dòng dưới tên thay vì ép tên còn vài chữ */
+  .chung-who{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 110px}
+  .chung-acts{display:flex;align-items:center;gap:6px;flex:none;margin-left:auto}
+  .chung-acts .chip{padding:8px 10px}
+  .voice-mark{flex:none;font-size:14px}
+  .voice-speaking{flex:none;color:var(--gold2);font-size:12.5px;white-space:nowrap}
+  .voice-speaking:empty{display:none}
+  .voice-route-note{margin:0 0 6px}
+  `);
+
+  // ---------- Nút micro trong thanh dưới (#chungBar), đứng trước nút "Nói" ----------
+  const SVG_MIC = '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3"/><path d="M9 21h6"/></svg>';
+  const bar = document.getElementById('chungBar'), talk = document.getElementById('chungTalk');
+  const mic = U.el('button', 'ibtn chung-g chung-mic hidden'); mic.type = 'button'; mic.id = 'chungMic';
+  mic.innerHTML = SVG_MIC; mic.appendChild(U.el('span', 'l', UI.micLabel));
+  mic.setAttribute('aria-label', UI.micAria); mic.setAttribute('aria-pressed', 'false'); mic.setAttribute('aria-busy', 'false');
+  const micTitle = UI.micTitle + (G.isTouch ? '' : UI.micKey);
+  mic.title = micTitle;
+  if (bar) bar.insertBefore(mic, talk && talk.parentNode === bar ? talk : null);
+  const DIM = { 'in-app': UI.dimInApp, 'no-devices': UI.dimNoDevices, 'cap': UI.dimCap, 'group': UI.dimGroup }; // bốn lý do làm nút mờ (nút vẫn hiện và bấm được: bấm để biết lý do)
+  function paintMic() {
+    const show = V.available, st = V.state, why = V.blockReason;
+    mic.classList.toggle('hidden', !show);
+    const dim = show && st === 'off' && Object.prototype.hasOwnProperty.call(DIM, why);
+    mic.classList.toggle('dim', dim);
+    mic.classList.toggle('on', st === 'open');
+    mic.setAttribute('aria-pressed', String(st === 'open'));
+    mic.setAttribute('aria-busy', String(st === 'opening'));
+    const title = dim ? DIM[why] : micTitle;
+    if (mic.title !== title) mic.title = title;
+    mic.dataset.reason = why;
+  }
+  function toggle() { // bật khi đang tắt, tắt khi đang mở, bỏ qua khi đang mở dở
+    if (V.state === 'open') Promise.resolve(V.closeMic('')).catch(() => { /* module 24 tự ghi lỗi */ });
+    else if (V.state === 'off') Promise.resolve(V.openMic()).catch(() => { /* module 24 tự ghi lỗi */ });
+  }
+  mic.onclick = () => {
+    toggle(); // phải gọi ngay trong cú chạm: iOS chỉ cho AudioContext và micro bắt đầu từ đây
+    mic.blur(); const cv = document.getElementById('c'); if (cv) cv.focus({ preventScroll: true }); // Space / Enter (phím hành động của lõi) không bấm lại nút này
+  };
+
+  // ---------- Phím V ----------
+  window.addEventListener('keydown', (e) => { // cùng hàng rào với phím cử chỉ 1 / 2 / 3
+    if (e.code !== 'KeyV' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.isComposing || !G.started || G.ui.panelOpen || tutOpen()) return;
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable)) return;
+    if (!V.available) return; // nút micro không hiện thì phím V cũng không làm gì
+    if (G.activity.current) { if (V.state === 'open') { e.preventDefault(); toggle(); } return; } // đang làm hoạt động: V chỉ để tắt, không bao giờ để bật
+    e.preventDefault();
+    toggle();
+  });
+
+  // ---------- Nút nổi "Micro đang mở · Tắt": khi đang làm hoạt động thì thanh dưới ẩn, micro đang mở vẫn phải có chỗ tắt ----------
+  const pill = U.el('button', 'hidden', UI.pill); pill.type = 'button'; pill.id = 'voicePill'; pill.setAttribute('aria-label', UI.pillAria);
+  document.body.appendChild(pill);
+  function paintPill() {
+    const show = !!G.activity.current && V.state === 'open';
+    pill.classList.toggle('hidden', !show);
+    document.body.classList.toggle('voice-pill-on', show);
+  }
+  pill.onclick = () => { Promise.resolve(V.closeMic('')).catch(() => { /* module 24 tự ghi lỗi */ }); pill.classList.add('hidden'); document.body.classList.remove('voice-pill-on'); };
+
+  // ---------- Khối "giọng nói" trong Cài đặt (nằm trong .chung-more, nên chỉ thấy khi đã bật "Đi chùa cùng mọi người") ----------
+  function mkSwitchRow(id, label, desc) {
+    const head = U.el('div', 'snd-h'), txt = U.el('div', 'snd-t');
+    txt.append(U.el('div', 'snd-l', label), U.el('div', 'small muted', desc));
+    const sw = U.el('button', 'snd-sw'); sw.type = 'button'; sw.id = id; sw.setAttribute('role', 'switch'); sw.setAttribute('aria-label', label);
+    head.append(txt, sw);
+    return { head, sw };
+  }
+  G.events.on('ui:chung-settings', (o) => {
+    const more = o && o.more;
+    if (!more || !more.appendChild) return;
+    const box = U.el('div', 'voice-block hidden'); box.id = 'voiceBlock';
+    const hint = U.el('div', 'chung-adv voice-short hidden', UI.shortHint); hint.id = 'voiceShortHint';
+    const rListen = mkSwitchRow('voiceListen', UI.listenL, UI.listenD), rQuiet = mkSwitchRow('voiceQuietSw', UI.quietL, UI.quietD);
+    const note = U.el('div', 'note'); note.id = 'voiceNote'; note.style.marginTop = '8px';
+    box.append(hint, rListen.head, rQuiet.head, note);
+    more.appendChild(box);
+    const paint = () => {
+      const code = C.code, ok = C.voiceEligible, cfg = C.voiceCfg;
+      box.classList.toggle('hidden', !code); // không có mã = phòng chung: không có giọng nói
+      note.textContent = C.relay === true ? UI.noteRelay : UI.notePlain; // câu về máy chủ chuyển tiếp chỉ khi trò chơi thật sự có danh sách dùng được
+      hint.classList.toggle('hidden', !(code && !ok));
+      for (const el of [rListen.head, rQuiet.head, note]) el.classList.toggle('hidden', !ok);
+      for (const [sw, on] of [[rListen.sw, cfg.voice], [rQuiet.sw, cfg.voiceQuiet]]) { sw.classList.toggle('on', on); sw.setAttribute('aria-checked', String(on)); }
+    };
+    rListen.sw.onclick = () => { G.audio?.play?.('ui'); C.setVoiceCfg({ voice: !C.voiceCfg.voice }); paint(); };
+    rQuiet.sw.onclick = () => { G.audio?.play?.('ui'); C.setVoiceCfg({ voiceQuiet: !C.voiceCfg.voiceQuiet }); paint(); };
+    const off1 = G.events.on('chung:change', () => { if (!box.isConnected) { off1(); return; } paint(); });
+    const off2 = G.events.on('voice:change', () => { if (!box.isConnected) { off2(); return; } paint(); });
+    paint();
+  });
+
+  // ghi chú dưới thanh trượt "Âm lượng giọng nói" khi máy này phát giọng qua phần tử <audio> (Path B): thanh trượt không chỉnh được
+  G.events.on('ui:settings', (box) => {
+    if (!box || !box.querySelectorAll) return;
+    let row = null;
+    for (const r of box.querySelectorAll('.snd-row')) { const l = r.querySelector('.snd-l'); if (l && l.textContent === UI.voiceRow) row = r; }
+    if (!row) return;
+    const note = U.el('div', 'small muted voice-route-note hidden', UI.routeNote); note.id = 'voiceRouteNote';
+    row.appendChild(note);
+    const paint = () => note.classList.toggle('hidden', !pathB());
+    paint();
+    const off = G.events.on('voice:change', paint);
+    const tick = setInterval(() => { if (!note.isConnected) { clearInterval(tick); off(); return; } paint(); }, 1000); // đổi V.route không có sự kiện riêng
+  });
+
+  // ---------- Danh sách người: "Tắt giọng" / "Nghe lại", dấu 🎙 khi mở micro, chữ "· đang nói" (cập nhật 15 lần/giây) ----------
+  const people = new Map(); // id → { peer, speak }: hàng hiện có, thay mỗi lần module 22 dựng lại hàng, bỏ khi hàng rời khỏi trang
+  let peopleT = 0;
+  function tickPeople() {
+    for (const [id, r] of people) {
+      if (!r.speak.isConnected) { people.delete(id); continue; }
+      const lv = V.levels.get(id);
+      const t = lv && lv.raw > V.SPEAK_RMS ? UI.speaking : '';
+      if (r.speak.textContent !== t) r.speak.textContent = t;
+    }
+    if (!people.size) { clearInterval(peopleT); peopleT = 0; }
+  }
+  G.events.on('ui:chung-person', (o) => {
+    const p = o && o.peer, row = o && o.row;
+    if (!p || !row || !C.code || !C.voiceEligible) return; // chỉ trong nhóm riêng đủ dài
+    const nameEl = row.firstElementChild, hideBtn = row.querySelector('button.chip');
+    if (!nameEl || !hideBtn) return;
+    row.classList.add('vg');
+    const who = U.el('span', 'chung-who');
+    row.insertBefore(who, nameEl); who.appendChild(nameEl);
+    if (p.vo & 2) { const m = U.el('span', 'voice-mark', UI.mark); m.setAttribute('role', 'img'); m.setAttribute('aria-label', UI.markAria); who.appendChild(m); }
+    const speak = U.el('span', 'voice-speaking'); who.appendChild(speak);
+    const acts = U.el('span', 'chung-acts');
+    const muted = V.isMuted(p.id);
+    const chip = U.el('button', 'chip voice-mute', muted ? UI.unmute : UI.mute); chip.type = 'button'; chip.setAttribute('aria-pressed', String(muted));
+    chip.onclick = () => { G.audio?.play?.('ui'); V.mutePeer(p.id, !V.isMuted(p.id)); }; // mutePeer làm danh sách dựng lại nên nút đổi chữ
+    row.insertBefore(acts, hideBtn); acts.append(hideBtn, chip); // "Ẩn người này" giữ vị trí đầu như trước (người dùng quen tay, các bộ kiểm cũ chọn nút đầu tiên)
+    people.set(p.id, { peer: p, speak });
+    if (!peopleT) peopleT = setInterval(tickPeople, 1000 / 15);
+  });
+
+  // ---------- Dấu sóng vàng cạnh bảng tên người đang nói (trong thế giới 3D) ----------
+  const MAX_SHOW = C.MAX_SHOW || 16;
+  const SPR = 0.22, GAP = 0.14, LV_LO = 0.01, LV_HI = 0.04, MUTED_K = 0.35; // cỡ (m), khoảng cách tới mép bảng tên (m), mức nghe → độ rõ, hệ số mờ khi bị tắt giọng
+  const level01 = (h) => clamp((h - LV_LO) / (LV_HI - LV_LO), 0, 1);
+  const sprites = new Array(MAX_SHOW).fill(null); // cùng chỉ số với ô vẽ của module 22: người có ô mới có dấu
+  let tex = null;
+  function drawWave() { // vẽ một lần: nền tròn tối và ba cung sóng vàng
+    const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+    const g = cv.getContext('2d');
+    g.fillStyle = 'rgba(42,24,14,0.82)'; g.beginPath(); g.arc(64, 64, 60, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#f7d793'; g.fillStyle = '#f7d793'; g.lineWidth = 8; g.lineCap = 'round';
+    g.beginPath(); g.arc(38, 64, 6, 0, Math.PI * 2); g.fill();
+    for (let i = 1; i <= 3; i++) { g.beginPath(); g.arc(38, 64, 12 + i * 13, -0.75, 0.75); g.stroke(); }
+    return cv;
+  }
+  function spriteFor(slot) {
+    let s = sprites[slot];
+    if (s) return s;
+    if (!tex) { tex = new THREE.CanvasTexture(drawWave()); tex.colorSpace = THREE.SRGBColorSpace; }
+    s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0 })); // mỗi dấu một vật liệu riêng (độ rõ riêng), chung một ảnh
+    s.scale.set(SPR, SPR, 1); s.renderOrder = 6; s.visible = false; s.name = 'giong:song'; s.userData.stamp = -1;
+    scene.add(s); sprites[slot] = s;
+    return s;
+  }
+  const _r = new THREE.Vector3();
+  let frameNo = 0, ringAcc = 0, ringV = 0, anyShown = false;
+  function updateSprites() {
+    frameNo++;
+    if (!V.levels.size && !anyShown) return;
+    const list = C.list;
+    let rightDone = false;
+    for (let i = 0; i < list.length; i++) {
+      const p = list[i];
+      if (p.slot < 0 || p.slot >= MAX_SHOW) continue;
+      const lv = V.levels.get(p.id);
+      if (!lv) continue;
+      const a = C.anchor(p);
+      if (!a || a.k < 0.02) continue; // mờ, bị ẩn, nằm trong nêm máy quay hay quá xa: không có dấu
+      const muted = V.isMuted(p.id);
+      const op = (muted ? level01(lv.raw) * MUTED_K : level01(lv.heard)) * a.k; // người bị mình tắt giọng vẫn nói: dấu mờ
+      if (op < 0.02) continue;
+      if (!rightDone) { _r.setFromMatrixColumn(G.camera.matrixWorld, 0); rightDone = true; }
+      const s = spriteFor(p.slot), off = a.half + GAP;
+      s.position.set(a.x - _r.x * off, a.y - _r.y * off, a.z - _r.z * off); // tâm bảng tên + hướng phải của máy quay × −(nửa bề ngang + 0,14 m)
+      s.material.opacity = op; s.material.color.setHex(muted ? 0xb9ab97 : 0xffffff);
+      s.userData.stamp = frameNo; s.visible = true;
+    }
+    anyShown = false;
+    for (let i = 0; i < MAX_SHOW; i++) {
+      const s = sprites[i];
+      if (!s || !s.visible) continue;
+      if (s.userData.stamp !== frameNo) s.visible = false; else anyShown = true;
+    }
+  }
+  function updateRing(dt) { // vòng sáng quanh nút micro theo mức giọng của chính mình, 15 lần/giây
+    ringAcc += dt;
+    if (ringAcc < 1 / 15) return;
+    ringAcc = 0;
+    const v = V.state === 'open' ? Math.min(1, V.ownLevel / 0.12) : 0;
+    if (Math.abs(v - ringV) < 0.02 && !(v === 0 && ringV !== 0)) return;
+    ringV = v; mic.style.setProperty('--lv', v.toFixed(2));
+  }
+  G.onUpdate((dt) => { updateSprites(); updateRing(dt); }, 23); // sau lúc module 22 (thứ tự 22) ghi vị trí người
+
+  // ---------- Vẽ lại theo trạng thái ----------
+  function paintAll() { paintMic(); paintPill(); }
+  for (const ev of ['voice:state', 'voice:change', 'chung:change', 'sound:change', 'activity:start', 'activity:end', 'enter']) G.events.on(ev, paintAll);
+  paintAll();
+
+  // =====================================================================
+  //  API CÔNG KHAI (G.voiceUI) — cũng dùng để kiểm tra headless
+  // =====================================================================
+  G.voiceUI = { TEXT, IOS_DENIED, DUR, textFor, durFor };
 }
 
 // ----- 30-activities-a.js -----
@@ -16075,6 +17283,7 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
 //  Mọi lối thoát (nút ×, Escape, Đứng dậy, lỗi) đều dọn sạch và gọi G.activity.end() đúng một lần.
 //  Lưu: G.save.data.kinh = { last, prog: { [id]: { part, i, n, at } }, done: { [id]: số lần } }, G.save.data.kinhCuaToi (chữ),
 //  G.save.data.thien = { lan, phut }. Cần G.kinh (21-kinh-van.js); có G.crowd.seats (20-crowd.js) thì giữ chỗ ngồi để khách AI không ngồi trùng.
+//  G.ngoi.mode = 'tung' | 'thien' | null (màn chữ kinh / vòng thở đang mở) và sự kiện 'ngoi:mode' khi đổi: giọng nói trong nhóm (module 24) tự im theo đó.
 // =====================================================================
 function installNgoiTungKinh(G) {
   const { util: U } = G;
@@ -16164,6 +17373,8 @@ function installNgoiTungKinh(G) {
   let heldSeat = -1;     // chỗ đang giữ trong G.crowd.seats
   let scr = null;        // màn hình con đang mở (chữ kinh / thiền)
   let bpmSel = 66;       // nhịp mõ tự động đã chọn (nhớ trong lúc chơi)
+  let mode = null;       // màn con đang mở: 'tung' (chữ kinh) | 'thien' (vòng thở) | null
+  function setMode(m) { if (m === mode) return; mode = m; G.events.emit('ngoi:mode', mode); }
 
   function releaseHeld() {
     if (heldSeat < 0) return;
@@ -16267,6 +17478,7 @@ function installNgoiTungKinh(G) {
     try { if (s.onEnd) s.onEnd(); } catch (e) { console.error(e); }
     for (let i = s.fns.length - 1; i >= 0; i--) { try { s.fns[i](); } catch (e) { console.error(e); } }
     s.fns.length = 0;
+    setMode(null); // newScreen() gọi endScreen() trước, nên khi đổi màn người nghe chỉ cần lấy giá trị cuối trong cùng một nhịp
   }
 
   // ---------- Bảng: một lúc chỉ có một; đóng bằng mã thì không gọi hành động "bỏ qua" ----------
@@ -16518,6 +17730,7 @@ function installNgoiTungKinh(G) {
         total += n;
       }
       if (!total) { endScreen(); G.ui.toast('Bài này chưa có chữ để tụng.'); showPicker(); return; }
+      setMode('tung');
 
       let pi = 0, li = 0, si = 0, done = 0;     // phần, câu, chữ hiện tại; số chữ đã tụng cả bài
       if (resume && resume.n === total && resume.i > 0 && resume.i < total) {
@@ -16719,6 +17932,7 @@ function installNgoiTungKinh(G) {
     function startThien(mins) {
       if (r.dead || leaving) return;
       const s = newScreen();
+      setMode('thien');
       const total = mins * 60;
       let el = 0, shown = -1, ended = false, committed = false;
       const layer = mkLayer(s);
@@ -16789,7 +18003,7 @@ function installNgoiTungKinh(G) {
   }
 
   // Gỡ lỗi / kiểm thử
-  G.ngoi = { poi, camFor, CAM, get seatIdx() { return seatIdx; }, get busy() { return busy; }, start: startNgoi };
+  G.ngoi = { poi, camFor, CAM, get seatIdx() { return seatIdx; }, get busy() { return busy; }, get mode() { return mode; }, start: startNgoi };
 }
 
 // ----- 50-activities-c.js -----
@@ -17640,7 +18854,10 @@ function installActivitiesC(G) {
     ['hoạt động 4–5', typeof installActivitiesB === 'function' ? installActivitiesB : null],
     ['ngồi bồ đoàn, tụng kinh, thiền', typeof installNgoiTungKinh === 'function' ? installNgoiTungKinh : null], // 45: ngồi lên bồ đoàn trống trong chính điện (E / nút chạm), tụng kinh theo bài, ngồi thiền
     ['hoạt động khu mở rộng', typeof installActivitiesC === 'function' ? installActivitiesC : null],
-    ['đi chùa chung', typeof installDiChuaChung === 'function' ? installDiChuaChung : null], // 22: nhiều người cùng dạo chùa qua kết nối ngang hàng (Trystero), tắt mặc định; chạy sau mọi hoạt động để đọc G.world.seats, G.crowd.seats
+    ['đi chùa chung', typeof installDiChuaChung === 'function' ? installDiChuaChung : null], // 22: nhiều người cùng dạo chùa qua kết nối ngang hàng (Trystero), bật mặc định từ 2026-11-09 (ai tự tắt thì giữ tắt); chạy sau mọi hoạt động để đọc G.world.seats, G.crowd.seats
+    ['lời mời vào nhóm', typeof installLoiMoi === 'function' ? installLoiMoi : null], // 23: mã nhóm ngẫu nhiên, link mời, bảng "Lời mời vào nhóm"
+    ['giọng nói trong nhóm', typeof installGiongNoi === 'function' ? installGiongNoi : null], // 24: micro, gửi/nhận giọng nói trong nhóm riêng (không có chữ hiển thị)
+    ['giao diện giọng nói', typeof installGiongNoiUI === 'function' ? installGiongNoiUI : null], // 25: nút micro, công tắc, nhãn người nói, câu báo
   ];
   for (const [name, fn] of steps) {
     if (!fn) continue;

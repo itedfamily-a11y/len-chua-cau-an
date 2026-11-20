@@ -24,7 +24,10 @@
     ['hoạt động 4–5', typeof installActivitiesB === 'function' ? installActivitiesB : null],
     ['ngồi bồ đoàn, tụng kinh, thiền', typeof installNgoiTungKinh === 'function' ? installNgoiTungKinh : null], // 45: ngồi lên bồ đoàn trống trong chính điện (E / nút chạm), tụng kinh theo bài, ngồi thiền
     ['hoạt động khu mở rộng', typeof installActivitiesC === 'function' ? installActivitiesC : null],
-    ['đi chùa chung', typeof installDiChuaChung === 'function' ? installDiChuaChung : null], // 22: nhiều người cùng dạo chùa qua kết nối ngang hàng (Trystero), tắt mặc định; chạy sau mọi hoạt động để đọc G.world.seats, G.crowd.seats
+    ['đi chùa chung', typeof installDiChuaChung === 'function' ? installDiChuaChung : null], // 22: nhiều người cùng dạo chùa qua kết nối ngang hàng (Trystero), bật mặc định từ 2026-11-09 (ai tự tắt thì giữ tắt); chạy sau mọi hoạt động để đọc G.world.seats, G.crowd.seats
+    ['lời mời vào nhóm', typeof installLoiMoi === 'function' ? installLoiMoi : null], // 23: mã nhóm ngẫu nhiên, link mời, bảng "Lời mời vào nhóm"
+    ['giọng nói trong nhóm', typeof installGiongNoi === 'function' ? installGiongNoi : null], // 24: micro, gửi/nhận giọng nói trong nhóm riêng (không có chữ hiển thị)
+    ['giao diện giọng nói', typeof installGiongNoiUI === 'function' ? installGiongNoiUI : null], // 25: nút micro, công tắc, nhãn người nói, câu báo
   ];
   for (const [name, fn] of steps) {
     if (!fn) continue;

@@ -149,6 +149,7 @@ const SOUND_CATS = [
   ['amb', 'Âm thanh xung quanh', 'Gió, lá xào xạc, chim hót, dế kêu'],
   ['chant', 'Tụng kinh & chuông xa', 'Tiếng tụng kinh trong điện, chuông chùa ngân xa'],
   ['sfx', 'Hiệu ứng', 'Thỉnh chuông, gõ mõ, thắp hương, bước chân, nút bấm'],
+  ['voice', 'Âm lượng giọng nói', 'Tiếng người cùng nhóm nói chuyện'], // giọng nói trong nhóm riêng (modules 22–25)
 ];
 const SOUND_DEF = () => Object.fromEntries(SOUND_CATS.map(([k]) => [k, { on: true, v: 70 }]));
 const DEF_SAVE = () => ({
@@ -936,7 +937,7 @@ function openSound() {
     head.append(txt, sw);
     const line = U.el('div', 'snd-line');
     const r = document.createElement('input');
-    r.type = 'range'; r.min = '0'; r.max = '100'; r.step = '1'; r.setAttribute('aria-label', k === 'master' ? label : 'Âm lượng ' + label.toLowerCase());
+    r.type = 'range'; r.min = '0'; r.max = '100'; r.step = '1'; r.setAttribute('aria-label', /^Âm lượng/.test(label) ? label : 'Âm lượng ' + label.toLowerCase());
     const val = U.el('span', 'snd-v');
     line.append(r, val); row.append(head, line); box.appendChild(row);
     const paint = () => {

@@ -148,14 +148,14 @@ function buildWorld2(G) {
     cuuPham: { tower: null, center: { x: A.tower.x, z: A.tower.z }, poi: { x: 3.7, z: -51.2, r: 2.2 }, stand: { x: 3.05, z: -51.2, yaw: -PI / 2 }, // đứng phía đông, tượng Phật chắn phía nam
       cam: { pos: [4.3, 3.4, -44.4], look: [1.2, 3.6, -51.2] }, camP: { pos: [5.4, 2.9, -50.6], look: [0.7, 3.6, -51.2] } }, // camP: màn hình dọc, nhìn qua vai người đẩy (dưới ván gác lửng y 3,2); 50-activities-c.js chia trước hệ số lùi máy
     baoNghiem: { center: { x: BN.x, z: BN.z }, ringR: BN.ringR, ringIn: 4.1, ringOut: 5.4, poi: { x: BN.x, z: BN.z - BN.ringR, r: 2.4 } }, // 2026-11-26: vành nhiễu nới ra 4,1…5,4 theo đế tháp mới; poi ở phía bắc, giữa lối (trước: 3,1…4,4, poi BN.z − 4,2)
-    quanAm: { statue: null }, // tượng nghìn tay do 09 dựng; 17-dien-phu.js đặt vào Quan Âm Các và điền poi / stand / cam
+    quanAm: { statue: null }, // tượng nghìn tay do 09 dựng; 17-quan-am-cac.js (gọi từ 17-dien-phu.js) đặt vào Quan Âm Các mới và điền poi / stand / cam
     vuonThap: { poi: { x: 25.0, z: -148.9, r: 2.4 }, stand: { x: 24.4, z: -151.5, yaw: PI / 2 }, seat: L.vuonThap.bench, cam: { pos: [22.2, 2.6, -147.1], look: [28.6, 2.6, -152.0] } }, // trong vườn sau chùa từ 2026-11-26
     linhThu: { poi: { x: 0, z: -27.2, r: 2.4 }, animals: L.animals },
     sites: [
       { id: 'cau-da', name: 'Cầu đá & ao Long Trì', rects: [[-11, 11, -21.5, -12.5]] },
       { id: 'linh-thu', name: 'Sân linh thú', rects: [[-6, 6, -43, -26]] },
       { id: 'tich-thien-am', name: 'Tích Thiện Am', rects: [[-5.7, 5.7, -56.6, -44]] },
-      { id: 'quan-am', name: 'Quan Âm Các', rects: [[11.4, 21.5, -1, 7.2]] }, // gồm ba bậc thềm
+      { id: 'quan-am', name: 'Quan Âm Các', rects: [[13.62, 32.88, -8.55, 6.65]] }, // 2026-11-27: nền của toà điện mới (17-quan-am-cac.js: tâm 23,25; −0,95, nền 19,26 × 15,2 m). Trước đó [11.4, 21.5, -1, 7.2]
       { id: 'bao-nghiem', name: 'Bảo tháp', rects: [[BN.x - 6, BN.x + 6, BN.z - 6, BN.z + 6]] }, // trong vườn sau chùa từ 2026-11-26 (rect cũ [−20,4…−11,5; −45…−35] theo BN)
       { id: 'vuon-thap', name: 'Vườn tháp', rects: [[23.3, 32.3, -169.5, -135.5]] }, // trong vườn sau chùa từ 2026-11-26
       { id: 'hanh-lang', name: 'Hành lang', rects: [[-35.9, -32.9, -113, -13], [32.9, 35.9, -113, -13]] }, // 2026-11-26: hành lang dời ra x ±(32,9…35,9)

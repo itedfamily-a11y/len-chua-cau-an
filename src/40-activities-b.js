@@ -463,7 +463,7 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
   const lanGlow = G.fx.glowPoints(LMAX, { flicker: 1, intensity: 1 });
   const tagGeo = new THREE.PlaneGeometry(0.36, 0.24);
   const lanterns = []; // chỉ số = ô trong InstancedMesh
-  let lanSeq = 0;
+  let lanSeq = 0; const LAN_TOP = { flame: 0.27, glow: 0.32 }; // độ cao ngọn lửa / quầng sáng trên gốc đèn (đơn vị của hình đèn); 41-hoa-dang-sen.js đổi khi thay hình đèn bằng hoa sen mô hình
 
   function drawTagTex(c, w, h, text) {
     const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#fff6df'); g.addColorStop(1, '#f1ddb0');
@@ -632,9 +632,9 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
       _q.setFromEuler(_e);
       _p.set(L.x, L.y, L.z); _s.setScalar(sc); _m4.compose(_p, _q, _s); bodyIM.setMatrixAt(i, _m4);
       const fl = 1 + Math.sin(t * 11 + L.ph) * 0.16 + Math.sin(t * 17.3 + L.ph * 1.7) * 0.1;
-      _p.set(L.x, L.y + 0.27 * sc, L.z); _s.set(sc * (1 - (fl - 1) * 0.5), sc * fl, sc * (1 - (fl - 1) * 0.5));
+      _p.set(L.x, L.y + LAN_TOP.flame * sc, L.z); _s.set(sc * (1 - (fl - 1) * 0.5), sc * fl, sc * (1 - (fl - 1) * 0.5));
       _m4.compose(_p, _q, _s); flameIM.setMatrixAt(i, _m4);
-      lanGlow.set(i, L.x, L.y + 0.32 * sc, L.z, 0.85 * sc, 1.0, 0.72, 0.36, 0.9);
+      lanGlow.set(i, L.x, L.y + LAN_TOP.glow * sc, L.z, 0.85 * sc, 1.0, 0.72, 0.36, 0.9);
       const tg = L.tag;
       if (tg) { // nhãn giấy nhỏ luôn hướng về máy quay, đặt bên cạnh đèn
         if (drifting) L.tagK = Math.min(1, L.tagK + dt * 1.6);
@@ -1318,7 +1318,7 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
   G.onUpdate((dt, t) => { updateRibbons(t); updateLanterns(dt, t); updateRipples(dt); updateFortune(dt, t); }, 32);
   G.onUpdate(applyFarHide, 77);
   G.activitiesB = {
-    openComposer, startFortune, openBook, openShare, drawShareImage, fortunes: FORTUNES, restoreSaved, clearPlayerItems,
+    openComposer, startFortune, openBook, openShare, drawShareImage, fortunes: FORTUNES, restoreSaved, clearPlayerItems, lanternTop: LAN_TOP,
     // chỉ để đọc (bài kiểm tra g04-cau-an.mjs): các mảng là mảng thật đang chạy, đừng sửa
     state: () => ({ tree: TREE, pond: POND, anchors: A, anchorUse: aUse, reserved: aRes, visitors: pil, ribbons, lanterns, MAX_RIB, MAX_LAN, N_PIL_RIB, N_PIL_LAN, N_REST, MIN_AGAP, WY,
       meshes: { pil: pilMesh, body: bodyIM, flame: flameIM, glow: lanGlow.points, ripples: ripples.map((q) => q.mesh) } }),

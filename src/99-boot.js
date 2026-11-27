@@ -28,6 +28,7 @@
     ['khách AI', typeof installCrowd === 'function' ? installCrowd : null],
     ['hoạt động 1–3', typeof installActivitiesA === 'function' ? installActivitiesA : null],
     ['hoạt động 4–5', typeof installActivitiesB === 'function' ? installActivitiesB : null],
+    ['đèn hoa đăng (hoa sen mô hình 3D)', typeof installHoaDangSen === 'function' ? installHoaDangSen : null], // 41-hoa-dang-sen.js: sau hoạt động 4–5 (đọc thân đèn của G.activitiesB); thay hình đèn bằng bông sen tải về khi người chơi tới gần hồ, lỗi thì giữ đèn dựng bằng mã
     ['ngồi bồ đoàn, tụng kinh, thiền', typeof installNgoiTungKinh === 'function' ? installNgoiTungKinh : null], // 45: ngồi lên bồ đoàn trống trong chính điện (E / nút chạm), tụng kinh theo bài, ngồi thiền
     ['hoạt động khu mở rộng', typeof installActivitiesC === 'function' ? installActivitiesC : null],
     ['đi chùa chung', typeof installDiChuaChung === 'function' ? installDiChuaChung : null], // 22: nhiều người cùng dạo chùa qua kết nối ngang hàng (Trystero), bật mặc định từ 2026-11-09 (ai tự tắt thì giữ tắt); chạy sau mọi hoạt động để đọc G.world.seats, G.crowd.seats

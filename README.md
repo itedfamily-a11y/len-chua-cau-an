@@ -54,6 +54,12 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
   giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã giảm số mặt (407 nghìn xuống 3 000), thu nhỏ ảnh bề mặt và nắn thẳng thân để cá tự bơi,
   lưu thành `assets/mo-hinh/ca-vang.glb` (212 KB, máy tính) và `assets/mo-hinh/ca-vang-nhe.glb` (106 KB, điện thoại);
   tải một bản khi người chơi tới gần hồ, lỗi thì game dùng cá dựng bằng mã. Sóng nước, phản chiếu và vòng sóng trên hồ đều viết bằng mã.
+  Đèn hoa đăng trên hồ là bông sen từ mô hình
+  [Lotus Flower by Geometry Nodes](https://sketchfab.com/3d-models/lotus-flower-by-geometry-nodes-398b0f0eafe640a2a3dec98305a8e1c3) của Shiki,
+  giấy phép [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) (**phi thương mại**: chỉ dùng được chừng nào trò chơi không có quảng cáo, không thu tiền, không nhận quyên góp),
+  đã chỉnh sửa (giảm từ 1,23 triệu xuống 4 200 mặt, thêm màu cho cánh hoa),
+  lưu thành `assets/mo-hinh/hoa-dang-sen.glb` (105 KB, máy tính) và `assets/mo-hinh/hoa-dang-sen-nhe.glb` (44 KB, điện thoại);
+  tải một bản khi người chơi tới gần hồ, lỗi thì game dùng đèn dựng bằng mã.
   Cây sồi và cây thông trong cảnh (cây quanh tường, cây đa đầu lối vào, cây bồ đề ở vườn sau, tùng, cây trong chậu) lấy từ hai mô hình
   [Oak trees pack (17var, LODs, seasons, gameready)](https://sketchfab.com/3d-models/oak-trees-pack-17var-lods-seasons-gameready-a5e4e64f9f1d4089bdcc6170a9333393) của LOLIPOP và
   [Pine Forest at Sunset](https://sketchfab.com/3d-models/pine-forest-at-sunset-bef89be6b189456095db79107045d726) của Jagobo,

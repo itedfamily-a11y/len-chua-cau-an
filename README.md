@@ -35,6 +35,11 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
   giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã giảm số mặt, cắt phần nền, thu nhỏ ảnh bề mặt và chỉnh vật liệu),
   lưu thành hai bản trong `assets/mo-hinh/`: `quan-am-but-thap-4k.glb` (3,6 MB, máy tính) và `quan-am-but-thap.glb` (1,9 MB, điện thoại);
   game chỉ tải một bản, khi người chơi tới gần; thiếu file hoặc tải lỗi thì game dùng tượng dựng bằng mã.
+  Tượng Địa Tạng Vương Bồ Tát ở Điện Địa Tạng là mô hình
+  [diZangPuSa_v2022-HiPory-4K-MaterialTest](https://sketchfab.com/3d-models/dizangpusa-v2022-hipory-4k-materialtest-c65b04e74d5843b6898b2918c2969d73) của chiwei,
+  giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã giảm số mặt, thu nhỏ ảnh bề mặt và chỉnh vật liệu,
+  lưu thành `assets/mo-hinh/dia-tang-4k.glb` (4,1 MB, máy tính) và `assets/mo-hinh/dia-tang.glb` (1,1 MB, điện thoại);
+  cũng chỉ tải một bản khi người chơi tới gần, lỗi thì giữ tượng dựng bằng mã.
   Tàng Kinh Các ở sân đông (qua cổng nách trên tường đông sân trước) dựng từ mô hình
   [Procedural asian architecture test 11](https://sketchfab.com/3d-models/procedural-asian-architecture-test-11-fea52a7cf45a4f5893c872c84da501e0) của ghostnoface,
   giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã giản lược từ 410 nghìn xuống 63 nghìn tam giác (vách cửa và lan can thành tấm phẳng dán ảnh),

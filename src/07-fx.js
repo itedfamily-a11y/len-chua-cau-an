@@ -59,9 +59,12 @@ function installFx(G) {
   const gl = G.world.glows;
   const nightG = gl.filter((q) => q.night), constG = gl.filter((q) => !q.night);
   const gN = fx.glowPoints(Math.max(1, nightG.length), { flicker: 1 });
-  nightG.forEach((q, i) => gN.set(i, q.x, q.y, q.z, q.size, q.r, q.g, q.b, 1)); gN.commit();
+  // q.fx = { pts, i }: chỗ của quầng trong nhóm điểm, để module khác dời / đổi quầng về sau (2026-11-27: 17-dia-tang-quet.js dời quầng minh châu và quầng điện theo mô hình 3D).
+  // Thuộc tính không liệt kê (defineProperty): JSON.stringify / Object.assign trên W.glows không đụng tới đối tượng Three.js (có vòng tham chiếu)
+  const slot = (q, pts, i) => Object.defineProperty(q, 'fx', { value: { pts, i }, writable: true, configurable: true });
+  nightG.forEach((q, i) => { gN.set(i, q.x, q.y, q.z, q.size, q.r, q.g, q.b, 1); slot(q, gN, i); }); gN.commit();
   const gC = fx.glowPoints(Math.max(1, constG.length), { flicker: 0.8, intensity: 0.75 });
-  constG.forEach((q, i) => gC.set(i, q.x, q.y, q.z, q.size, q.r, q.g, q.b, 1)); gC.commit();
+  constG.forEach((q, i) => { gC.set(i, q.x, q.y, q.z, q.size, q.r, q.g, q.b, 1); slot(q, gC, i); }); gC.commit();
   G.onUpdate(() => { const gg = G.post && G.post.glowGain != null ? G.post.glowGain : 1; /* 07-hau-ky.js hạ độ sáng khi vẽ qua mục tiêu tuyến tính */ gN.material.uniforms.uIntensity.value = (0.18 + G.tod.night * 0.95) * gg; gC.material.uniforms.uIntensity.value = (0.55 + G.tod.night * 0.35) * gg; }, 62);
 
   // ---------- Khói hương: bể 520 hạt ----------

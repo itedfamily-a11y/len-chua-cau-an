@@ -2597,9 +2597,12 @@ function installFx(G) {
   const gl = G.world.glows;
   const nightG = gl.filter((q) => q.night), constG = gl.filter((q) => !q.night);
   const gN = fx.glowPoints(Math.max(1, nightG.length), { flicker: 1 });
-  nightG.forEach((q, i) => gN.set(i, q.x, q.y, q.z, q.size, q.r, q.g, q.b, 1)); gN.commit();
+  // q.fx = { pts, i }: chỗ của quầng trong nhóm điểm, để module khác dời / đổi quầng về sau (2026-11-27: 17-dia-tang-quet.js dời quầng minh châu và quầng điện theo mô hình 3D).
+  // Thuộc tính không liệt kê (defineProperty): JSON.stringify / Object.assign trên W.glows không đụng tới đối tượng Three.js (có vòng tham chiếu)
+  const slot = (q, pts, i) => Object.defineProperty(q, 'fx', { value: { pts, i }, writable: true, configurable: true });
+  nightG.forEach((q, i) => { gN.set(i, q.x, q.y, q.z, q.size, q.r, q.g, q.b, 1); slot(q, gN, i); }); gN.commit();
   const gC = fx.glowPoints(Math.max(1, constG.length), { flicker: 0.8, intensity: 0.75 });
-  constG.forEach((q, i) => gC.set(i, q.x, q.y, q.z, q.size, q.r, q.g, q.b, 1)); gC.commit();
+  constG.forEach((q, i) => { gC.set(i, q.x, q.y, q.z, q.size, q.r, q.g, q.b, 1); slot(q, gC, i); }); gC.commit();
   G.onUpdate(() => { const gg = G.post && G.post.glowGain != null ? G.post.glowGain : 1; /* 07-hau-ky.js hạ độ sáng khi vẽ qua mục tiêu tuyến tính */ gN.material.uniforms.uIntensity.value = (0.18 + G.tod.night * 0.95) * gg; gC.material.uniforms.uIntensity.value = (0.55 + G.tod.night * 0.35) * gg; }, 62);
 
   // ---------- Khói hương: bể 520 hạt ----------
@@ -8108,6 +8111,158 @@ function buildHallAltar(G) {
   if (G.nav) G.nav.built = false; // bàn thờ phụ, tủ, hạc có vật cản mới: dựng lại đồ thị dẫn đường khi bắt đầu
 }
 
+// ----- 17-dia-tang-quet.js -----
+// =====================================================================
+//  TƯỢNG ĐỊA TẠNG VƯƠNG BỒ TÁT — MÔ HÌNH 3D TẢI VỀ (2026-11-27)
+//  Thay tượng dựng bằng mã ở Điện Địa Tạng (17-dien-phu.js, hàm diaTang, dựng riêng nhờ spec solo: 'diaTang') bằng mô hình
+//  "diZangPuSa_v2022-HiPory-4K-MaterialTest" của chiwei trên Sketchfab, giấy phép CC BY 4.0: Bồ Tát ngồi trên tảng đá, một chân buông,
+//  tay phải cầm tích trượng, tay trái nâng minh châu, vầng hào quang lửa sau đầu; thếp vàng cũ.
+//  File trong game đã giảm số mặt (610 nghìn → 150 / 70 nghìn), chỉ giữ ảnh màu (bỏ ảnh pháp tuyến gần như phẳng và ảnh kim loại – nhám),
+//  chuẩn hoá trục (y hướng lên, mặt tượng quay về +z, đáy ở y = 0, tâm ở x = z = 0, cao 1). Lệnh dựng: tests-local/quan-am-tools/LENH-TUONG-DIA-TANG.md.
+//  - Chỉ tải khi người chơi tới gần Điện Địa Tạng (CFG.near mét). Máy bật "tiết kiệm dữ liệu" thì không tải.
+//  - Hai bản:  dia-tang-4k.glb  150 nghìn mặt, ảnh 4096 px, khoảng 4,1 MB — máy tính;
+//              dia-tang.glb     70 nghìn mặt, ảnh 2048 px, khoảng 1,1 MB — máy cảm ứng, mức đồ hoạ thấp, máy đã được ghi nhớ là yếu trong 7 ngày,
+//                               máy không nhận ảnh 4096 px; cũng là bản dùng khi thử lại sau khi bản nét tải hỏng.
+//  - GLTFLoader và MeshoptDecoder: addon Three.js r160 qua import map "three/addons/" (như 17-quan-am-quet.js).
+//  - Lỗi ở bất kỳ bước nào: giữ tượng dựng bằng mã, ghi một dòng console.warn. Lỗi tải file thử lại một lần sau 45 giây (bằng bản nhẹ);
+//    lỗi import() và mô hình hỏng thì không thử lại.
+//  - Khi bản tải về hiển thị: quầng sáng minh châu dời tới viên ngọc trên tay trái của tượng mới; quầng sáng lớn của điện hạ thấp xuống trước bệ
+//    (như Quan Âm Các) để không loá mặt tượng; bảng Lễ ghi công tác giả (W.ext.diaTang.credit).
+//  - Trạng thái: W.ext.diaTang.scan = { state: 'idle' | 'loading' | 'ready' | 'failed' | 'skipped', error, tris, show(bool) }.
+// =====================================================================
+function installDiaTangQuet(G) {
+  const { THREE, world: W } = G;
+  const D = W && W.ext && W.ext.diaTang, st = D && D.statue;
+  if (!st || !D.seat || !G.onUpdate) return;
+
+  const CFG = {
+    url: 'assets/mo-hinh/dia-tang.glb',       // bản nhẹ
+    urlHi: 'assets/mo-hinh/dia-tang-4k.glb',  // bản nét cho máy tính
+    near: 30,                 // m
+    height: 2.5,              // m, đáy tảng đá → đỉnh hào quang. Tượng cũ (cả tích trượng) cao khoảng 2,44 m; đỉnh tượng mới ở 3,83 m, dưới nẹp vàng trên phông (4,05 m)
+    x: 0, y: -0.01, z: 0, yaw: 0, // y: lún 1 cm vào mặt bệ cho kín mép đáy đá
+    // Vật liệu: thếp vàng. Có bản đồ phản chiếu "phòng ấm" (W.banTho.envTex, 18-ban-tho.js) thì để bán kim loại như vàng ở chính điện;
+    // col > 1 nâng ảnh màu (vàng cũ ngả cam, khá tối) lên gần vàng thếp; glow: ảnh màu tự sáng nhẹ để phần khuất đèn vẫn đọc được nếp áo.
+    // Đã chụp thử trong game 2026-11-27 (Chrome headless, ngày và đêm, trong điện và ngoài thềm): tượng vàng ngả cam như ảnh màu của file gốc, rõ nếp áo, không loá.
+    // Muốn vàng hơn / bớt cam: tăng số giữa của col (ví dụ [1.2, 1.4, 1.15]); muốn bớt bóng: giảm metal hoặc env.
+    withEnv: { rough: 0.42, metal: 0.75, env: 1.1, col: [1.3, 1.25, 1.1], glow: 0.14 },
+    noEnv: { rough: 0.7, metal: 0, env: 0, col: [0.9, 0.88, 0.84], glow: 0.35 },
+    pearl: [0.012, 0.426, 0.014], pearlSize: 0.45, // viên minh châu trong hệ của file (cao 1): đo bằng tests-local/quan-am-tools/pearl.mjs
+    hallGlow: { y: -0.05, z: 1.35, r: 1.5, c: [0.5, 0.36, 0.16] }, // so với chỗ đặt tượng (mặt bệ): như quầng của Quan Âm Các
+    retryAfter: 45,           // giây
+  };
+  const CREDIT = {
+    text: 'Tượng trong điện là mô hình 3D "diZangPuSa_v2022-HiPory-4K-MaterialTest" của chiwei trên Sketchfab, giấy phép CC BY 4.0, đã chỉnh sửa cho vừa trò chơi (giảm số mặt, thu nhỏ ảnh bề mặt, chỉnh vật liệu).',
+    href: 'https://sketchfab.com/3d-models/dizangpusa-v2022-hipory-4k-materialtest-c65b04e74d5843b6898b2918c2969d73',
+    licence: 'https://creativecommons.org/licenses/by/4.0/', // CC BY 4.0: nêu tên tác giả, nguồn, giấy phép (kèm đường dẫn) và việc đã chỉnh sửa
+  };
+  const S = (D.scan = { state: 'idle', url: CFG.url, error: null, tris: 0, tries: 0, next: 0, mesh: null, show: null });
+  let Loader = null, Decoder = null, now = 0;
+  const pickUrl = () => {
+    const lowSaved = (() => { const a = Date.now() - ((G.save && G.save.data && +G.save.data.lowQ) || 0); return a >= 0 && a < 7 * 864e5; })();
+    let small = !!G.isTouch || lowSaved || !!(G.quality && G.quality.low);
+    try { if (G.renderer.capabilities.maxTextureSize < 4096) small = true; } catch (e) { small = true; }
+    return small ? CFG.url : CFG.urlHi;
+  };
+  const seat = D.seat, cy = Math.cos(seat.yaw), sy = Math.sin(seat.yaw);
+  const toW = (lx, ly, lz) => [seat.x + lx * cy + lz * sy, seat.y + ly, seat.z - lx * sy + lz * cy]; // toạ độ quanh chỗ đặt (x ngang, z ra cửa) → thế giới, như frame() của 17-dien-phu.js
+  // quầng sáng tĩnh (07-fx.js gắn q.fx = { pts, i }): đặt lại vị trí / cỡ / màu; q giữ số gốc để trả về tượng cũ
+  const glowTo = (q, x, y, z, size, r, g, b) => { if (!q || !q.fx) return; q.fx.pts.set(q.fx.i, x, y, z, size, r, g, b, 1); q.fx.pts.commit(); };
+  const glowBack = (q) => glowTo(q, q && q.x, q && q.y, q && q.z, q && q.size, q && q.r, q && q.g, q && q.b);
+
+  function place(gltf) {
+    const root = gltf && (gltf.scene || (gltf.scenes && gltf.scenes[0]));
+    if (!root) throw new Error('mô hình không có cảnh');
+    root.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+    if (!(size.y > 1e-6) || !isFinite(size.x + size.y + size.z)) throw new Error('mô hình rỗng');
+    const env = W.banTho && W.banTho.envTex && W.banTho.envTex();
+    const M = env ? CFG.withEnv : CFG.noEnv;
+    const aniso = Math.min(8, G.renderer.capabilities.getMaxAnisotropy());
+    const mats = new Set(), swap = new Map(); let tris = 0;
+    const std = (m) => { // vật liệu "không bóng" (MeshBasicMaterial) → MeshStandardMaterial cùng ảnh, để đèn và phản chiếu của điện có tác dụng
+      if (!m || m.isMeshStandardMaterial) return m;
+      if (!swap.has(m)) swap.set(m, new THREE.MeshStandardMaterial({ map: m.map || null, color: m.color ? m.color.clone() : 0xffffff, side: m.side, transparent: !!m.transparent, alphaTest: m.alphaTest || 0 }));
+      return swap.get(m);
+    };
+    root.traverse((o) => {
+      if (!o.isMesh || !o.geometry || !o.geometry.attributes.position) return;
+      o.castShadow = false; o.receiveShadow = false;
+      tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3;
+      o.material = Array.isArray(o.material) ? o.material.map(std) : std(o.material);
+      for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m) mats.add(m);
+    });
+    if (tris < 1) throw new Error('mô hình không có mặt nào');
+    let withMap = 0; for (const m of mats) if (m.map && m.map.image) withMap++; // GLTFLoader nuốt lỗi giải mã ảnh (map = null): tượng trơn thì thà giữ tượng cũ
+    if (!withMap) throw new Error('mô hình không có ảnh bề mặt');
+    for (const m of mats) {
+      if (!m.isMeshStandardMaterial) continue;
+      m.roughness = M.rough; m.metalness = M.metal; m.roughnessMap = null; m.metalnessMap = null; m.normalMap = null; m.aoMap = null;
+      m.color.setRGB(M.col[0], M.col[1], M.col[2]);
+      if (m.map) {
+        m.map.anisotropy = aniso; m.map.needsUpdate = true;
+        m.emissive.setHex(0xffffff); m.emissiveMap = m.map; m.emissiveIntensity = M.glow;
+        try { G.renderer.initTexture(m.map); } catch (e) { /* đẩy ảnh lên máy ngay lúc tải; lỗi thì để lần vẽ đầu tự làm */ }
+      }
+      if (env && M.env > 0) { m.envMap = env; m.envMapIntensity = M.env; if (W.banTho.envMats) W.banTho.envMats.push(m); } // 18-ban-tho.js gán lại bản đồ phản chiếu khi khôi phục ngữ cảnh WebGL
+      m.needsUpdate = true;
+    }
+    // đưa tâm đáy về gốc, co cho vừa chiều cao, đặt lên bệ, quay mặt ra cửa
+    const k = CFG.height / size.y;
+    const hold = new THREE.Group(); hold.name = 'diaTangQuet';
+    root.position.x -= c.x; root.position.y -= box.min.y; root.position.z -= c.z;
+    hold.add(root); hold.scale.setScalar(k);
+    const p0 = toW(CFG.x, CFG.y, CFG.z); hold.position.set(p0[0], p0[1], p0[2]); hold.rotation.y = seat.yaw + CFG.yaw;
+    G.scene.add(hold); hold.updateMatrixWorld(true);
+    const pv = root.localToWorld(new THREE.Vector3(CFG.pearl[0], CFG.pearl[1], CFG.pearl[2])); // root giữ hệ của file (đã chuẩn hoá cao 1)
+    const pq = D.glows && D.glows[0], hq = D.hallGlow, hg = CFG.hallGlow, hp = toW(0, hg.y, hg.z);
+    const old = st.children.slice();
+    S.mesh = hold; S.tris = Math.round(tris);
+    S.show = (scan) => { // true: mô hình tải về; false: tượng dựng bằng mã (để so sánh / gỡ lỗi)
+      hold.visible = !!scan; st.visible = !scan;
+      if (scan) { if (pq) glowTo(pq, pv.x, pv.y, pv.z, CFG.pearlSize, pq.r, pq.g, pq.b); if (hq) glowTo(hq, hp[0], hp[1], hp[2], hg.r, hg.c[0], hg.c[1], hg.c[2]); }
+      else { glowBack(pq); glowBack(hq); }
+      D.credit = scan ? CREDIT : null;
+    };
+    S.show(true);
+    for (const o of old) o.traverse((n) => { if (n.geometry) n.geometry.dispose(); }); // trả bộ nhớ đồ hoạ của tượng cũ; hiện lại thì Three.js tự đẩy lên lại
+  }
+
+  async function load() {
+    S.state = 'loading'; S.tries++;
+    try {
+      if (!Loader || !Decoder) {
+        try {
+          const [L, Mo] = await Promise.all([import('three/addons/loaders/GLTFLoader.js'), import('three/addons/libs/meshopt_decoder.module.js')]);
+          Loader = L.GLTFLoader; Decoder = Mo.MeshoptDecoder || Mo.default;
+        } catch (e) { S.tries = 99; throw e; }
+        if (!Loader || !Decoder || Decoder.supported === false) { S.tries = 99; throw new Error(Loader && Decoder ? 'trình duyệt không chạy được WebAssembly (MeshoptDecoder không dùng được)' : 'addon không có GLTFLoader / MeshoptDecoder'); }
+      }
+      S.url = (S.tries > 1 && S.url === CFG.urlHi) ? CFG.url : pickUrl(); // lần thử lại sau khi bản nét hỏng: lùi về bản nhẹ
+      const loader = new Loader(); loader.setMeshoptDecoder(Decoder);
+      const gltf = await loader.loadAsync(S.url);
+      try { place(gltf); } catch (e) { S.tries = 99; throw e; }
+      S.state = 'ready'; S.error = null;
+    } catch (e) {
+      S.error = (e && e.message) || String(e);
+      if (S.tries < 2) { S.state = 'idle'; S.next = now + CFG.retryAfter; }
+      else { S.state = 'failed'; console.warn('[Địa Tạng] không tải được mô hình 3D — giữ tượng dựng bằng mã: ' + S.error); }
+    }
+  }
+
+  const near2 = CFG.near * CFG.near;
+  G.onUpdate((dt, t) => {
+    now = t || 0;
+    if (S.state !== 'idle' || now < S.next) return;
+    const P = G.player; if (!P || !P.pos) return;
+    const dx = P.pos.x - seat.x, dz = P.pos.z - seat.z;
+    if (dx * dx + dz * dz > near2) return;
+    const conn = navigator.connection;
+    if (conn && conn.saveData) { S.state = 'skipped'; return; }
+    load();
+  }, 56);
+}
+
 // ----- 17-dien-phu.js -----
 // =====================================================================
 //  ĐIỆN PHỤ: bộ dựng điện nhỏ dùng chung (cột son, mái cong, biển tên, bệ thờ, tượng) rồi dựng
@@ -8348,9 +8503,24 @@ function buildDienPhu(G) {
     boxMM(T.F, -0.9, fh + 0.02, tf, 0.9, fh + 0.035, -0.1, 0x7a2418);
     const c1 = tf + 1.4, c2 = c1 + 1.3;                      // hai hàng bồ đoàn
     cushion(T, 0, fh, c1, true); cushion(T, -1.7, fh, c1); cushion(T, 1.7, fh, c1); cushion(T, 0, fh, c2);
-    if (sp.deity) putFigure(T, sp.deity, 0, fh + ph + 0.08, pzc, sp.scale || 0.62);
+    // sp.solo (2026-11-27): tượng dựng thành mesh riêng thay vì gom chung, để bản quét 3D (17-dia-tang-quet.js) ẩn được tượng này; W.ext[sp.solo] giữ tượng, chỗ đặt, các quầng sáng
+    const solo = sp.solo ? { G: U.batch(), L: U.batch() } : null, gF = W.glows.length;
+    if (sp.deity) putFigure(solo || T, sp.deity, 0, fh + ph + 0.08, pzc, sp.scale || 0.62);
+    const figGlows = W.glows.slice(gF);
     { const hl = sp.halo || {}; glow(0, fh + ph + 0.08 + (hl.y != null ? hl.y : sp.haloY || 1.6), pzc + (hl.z != null ? hl.z : 0.3), hl.r || 3.0, hl.c || [1.0, 0.78, 0.36], false); } // sp.halo (tuỳ chọn): đặt lại quầng sáng cho tượng lớn để không loá mặt tượng
+    const hallGlow = W.glows[W.glows.length - 1]; // quầng sáng lớn của điện vừa thêm ngay trên
     flush(T, fr); toWorldFx(fr, g0, s0);
+    if (solo) {
+      const grp = new THREE.Group(); grp.name = 'dienPhu:' + sp.id;
+      for (const [B, mat, o] of [[solo.G, G.mats.gold, { cast: false, receive: true }], [solo.L, G.mats.lantern, { cast: false, receive: false }]]) { // cùng vật liệu, cùng cờ bóng như khi gom chung (WG, WL)
+        if (!B.list.length) continue;
+        for (const g of B.list) g.applyMatrix4(fr.mat);
+        const m = B.mesh(mat, o); m.name = 'dienPhu:' + sp.id; grp.add(m);
+      }
+      scene.add(grp);
+      W.ext = W.ext || {};
+      W.ext[sp.solo] = { statue: grp, hall: sp.id, seat: { x: fr.X(0, pzc), y: fh + ph + 0.08, z: fr.Z(0, pzc), yaw: fr.yaw }, glows: figGlows, hallGlow, credit: null }; // glows, hallGlow: toạ độ thế giới (toWorldFx đã đổi)
+    }
     // vật cản, kính chắn máy quay, độ cao, vùng mái, dẫn đường, vùng chừa, chỗ đứng cho khách
     const wy1 = wt, eyeY = fh + 1.9;
     colBox(fr, -hx + 0.1, -D + 0.1, hx - 0.1, -D + 0.4, 'dienphu'); blk(fr, -hx + 0.1, fh, -D + 0.1, hx - 0.1, wy1, -D + 0.4);
@@ -8417,7 +8587,7 @@ function buildDienPhu(G) {
   // ---------- Dựng ----------
   const specs = [
     { id: 'duoc-su', title: 'Dược Sư Lưu Ly Quang Vương Phật', name: 'ĐIỆN DƯỢC SƯ', x0: 11.5, x1: 19.5, z0: -26, z1: -18, face: 'S', floorH: 0.45, tiers: 1, deity: drugBuddha, scale: 0.62, haloY: 1.8, extra: [[16.8, -27.4, 'dsBack']] },
-    { id: 'dia-tang', title: 'Địa Tạng Vương Bồ Tát', name: 'ĐIỆN ĐỊA TẠNG', x0: -19.5, x1: -11.5, z0: -26, z1: -18, face: 'S', floorH: 0.45, tiers: 1, deity: diaTang, scale: 0.6, haloY: 1.8, extra: [[-16.8, -27.4, 'dtBack']] },
+    { id: 'dia-tang', title: 'Địa Tạng Vương Bồ Tát', name: 'ĐIỆN ĐỊA TẠNG', x0: -19.5, x1: -11.5, z0: -26, z1: -18, face: 'S', floorH: 0.45, tiers: 1, deity: diaTang, solo: 'diaTang', scale: 0.6, haloY: 1.8, extra: [[-16.8, -27.4, 'dtBack']] },
     { id: 'quan-am-cac', title: 'Quan Thế Âm Bồ Tát', name: 'QUAN ÂM CÁC', x0: 12.5, x1: 21.5, z0: -1.0, z1: 7.2, face: 'W', floorH: 0.45, tiers: 2, deity: null, ext: 'quanAm', scale: 1.12, haloY: 2.2, halo: { y: -0.05, z: 1.35, r: 1.5, c: [0.5, 0.36, 0.16] }, back: 2.2, extra: [[22.0, -2.4, 'qaE1'], [22.0, 3.0, 'qaE2'], [22.0, 10.0, 'qaE3']] }, // ao sen lớn tới z 7.2 nên điện lùi lên 1 m; lối bên đông 2,2 m
   ];
   // dọn nút dẫn đường / chỗ đứng cũ nằm trong khuôn viên các toà mới (phải làm trước khi thêm nút mới)
@@ -8498,8 +8668,8 @@ function buildDienPhu(G) {
       if (r.dead) return;
       const body = U.el('div'), chips = U.el('div', 'chips');
       for (const t of info.intro) body.append(U.el('p', 'small', t));
-      { // Quan Âm Các đang hiển thị bản quét 3D (17-quan-am-quet.js): ghi công tác giả mô hình theo giấy phép CC BY 4.0
-        const cr = h.id === 'quan-am-cac' && W.ext && W.ext.quanAm && W.ext.quanAm.credit;
+      { // Quan Âm Các / Điện Địa Tạng đang hiển thị mô hình 3D tải về (17-quan-am-quet.js, 17-dia-tang-quet.js): ghi công tác giả mô hình theo giấy phép CC BY 4.0
+        const X = W.ext || {}, cr = (h.id === 'quan-am-cac' && X.quanAm && X.quanAm.credit) || (h.id === 'dia-tang' && X.diaTang && X.diaTang.credit);
         if (cr) {
           const p = U.el('p', 'muted small', cr.text + ' ');
           [['Xem mô hình gốc', cr.href], ['Giấy phép CC BY 4.0', cr.licence]].filter((l) => l[1]).forEach(([label, href], i) => {
@@ -20389,6 +20559,7 @@ function installActivitiesC(G) {
     ['trang trí cung đình', typeof buildCungDinh === 'function' ? buildCungDinh : null], // sau chính điện (18), trước điện phụ / trang trí sân: sư tử, hoa biểu, vạc, hạc, nhật quỹ, cửa chính, kìm nóc
     ['điện phụ & tháp Văn Thù', typeof buildDienPhu === 'function' ? buildDienPhu : null], // trước trang trí: chừa chỗ cho cây cảnh, đèn đá
     ['tượng Quan Âm (bản quét 3D)', typeof installQuanAmQuet === 'function' ? installQuanAmQuet : null], // 17-quan-am-quet.js: sau điện phụ (tượng dựng bằng mã đã đặt lên bệ); tải file mô hình khi người chơi tới gần, lỗi thì giữ tượng cũ
+    ['tượng Địa Tạng (mô hình 3D)', typeof installDiaTangQuet === 'function' ? installDiaTangQuet : null], // 17-dia-tang-quet.js: sau điện phụ (tượng dựng bằng mã ở W.ext.diaTang); tải file mô hình khi người chơi tới gần, lỗi thì giữ tượng cũ
     ['vườn sau chùa', typeof buildVuonSau === 'function' ? buildVuonSau : null], // 19-vuon-sau.js: vườn sau chính điện (tường, hai cổng nách, hồ sen, thủy tạ, cây, đèn đá); phải đứng trước 12 và 13 vì hai nơi này đọc nút / chỗ đứng / vật cản lúc dựng, và trước 07-fx (quầng sáng, đom đóm)
     ['Tàng Kinh Các (sân đông)', typeof buildTangKinhCac === 'function' ? buildTangKinhCac : null], // 19-tang-kinh-cac.js: sân mới ngoài tường đông, cổng nách, lầu hai tầng (mô hình tải sau); trước 12 và 13 vì hai nơi này đọc vật cản, nút dẫn đường, vùng chừa lúc dựng
     ['trang trí sân chùa', typeof buildDecorInside === 'function' ? buildDecorInside : null],

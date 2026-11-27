@@ -237,9 +237,24 @@ function buildDienPhu(G) {
     boxMM(T.F, -0.9, fh + 0.02, tf, 0.9, fh + 0.035, -0.1, 0x7a2418);
     const c1 = tf + 1.4, c2 = c1 + 1.3;                      // hai hàng bồ đoàn
     cushion(T, 0, fh, c1, true); cushion(T, -1.7, fh, c1); cushion(T, 1.7, fh, c1); cushion(T, 0, fh, c2);
-    if (sp.deity) putFigure(T, sp.deity, 0, fh + ph + 0.08, pzc, sp.scale || 0.62);
+    // sp.solo (2026-11-27): tượng dựng thành mesh riêng thay vì gom chung, để bản quét 3D (17-dia-tang-quet.js) ẩn được tượng này; W.ext[sp.solo] giữ tượng, chỗ đặt, các quầng sáng
+    const solo = sp.solo ? { G: U.batch(), L: U.batch() } : null, gF = W.glows.length;
+    if (sp.deity) putFigure(solo || T, sp.deity, 0, fh + ph + 0.08, pzc, sp.scale || 0.62);
+    const figGlows = W.glows.slice(gF);
     { const hl = sp.halo || {}; glow(0, fh + ph + 0.08 + (hl.y != null ? hl.y : sp.haloY || 1.6), pzc + (hl.z != null ? hl.z : 0.3), hl.r || 3.0, hl.c || [1.0, 0.78, 0.36], false); } // sp.halo (tuỳ chọn): đặt lại quầng sáng cho tượng lớn để không loá mặt tượng
+    const hallGlow = W.glows[W.glows.length - 1]; // quầng sáng lớn của điện vừa thêm ngay trên
     flush(T, fr); toWorldFx(fr, g0, s0);
+    if (solo) {
+      const grp = new THREE.Group(); grp.name = 'dienPhu:' + sp.id;
+      for (const [B, mat, o] of [[solo.G, G.mats.gold, { cast: false, receive: true }], [solo.L, G.mats.lantern, { cast: false, receive: false }]]) { // cùng vật liệu, cùng cờ bóng như khi gom chung (WG, WL)
+        if (!B.list.length) continue;
+        for (const g of B.list) g.applyMatrix4(fr.mat);
+        const m = B.mesh(mat, o); m.name = 'dienPhu:' + sp.id; grp.add(m);
+      }
+      scene.add(grp);
+      W.ext = W.ext || {};
+      W.ext[sp.solo] = { statue: grp, hall: sp.id, seat: { x: fr.X(0, pzc), y: fh + ph + 0.08, z: fr.Z(0, pzc), yaw: fr.yaw }, glows: figGlows, hallGlow, credit: null }; // glows, hallGlow: toạ độ thế giới (toWorldFx đã đổi)
+    }
     // vật cản, kính chắn máy quay, độ cao, vùng mái, dẫn đường, vùng chừa, chỗ đứng cho khách
     const wy1 = wt, eyeY = fh + 1.9;
     colBox(fr, -hx + 0.1, -D + 0.1, hx - 0.1, -D + 0.4, 'dienphu'); blk(fr, -hx + 0.1, fh, -D + 0.1, hx - 0.1, wy1, -D + 0.4);
@@ -306,7 +321,7 @@ function buildDienPhu(G) {
   // ---------- Dựng ----------
   const specs = [
     { id: 'duoc-su', title: 'Dược Sư Lưu Ly Quang Vương Phật', name: 'ĐIỆN DƯỢC SƯ', x0: 11.5, x1: 19.5, z0: -26, z1: -18, face: 'S', floorH: 0.45, tiers: 1, deity: drugBuddha, scale: 0.62, haloY: 1.8, extra: [[16.8, -27.4, 'dsBack']] },
-    { id: 'dia-tang', title: 'Địa Tạng Vương Bồ Tát', name: 'ĐIỆN ĐỊA TẠNG', x0: -19.5, x1: -11.5, z0: -26, z1: -18, face: 'S', floorH: 0.45, tiers: 1, deity: diaTang, scale: 0.6, haloY: 1.8, extra: [[-16.8, -27.4, 'dtBack']] },
+    { id: 'dia-tang', title: 'Địa Tạng Vương Bồ Tát', name: 'ĐIỆN ĐỊA TẠNG', x0: -19.5, x1: -11.5, z0: -26, z1: -18, face: 'S', floorH: 0.45, tiers: 1, deity: diaTang, solo: 'diaTang', scale: 0.6, haloY: 1.8, extra: [[-16.8, -27.4, 'dtBack']] },
     { id: 'quan-am-cac', title: 'Quan Thế Âm Bồ Tát', name: 'QUAN ÂM CÁC', x0: 12.5, x1: 21.5, z0: -1.0, z1: 7.2, face: 'W', floorH: 0.45, tiers: 2, deity: null, ext: 'quanAm', scale: 1.12, haloY: 2.2, halo: { y: -0.05, z: 1.35, r: 1.5, c: [0.5, 0.36, 0.16] }, back: 2.2, extra: [[22.0, -2.4, 'qaE1'], [22.0, 3.0, 'qaE2'], [22.0, 10.0, 'qaE3']] }, // ao sen lớn tới z 7.2 nên điện lùi lên 1 m; lối bên đông 2,2 m
   ];
   // dọn nút dẫn đường / chỗ đứng cũ nằm trong khuôn viên các toà mới (phải làm trước khi thêm nút mới)
@@ -387,8 +402,8 @@ function buildDienPhu(G) {
       if (r.dead) return;
       const body = U.el('div'), chips = U.el('div', 'chips');
       for (const t of info.intro) body.append(U.el('p', 'small', t));
-      { // Quan Âm Các đang hiển thị bản quét 3D (17-quan-am-quet.js): ghi công tác giả mô hình theo giấy phép CC BY 4.0
-        const cr = h.id === 'quan-am-cac' && W.ext && W.ext.quanAm && W.ext.quanAm.credit;
+      { // Quan Âm Các / Điện Địa Tạng đang hiển thị mô hình 3D tải về (17-quan-am-quet.js, 17-dia-tang-quet.js): ghi công tác giả mô hình theo giấy phép CC BY 4.0
+        const X = W.ext || {}, cr = (h.id === 'quan-am-cac' && X.quanAm && X.quanAm.credit) || (h.id === 'dia-tang' && X.diaTang && X.diaTang.credit);
         if (cr) {
           const p = U.el('p', 'muted small', cr.text + ' ');
           [['Xem mô hình gốc', cr.href], ['Giấy phép CC BY 4.0', cr.licence]].filter((l) => l[1]).forEach(([label, href], i) => {

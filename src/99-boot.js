@@ -11,6 +11,7 @@
     ['trang trí cung đình', typeof buildCungDinh === 'function' ? buildCungDinh : null], // sau chính điện (18), trước điện phụ / trang trí sân: sư tử, hoa biểu, vạc, hạc, nhật quỹ, cửa chính, kìm nóc
     ['điện phụ & tháp Văn Thù', typeof buildDienPhu === 'function' ? buildDienPhu : null], // trước trang trí: chừa chỗ cho cây cảnh, đèn đá
     ['tượng Quan Âm (bản quét 3D)', typeof installQuanAmQuet === 'function' ? installQuanAmQuet : null], // 17-quan-am-quet.js: sau điện phụ (tượng dựng bằng mã đã đặt lên bệ); tải file mô hình khi người chơi tới gần, lỗi thì giữ tượng cũ
+    ['tượng Địa Tạng (mô hình 3D)', typeof installDiaTangQuet === 'function' ? installDiaTangQuet : null], // 17-dia-tang-quet.js: sau điện phụ (tượng dựng bằng mã ở W.ext.diaTang); tải file mô hình khi người chơi tới gần, lỗi thì giữ tượng cũ
     ['vườn sau chùa', typeof buildVuonSau === 'function' ? buildVuonSau : null], // 19-vuon-sau.js: vườn sau chính điện (tường, hai cổng nách, hồ sen, thủy tạ, cây, đèn đá); phải đứng trước 12 và 13 vì hai nơi này đọc nút / chỗ đứng / vật cản lúc dựng, và trước 07-fx (quầng sáng, đom đóm)
     ['Tàng Kinh Các (sân đông)', typeof buildTangKinhCac === 'function' ? buildTangKinhCac : null], // 19-tang-kinh-cac.js: sân mới ngoài tường đông, cổng nách, lầu hai tầng (mô hình tải sau); trước 12 và 13 vì hai nơi này đọc vật cản, nút dẫn đường, vùng chừa lúc dựng
     ['trang trí sân chùa', typeof buildDecorInside === 'function' ? buildDecorInside : null],

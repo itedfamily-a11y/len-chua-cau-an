@@ -986,7 +986,7 @@ G.input.moveVector = () => {
 //  MÁY QUAY: theo sau lưng nhân vật, kéo để xoay, có chế độ "nhìn cận" cho hoạt động
 // =====================================================================
 const cam = (G.cam = {
-  yaw: Math.PI, pitch: 0.42, dist: 7.2, distT: 7.2, blend: 0, blendT: 0, blendDur: 1,
+  yaw: Math.PI, pitch: 0.42, dist: 6.6, distT: 6.6, blend: 0, blendT: 0, blendDur: 1, // 6,6 (trước 7,2): người nhỏ đi 0,8 nên máy quay lại gần một chút
   target: new V3(0, 1.3, 40), focusPos: new V3(), focusLook: new V3(), shakeT: 0, shakeA: 0, shakeD: 0.4,
   blockers: [], collDist: 99, baseFov: 52, focusFov: null,
   focus({ pos, look, dur = 1.1, fov }) { this.focusPos.set(pos[0], pos[1], pos[2]); this.focusLook.set(look[0], look[1], look[2]); this.focusFov = fov > 0 ? fov : null; this.blendT = 1; this.blendDur = dur; },
@@ -1000,7 +1000,7 @@ function updateCamera(dt) {
   if (P) {
     cam.target.x = U.damp(cam.target.x, P.pos.x, 9, dt);
     cam.target.z = U.damp(cam.target.z, P.pos.z, 9, dt);
-    cam.target.y = U.damp(cam.target.y, P.pos.y + 1.55, 7, dt);
+    cam.target.y = U.damp(cam.target.y, P.pos.y + 1.55 * (G.chibi ? G.chibi.k : 1), 7, dt); // ngang đỉnh đầu (người đã thu theo G.chibi.k)
     // tự xoay nhẹ ra sau lưng khi đang đi tới
     if (P.moving && G.time - input.lastDrag > 1.4 && cam.blend < 0.01) {
       const diff = Math.abs(U.angleDiff(cam.yaw, P.yaw));
@@ -2386,6 +2386,10 @@ function installPlayer(G) {
 
   // ---------- Hình khối chibi dùng chung (gốc ở chân, mặt quay về +z) ----------
   const L = { hipY: 0.38, neckY: 0.9, shoulderX: 0.2, shoulderY: 0.8, armLen: 0.36, headR: 0.34, headC: 0.3 };
+  // Tỉ lệ người so với công trình (2026-11-27): dáng chibi đầu to, thân rộng (cỡ 1: cao 1,57 m nhưng ngang tới 0,68 m) nên đứng cạnh cột, tường, cổng trông quá to.
+  // Thu cả người về K (0,8: cao ≈ 1,26 m, ngang ≈ 0,54 m). MỘT hằng số: khách AI (20), người chơi cùng (22), máy quay (00), chỗ ngồi (30 / 45 / 50) đều đọc G.chibi.k.
+  // Hình khối và các số trong L vẫn ở cỡ 1; tỉ lệ đặt ở gốc của từng người. Bán kính va chạm (0,35) và tốc độ đi giữ nguyên.
+  const K = 0.8, TOP = 1.57; // TOP: đỉnh đầu ở cỡ 1
   const lathe = (pts, sg) => new THREE.LatheGeometry(pts.map((p) => new THREE.Vector2(p[0], p[1])), sg);
   const geos = {
     body: lathe([[0, 0.05], [0.33, 0.05], [0.335, 0.12], [0.3, 0.32], [0.25, 0.52], [0.22, 0.68], [0.19, 0.8], [0.11, 0.88], [0, 0.9]], 12),
@@ -2410,7 +2414,7 @@ function installPlayer(G) {
     parts.push(U.piece(new THREE.SphereGeometry(0.025, 6, 4), 0xc0604a, { p: [0, L.headC - 0.12, 0.318], s: [1.4, 0.6, 0.5], j: 0 }));
     geos.face = U.merge(parts);
   }
-  G.chibi = { geos, layout: L };
+  G.chibi = { geos, layout: L, k: K, drop: TOP * (1 - K) }; // drop: đỉnh đầu thấp hơn cỡ 1 bao nhiêu mét (bảng tên, bong bóng lời hạ theo)
 
   // bóng mờ dưới chân (dùng chung)
   const blobTex = U.canvasTex(64, 64, (g, w) => {
@@ -2432,7 +2436,7 @@ function installPlayer(G) {
   const mShoe = new THREE.MeshLambertMaterial({ color: COL.shoe });
   const mFace = new THREE.MeshBasicMaterial({ vertexColors: true });
 
-  const root = new THREE.Group(); root.name = 'player';
+  const root = new THREE.Group(); root.name = 'player'; root.scale.setScalar(K);
   const blob = new THREE.Mesh(G.assets.blobGeo, G.assets.blobMat); blob.scale.set(0.95, 1, 0.95); blob.position.y = 0.02; root.add(blob);
   const inner = new THREE.Group(); root.add(inner);
   const footL = new THREE.Mesh(geos.foot, mShoe), footR = new THREE.Mesh(geos.foot, mShoe);
@@ -2454,12 +2458,12 @@ function installPlayer(G) {
   };
   const armL = mkArm(1), armR = mkArm(-1);
   for (const m of [body, head, hair, bun, footL, footR, sitLegs]) m.castShadow = false;
-  const handsMid = new THREE.Object3D(); root.add(handsMid);
+  const handsMid = new THREE.Object3D(); handsMid.scale.setScalar(1 / K); root.add(handsMid); // bù tỉ lệ: vật cầm giữa hai tay (hương, dải lụa, hoa đăng) giữ cỡ thật, không đổi cỡ khi rời tay
   // nhãn tên trên đầu
   const tagCanvas = document.createElement('canvas'); tagCanvas.width = 512; tagCanvas.height = 112;
   const tagTex = new THREE.CanvasTexture(tagCanvas); tagTex.colorSpace = THREE.SRGBColorSpace;
   const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: tagTex, transparent: true, depthWrite: false }));
-  tag.scale.set(1.25, 0.27, 1); tag.position.y = 1.95; tag.renderOrder = 5; root.add(tag);
+  tag.scale.set(1.25 / K, 0.27 / K, 1); tag.position.y = (1.95 - TOP * (1 - K)) / K; tag.renderOrder = 5; root.add(tag); // bù tỉ lệ: chữ giữ cỡ cũ, cách đỉnh đầu như cũ
   scene.add(root);
 
   const start = { x: 0, z: 37 };
@@ -10351,7 +10355,7 @@ function installCrowd(G) {
   const V3 = THREE.Vector3, PI = Math.PI, TAU = PI * 2;
   const rand = U.rand, randInt = U.randInt, clamp = U.clamp, pick = U.pick;
   const geos = G.chibi.geos, LY = G.chibi.layout, S = G.spots, scene = G.scene;
-  const HIP = LY.hipY, NECK = LY.neckY, SHX = LY.shoulderX, SHY = LY.shoulderY;
+  const HIP = LY.hipY, NECK = LY.neckY, SHX = LY.shoulderX, SHY = LY.shoulderY, HS = G.chibi.k || 1;
 
   // ---------- Hằng số ----------
   const POOL = 60, FLAGS = 4, FLASHES = 6;
@@ -11274,7 +11278,7 @@ function installCrowd(G) {
   //  GHI MA TRẬN: gốc (vị trí, hướng, tỉ lệ) × nghiêng hông × từng bộ phận
   // =====================================================================
   function writePilgrim(p, time) {
-    const a = p.a, s = p.scale, sl = p.slot, sit = a.sit;
+    const a = p.a, s = p.scale * HS, sl = p.slot, sit = a.sit; // HS: tỉ lệ người chung (G.chibi.k); p.scale chỉ còn là khác biệt lớn / bé giữa các khách
     const vy = p.gy + sit * (p.seatTop - 0.05 * s - p.gy) + p.bob * s; // ngồi: hạ thân xuống ngang mặt bồ đoàn / ghế
     const px = p.pos.x + p.ox, pz = p.pos.z + p.oz;
     const hy = p.yaw * 0.5;
@@ -12947,6 +12951,7 @@ function installDiChuaChung(G) {
   if (!G.player || !G.chibi || !G.assets || !G.save || !G.ui || !G.events) return;
   const V3 = THREE.Vector3, M4 = THREE.Matrix4, PI = Math.PI, TAU = PI * 2;
   const P = G.player, geos = G.chibi.geos, LY = G.chibi.layout;
+  const HS = G.chibi.k || 1, HDROP = G.chibi.drop || 0; // tỉ lệ người chung và độ hạ của đỉnh đầu (06-player.js)
   const HIP = LY.hipY, NECK = LY.neckY, SHX = LY.shoulderX, SHY = LY.shoulderY;
   const clamp = U.clamp, damp = U.damp;
   const now = () => performance.now() / 1000;
@@ -12971,7 +12976,7 @@ function installDiChuaChung(G) {
   const NAME_GAP = 30;                        // đổi tên hiển thị tối đa 1 lần / 30 giây mỗi người
   const LIM = { id: 64, n: 40, a: 32, p: 16, t: 240, g: 8 }; // độ dài (đơn vị UTF-16) tối đa của từng trường; vượt là bỏ cả gói
   const STALE_S = 5, DROP_S = 30, FADE_RATE = 0.5; // > 5 giây không tin → mờ dần (2 giây), > 30 giây → gỡ
-  const SEAT_LIFT = 0.17;                     // ngồi cao hơn mặt bồ đoàn một chút (giống module 45)
+  const SEAT_LIFT = 0.17 * HS;                // ngồi cao hơn mặt bồ đoàn một chút (giống module 45)
   const CHAT_MAX = 60, CHAT_GAP = 2.0, CHAT_RUN = 20; // lời nói: ≤ 60 ký tự Unicode, 1 câu / 2 giây, chèn khoảng trắng vào chuỗi > 20 ký tự liền
   const ROBES = [0xe0b85a, 0xd7a447, 0xe8c56e, 0xcf9a3c, 0xe3bd63, 0xd9ab50, 0xdcb24f, 0xe6c070]; // áo vàng nhạt, mỗi người một sắc
   const SKIN = 0xf3c9a0, HAIR = 0x2a1d16, SHOE = 0x4a3426;
@@ -13314,7 +13319,7 @@ function installDiChuaChung(G) {
     // KHÔNG xét độ mờ hiện tại: người vừa xuất hiện còn đang hiện dần (≈ 0,5–1 giây) — câu chào gửi ngay lúc đó trước đây bị bỏ im lặng.
     if (p.slot < 0 || !p.got || p.wedged || p.gone || t - p.last >= STALE_S) { chatStats.unseen++; return; }
     chatStats.shown++; lastShown = f;
-    p.bub = G.ui.bubble(p.getBV, f, bubbleMs(f), 2.35); // hệ bong bóng của khách AI (00-core): textContent, ẩn khi xa máy quay
+    p.bub = G.ui.bubble(p.getBV, f, bubbleMs(f), 2.35 - HDROP); // hệ bong bóng của khách AI (00-core): textContent, ẩn khi xa máy quay
   }
   function chat(text) {
     if (!room || !sendCh) { G.ui.toast('Bạn hãy bật "Đi chùa cùng mọi người" trong Cài đặt trước nhé.', 3000); return false; }
@@ -13326,7 +13331,7 @@ function installDiChuaChung(G) {
     if (f === null) { G.ui.toast('Không gửi được: lời nhắn có địa chỉ web hoặc dãy số dài.', 3200); return false; }
     lastChatSent = t; chatStats.sent++;
     try { sendCh({ t: f }); } catch (e) { /* mất kết nối thì bỏ qua */ }
-    if (!isMuted()) G.ui.bubble(P.root, f, bubbleMs(f), 2.35); // chính mình cũng thấy câu đã lọc
+    if (!isMuted()) G.ui.bubble(P.root, f, bubbleMs(f), 2.35 - HDROP); // chính mình cũng thấy câu đã lọc
     return true;
   }
   // Kiểm thử: gửi thẳng một gói không qua lọc / hạn mức phía gửi (phía nhận mới là hàng rào thật); gọi thẳng hàm nhận với dữ liệu giả
@@ -13383,9 +13388,9 @@ function installDiChuaChung(G) {
   function writeAvatar(p, time) {
     const a = p.a, sl = p.slot, sit = a.sit, k = p.vis * p.vis * (3 - 2 * p.vis); // k: thu về chân khi mờ dần
     const bob = p.walkAmt * Math.abs(Math.sin(p.phase)) * 0.045 + Math.sin(time * 1.6 + p.ph) * 0.006 * (1 - p.walkAmt);
-    const vy = p.y + bob - sit * 0.34;
+    const vy = p.y + (bob - sit * 0.34) * HS;
     const hy = p.yaw * 0.5; _q.set(0, Math.sin(hy), 0, Math.cos(hy));
-    _rootM.compose(_pv.set(p.x, vy, p.z), _q, _sv.set(k, k, k));
+    _rootM.compose(_pv.set(p.x, vy, p.z), _q, _sv.set(k * HS, k * HS, k * HS));
     _e.set(a.hip, 0, 0, 'XYZ'); _q.setFromEuler(_e);
     _hipM.multiplyMatrices(_rootM, _loc.compose(_pv.set(0, HIP, 0), _q, _one));
     _bodyM.copy(_hipM); const be = _bodyM.elements; be[12] -= HIP * be[4]; be[13] -= HIP * be[5]; be[14] -= HIP * be[6];
@@ -13407,11 +13412,11 @@ function installDiChuaChung(G) {
     }
     if (sit > 0.12) { _tmp.multiplyMatrices(_rootM, _loc.compose(_zeroV, _qI, _sv.setScalar(Math.max(0.01, sit)))); mLegs.setMatrixAt(sl, _tmp); }
     else mLegs.setMatrixAt(sl, ZERO);
-    mShadow.setMatrixAt(sl, _loc.compose(_pv.set(p.x, p.gy + 0.025, p.z), _qI, _sv.set(0.95 * k * (1 + sit * 0.1), 1, 0.95 * k)));
+    mShadow.setMatrixAt(sl, _loc.compose(_pv.set(p.x, p.gy + 0.025, p.z), _qI, _sv.set(0.95 * k * HS * (1 + sit * 0.1), 1, 0.95 * k * HS)));
     // bảng tên: trên đầu, mờ theo khoảng cách máy quay và theo độ hiện (ẩn cùng người khi trong nêm máy quay gõ mõ)
     const t = tagFor(sl);
     if (t.name !== p.name) drawTag(t, p.name);
-    t.sprite.position.set(p.x, vy + 1.95, p.z);
+    t.sprite.position.set(p.x, vy + 1.95 - HDROP, p.z);
     p.bv.set(p.x, vy, p.z); // điểm gắn bong bóng lời nói (G.ui.bubble đọc qua p.getBV)
     const op = tagK(p, vy);
     t.sprite.material.opacity = op; t.sprite.visible = op > 0.02;
@@ -13425,7 +13430,7 @@ function installDiChuaChung(G) {
   function anchor(p) {
     if (!p || !built || p.slot < 0) return null;
     const t = tags[p.slot], vy = p.bv.y;
-    return { x: p.x, y: vy + 1.95, z: p.z, k: tagK(p, vy), half: t && t.half ? t.half : 0.625 };
+    return { x: p.x, y: vy + 1.95 - HDROP, z: p.z, k: tagK(p, vy), half: t && t.half ? t.half : 0.625 };
   }
 
   // =====================================================================
@@ -15683,7 +15688,7 @@ function installActivitiesA(G) {
   const MO_BPM = 70, MO_BEATS = 35, MO_COUNTIN = 3, MO_LEAD = 1.5;
   const MO_P = 60 / MO_BPM;                   // giây mỗi nhịp
   const MO_WIN = 0.25, MO_PERFECT = 0.09, MO_OK = 0.18, MO_RING = 1.3;
-  const SEAT_LIFT = 0.2;                      // ngồi cao hơn một chút trên bồ đoàn để dùi chạm tới mõ
+  const SEAT_LIFT = 0.2 * (G.chibi.k || 1);   // ngồi cao hơn một chút trên bồ đoàn để dùi chạm tới mõ (theo tỉ lệ người)
   const SYL = ['Nam', 'mô', 'A', 'Di', 'Đà', 'Phật'];
   const MO_GRADE = [{ name: 'Lệch nhịp', cls: 'g3' }, { name: 'Được', cls: 'g2' }, { name: 'Tĩnh tâm', cls: 'g1' }];
   const _k = new V3(), _up = new V3(0, 1, 0), _md = new V3(0, -0.3, 0.954).normalize();
@@ -17297,7 +17302,7 @@ function installNgoiTungKinh(G) {
   const persist = () => { try { G.save.persist(); } catch (e) { /* không lưu được thì thôi */ } };
 
   const SEAT_R = 1.7;          // tìm bồ đoàn trống trong bán kính này quanh người chơi
-  const SEAT_LIFT = 0.17;      // ngồi cao hơn mặt bồ đoàn một chút
+  const SEAT_LIFT = 0.17 * ((G.chibi && G.chibi.k) || 1); // ngồi cao hơn mặt bồ đoàn một chút (theo tỉ lệ người)
   const ZIN = -87.3;           // máy quay không lùi sát hơn nữa vào tường trước (mặt trong z −86,7)
   const FAR_Z = 9999;
   const BPMS = [['Chậm', 52], ['Vừa', 66], ['Nhanh', 80]];
@@ -18654,7 +18659,7 @@ function installActivitiesC(G) {
     if (!(await goTo(r, V.stand))) return;
     const seat = V.seat || V.stand;
     P.placeAt(seat.x, seat.z, seat.yaw);
-    P.pos.y = (seat.y != null ? seat.y : 0.42) + 0.07 + 0.31;      // mặt ghế đá + nửa độ hạ thân khi ngồi
+    P.pos.y = (seat.y != null ? seat.y : 0.42) + (0.07 + 0.31) * (G.chibi.k || 1); // mặt ghế đá + nửa độ hạ thân khi ngồi (theo tỉ lệ người)
     seated = true;
     P.poseParam = 0; P.setPose('sitPray');
 

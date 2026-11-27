@@ -24,6 +24,7 @@ function installDiChuaChung(G) {
   if (!G.player || !G.chibi || !G.assets || !G.save || !G.ui || !G.events) return;
   const V3 = THREE.Vector3, M4 = THREE.Matrix4, PI = Math.PI, TAU = PI * 2;
   const P = G.player, geos = G.chibi.geos, LY = G.chibi.layout;
+  const HS = G.chibi.k || 1, HDROP = G.chibi.drop || 0; // tỉ lệ người chung và độ hạ của đỉnh đầu (06-player.js)
   const HIP = LY.hipY, NECK = LY.neckY, SHX = LY.shoulderX, SHY = LY.shoulderY;
   const clamp = U.clamp, damp = U.damp;
   const now = () => performance.now() / 1000;
@@ -48,7 +49,7 @@ function installDiChuaChung(G) {
   const NAME_GAP = 30;                        // đổi tên hiển thị tối đa 1 lần / 30 giây mỗi người
   const LIM = { id: 64, n: 40, a: 32, p: 16, t: 240, g: 8 }; // độ dài (đơn vị UTF-16) tối đa của từng trường; vượt là bỏ cả gói
   const STALE_S = 5, DROP_S = 30, FADE_RATE = 0.5; // > 5 giây không tin → mờ dần (2 giây), > 30 giây → gỡ
-  const SEAT_LIFT = 0.17;                     // ngồi cao hơn mặt bồ đoàn một chút (giống module 45)
+  const SEAT_LIFT = 0.17 * HS;                // ngồi cao hơn mặt bồ đoàn một chút (giống module 45)
   const CHAT_MAX = 60, CHAT_GAP = 2.0, CHAT_RUN = 20; // lời nói: ≤ 60 ký tự Unicode, 1 câu / 2 giây, chèn khoảng trắng vào chuỗi > 20 ký tự liền
   const ROBES = [0xe0b85a, 0xd7a447, 0xe8c56e, 0xcf9a3c, 0xe3bd63, 0xd9ab50, 0xdcb24f, 0xe6c070]; // áo vàng nhạt, mỗi người một sắc
   const SKIN = 0xf3c9a0, HAIR = 0x2a1d16, SHOE = 0x4a3426;
@@ -391,7 +392,7 @@ function installDiChuaChung(G) {
     // KHÔNG xét độ mờ hiện tại: người vừa xuất hiện còn đang hiện dần (≈ 0,5–1 giây) — câu chào gửi ngay lúc đó trước đây bị bỏ im lặng.
     if (p.slot < 0 || !p.got || p.wedged || p.gone || t - p.last >= STALE_S) { chatStats.unseen++; return; }
     chatStats.shown++; lastShown = f;
-    p.bub = G.ui.bubble(p.getBV, f, bubbleMs(f), 2.35); // hệ bong bóng của khách AI (00-core): textContent, ẩn khi xa máy quay
+    p.bub = G.ui.bubble(p.getBV, f, bubbleMs(f), 2.35 - HDROP); // hệ bong bóng của khách AI (00-core): textContent, ẩn khi xa máy quay
   }
   function chat(text) {
     if (!room || !sendCh) { G.ui.toast('Bạn hãy bật "Đi chùa cùng mọi người" trong Cài đặt trước nhé.', 3000); return false; }
@@ -403,7 +404,7 @@ function installDiChuaChung(G) {
     if (f === null) { G.ui.toast('Không gửi được: lời nhắn có địa chỉ web hoặc dãy số dài.', 3200); return false; }
     lastChatSent = t; chatStats.sent++;
     try { sendCh({ t: f }); } catch (e) { /* mất kết nối thì bỏ qua */ }
-    if (!isMuted()) G.ui.bubble(P.root, f, bubbleMs(f), 2.35); // chính mình cũng thấy câu đã lọc
+    if (!isMuted()) G.ui.bubble(P.root, f, bubbleMs(f), 2.35 - HDROP); // chính mình cũng thấy câu đã lọc
     return true;
   }
   // Kiểm thử: gửi thẳng một gói không qua lọc / hạn mức phía gửi (phía nhận mới là hàng rào thật); gọi thẳng hàm nhận với dữ liệu giả
@@ -460,9 +461,9 @@ function installDiChuaChung(G) {
   function writeAvatar(p, time) {
     const a = p.a, sl = p.slot, sit = a.sit, k = p.vis * p.vis * (3 - 2 * p.vis); // k: thu về chân khi mờ dần
     const bob = p.walkAmt * Math.abs(Math.sin(p.phase)) * 0.045 + Math.sin(time * 1.6 + p.ph) * 0.006 * (1 - p.walkAmt);
-    const vy = p.y + bob - sit * 0.34;
+    const vy = p.y + (bob - sit * 0.34) * HS;
     const hy = p.yaw * 0.5; _q.set(0, Math.sin(hy), 0, Math.cos(hy));
-    _rootM.compose(_pv.set(p.x, vy, p.z), _q, _sv.set(k, k, k));
+    _rootM.compose(_pv.set(p.x, vy, p.z), _q, _sv.set(k * HS, k * HS, k * HS));
     _e.set(a.hip, 0, 0, 'XYZ'); _q.setFromEuler(_e);
     _hipM.multiplyMatrices(_rootM, _loc.compose(_pv.set(0, HIP, 0), _q, _one));
     _bodyM.copy(_hipM); const be = _bodyM.elements; be[12] -= HIP * be[4]; be[13] -= HIP * be[5]; be[14] -= HIP * be[6];
@@ -484,11 +485,11 @@ function installDiChuaChung(G) {
     }
     if (sit > 0.12) { _tmp.multiplyMatrices(_rootM, _loc.compose(_zeroV, _qI, _sv.setScalar(Math.max(0.01, sit)))); mLegs.setMatrixAt(sl, _tmp); }
     else mLegs.setMatrixAt(sl, ZERO);
-    mShadow.setMatrixAt(sl, _loc.compose(_pv.set(p.x, p.gy + 0.025, p.z), _qI, _sv.set(0.95 * k * (1 + sit * 0.1), 1, 0.95 * k)));
+    mShadow.setMatrixAt(sl, _loc.compose(_pv.set(p.x, p.gy + 0.025, p.z), _qI, _sv.set(0.95 * k * HS * (1 + sit * 0.1), 1, 0.95 * k * HS)));
     // bảng tên: trên đầu, mờ theo khoảng cách máy quay và theo độ hiện (ẩn cùng người khi trong nêm máy quay gõ mõ)
     const t = tagFor(sl);
     if (t.name !== p.name) drawTag(t, p.name);
-    t.sprite.position.set(p.x, vy + 1.95, p.z);
+    t.sprite.position.set(p.x, vy + 1.95 - HDROP, p.z);
     p.bv.set(p.x, vy, p.z); // điểm gắn bong bóng lời nói (G.ui.bubble đọc qua p.getBV)
     const op = tagK(p, vy);
     t.sprite.material.opacity = op; t.sprite.visible = op > 0.02;
@@ -502,7 +503,7 @@ function installDiChuaChung(G) {
   function anchor(p) {
     if (!p || !built || p.slot < 0) return null;
     const t = tags[p.slot], vy = p.bv.y;
-    return { x: p.x, y: vy + 1.95, z: p.z, k: tagK(p, vy), half: t && t.half ? t.half : 0.625 };
+    return { x: p.x, y: vy + 1.95 - HDROP, z: p.z, k: tagK(p, vy), half: t && t.half ? t.half : 0.625 };
   }
 
   // =====================================================================

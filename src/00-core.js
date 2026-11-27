@@ -686,7 +686,7 @@ G.input.moveVector = () => {
 //  MÁY QUAY: theo sau lưng nhân vật, kéo để xoay, có chế độ "nhìn cận" cho hoạt động
 // =====================================================================
 const cam = (G.cam = {
-  yaw: Math.PI, pitch: 0.42, dist: 7.2, distT: 7.2, blend: 0, blendT: 0, blendDur: 1,
+  yaw: Math.PI, pitch: 0.42, dist: 6.6, distT: 6.6, blend: 0, blendT: 0, blendDur: 1, // 6,6 (trước 7,2): người nhỏ đi 0,8 nên máy quay lại gần một chút
   target: new V3(0, 1.3, 40), focusPos: new V3(), focusLook: new V3(), shakeT: 0, shakeA: 0, shakeD: 0.4,
   blockers: [], collDist: 99, baseFov: 52, focusFov: null,
   focus({ pos, look, dur = 1.1, fov }) { this.focusPos.set(pos[0], pos[1], pos[2]); this.focusLook.set(look[0], look[1], look[2]); this.focusFov = fov > 0 ? fov : null; this.blendT = 1; this.blendDur = dur; },
@@ -700,7 +700,7 @@ function updateCamera(dt) {
   if (P) {
     cam.target.x = U.damp(cam.target.x, P.pos.x, 9, dt);
     cam.target.z = U.damp(cam.target.z, P.pos.z, 9, dt);
-    cam.target.y = U.damp(cam.target.y, P.pos.y + 1.55, 7, dt);
+    cam.target.y = U.damp(cam.target.y, P.pos.y + 1.55 * (G.chibi ? G.chibi.k : 1), 7, dt); // ngang đỉnh đầu (người đã thu theo G.chibi.k)
     // tự xoay nhẹ ra sau lưng khi đang đi tới
     if (P.moving && G.time - input.lastDrag > 1.4 && cam.blend < 0.01) {
       const diff = Math.abs(U.angleDiff(cam.yaw, P.yaw));

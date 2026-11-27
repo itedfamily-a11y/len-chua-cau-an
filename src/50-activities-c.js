@@ -645,7 +645,7 @@ function installActivitiesC(G) {
     if (!(await goTo(r, V.stand))) return;
     const seat = V.seat || V.stand;
     P.placeAt(seat.x, seat.z, seat.yaw);
-    P.pos.y = (seat.y != null ? seat.y : 0.42) + 0.07 + 0.31;      // mặt ghế đá + nửa độ hạ thân khi ngồi
+    P.pos.y = (seat.y != null ? seat.y : 0.42) + (0.07 + 0.31) * (G.chibi.k || 1); // mặt ghế đá + nửa độ hạ thân khi ngồi (theo tỉ lệ người)
     seated = true;
     P.poseParam = 0; P.setPose('sitPray');
 

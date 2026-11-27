@@ -646,7 +646,7 @@ function installActivitiesA(G) {
   const MO_BPM = 70, MO_BEATS = 35, MO_COUNTIN = 3, MO_LEAD = 1.5;
   const MO_P = 60 / MO_BPM;                   // giây mỗi nhịp
   const MO_WIN = 0.25, MO_PERFECT = 0.09, MO_OK = 0.18, MO_RING = 1.3;
-  const SEAT_LIFT = 0.2;                      // ngồi cao hơn một chút trên bồ đoàn để dùi chạm tới mõ
+  const SEAT_LIFT = 0.2 * (G.chibi.k || 1);   // ngồi cao hơn một chút trên bồ đoàn để dùi chạm tới mõ (theo tỉ lệ người)
   const SYL = ['Nam', 'mô', 'A', 'Di', 'Đà', 'Phật'];
   const MO_GRADE = [{ name: 'Lệch nhịp', cls: 'g3' }, { name: 'Được', cls: 'g2' }, { name: 'Tĩnh tâm', cls: 'g1' }];
   const _k = new V3(), _up = new V3(0, 1, 0), _md = new V3(0, -0.3, 0.954).normalize();

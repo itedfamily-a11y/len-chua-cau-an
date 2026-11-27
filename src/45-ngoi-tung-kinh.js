@@ -20,7 +20,7 @@ function installNgoiTungKinh(G) {
   const persist = () => { try { G.save.persist(); } catch (e) { /* không lưu được thì thôi */ } };
 
   const SEAT_R = 1.7;          // tìm bồ đoàn trống trong bán kính này quanh người chơi
-  const SEAT_LIFT = 0.17;      // ngồi cao hơn mặt bồ đoàn một chút
+  const SEAT_LIFT = 0.17 * ((G.chibi && G.chibi.k) || 1); // ngồi cao hơn mặt bồ đoàn một chút (theo tỉ lệ người)
   const ZIN = -87.3;           // máy quay không lùi sát hơn nữa vào tường trước (mặt trong z −86,7)
   const FAR_Z = 9999;
   const BPMS = [['Chậm', 52], ['Vừa', 66], ['Nhanh', 80]];

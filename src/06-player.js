@@ -9,6 +9,10 @@ function installPlayer(G) {
 
   // ---------- Hình khối chibi dùng chung (gốc ở chân, mặt quay về +z) ----------
   const L = { hipY: 0.38, neckY: 0.9, shoulderX: 0.2, shoulderY: 0.8, armLen: 0.36, headR: 0.34, headC: 0.3 };
+  // Tỉ lệ người so với công trình (2026-11-27): dáng chibi đầu to, thân rộng (cỡ 1: cao 1,57 m nhưng ngang tới 0,68 m) nên đứng cạnh cột, tường, cổng trông quá to.
+  // Thu cả người về K (0,8: cao ≈ 1,26 m, ngang ≈ 0,54 m). MỘT hằng số: khách AI (20), người chơi cùng (22), máy quay (00), chỗ ngồi (30 / 45 / 50) đều đọc G.chibi.k.
+  // Hình khối và các số trong L vẫn ở cỡ 1; tỉ lệ đặt ở gốc của từng người. Bán kính va chạm (0,35) và tốc độ đi giữ nguyên.
+  const K = 0.8, TOP = 1.57; // TOP: đỉnh đầu ở cỡ 1
   const lathe = (pts, sg) => new THREE.LatheGeometry(pts.map((p) => new THREE.Vector2(p[0], p[1])), sg);
   const geos = {
     body: lathe([[0, 0.05], [0.33, 0.05], [0.335, 0.12], [0.3, 0.32], [0.25, 0.52], [0.22, 0.68], [0.19, 0.8], [0.11, 0.88], [0, 0.9]], 12),
@@ -33,7 +37,7 @@ function installPlayer(G) {
     parts.push(U.piece(new THREE.SphereGeometry(0.025, 6, 4), 0xc0604a, { p: [0, L.headC - 0.12, 0.318], s: [1.4, 0.6, 0.5], j: 0 }));
     geos.face = U.merge(parts);
   }
-  G.chibi = { geos, layout: L };
+  G.chibi = { geos, layout: L, k: K, drop: TOP * (1 - K) }; // drop: đỉnh đầu thấp hơn cỡ 1 bao nhiêu mét (bảng tên, bong bóng lời hạ theo)
 
   // bóng mờ dưới chân (dùng chung)
   const blobTex = U.canvasTex(64, 64, (g, w) => {
@@ -55,7 +59,7 @@ function installPlayer(G) {
   const mShoe = new THREE.MeshLambertMaterial({ color: COL.shoe });
   const mFace = new THREE.MeshBasicMaterial({ vertexColors: true });
 
-  const root = new THREE.Group(); root.name = 'player';
+  const root = new THREE.Group(); root.name = 'player'; root.scale.setScalar(K);
   const blob = new THREE.Mesh(G.assets.blobGeo, G.assets.blobMat); blob.scale.set(0.95, 1, 0.95); blob.position.y = 0.02; root.add(blob);
   const inner = new THREE.Group(); root.add(inner);
   const footL = new THREE.Mesh(geos.foot, mShoe), footR = new THREE.Mesh(geos.foot, mShoe);
@@ -77,12 +81,12 @@ function installPlayer(G) {
   };
   const armL = mkArm(1), armR = mkArm(-1);
   for (const m of [body, head, hair, bun, footL, footR, sitLegs]) m.castShadow = false;
-  const handsMid = new THREE.Object3D(); root.add(handsMid);
+  const handsMid = new THREE.Object3D(); handsMid.scale.setScalar(1 / K); root.add(handsMid); // bù tỉ lệ: vật cầm giữa hai tay (hương, dải lụa, hoa đăng) giữ cỡ thật, không đổi cỡ khi rời tay
   // nhãn tên trên đầu
   const tagCanvas = document.createElement('canvas'); tagCanvas.width = 512; tagCanvas.height = 112;
   const tagTex = new THREE.CanvasTexture(tagCanvas); tagTex.colorSpace = THREE.SRGBColorSpace;
   const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: tagTex, transparent: true, depthWrite: false }));
-  tag.scale.set(1.25, 0.27, 1); tag.position.y = 1.95; tag.renderOrder = 5; root.add(tag);
+  tag.scale.set(1.25 / K, 0.27 / K, 1); tag.position.y = (1.95 - TOP * (1 - K)) / K; tag.renderOrder = 5; root.add(tag); // bù tỉ lệ: chữ giữ cỡ cũ, cách đỉnh đầu như cũ
   scene.add(root);
 
   const start = { x: 0, z: 37 };

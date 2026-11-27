@@ -8,7 +8,7 @@ function installCrowd(G) {
   const V3 = THREE.Vector3, PI = Math.PI, TAU = PI * 2;
   const rand = U.rand, randInt = U.randInt, clamp = U.clamp, pick = U.pick;
   const geos = G.chibi.geos, LY = G.chibi.layout, S = G.spots, scene = G.scene;
-  const HIP = LY.hipY, NECK = LY.neckY, SHX = LY.shoulderX, SHY = LY.shoulderY;
+  const HIP = LY.hipY, NECK = LY.neckY, SHX = LY.shoulderX, SHY = LY.shoulderY, HS = G.chibi.k || 1;
 
   // ---------- Hằng số ----------
   const POOL = 60, FLAGS = 4, FLASHES = 6;
@@ -931,7 +931,7 @@ function installCrowd(G) {
   //  GHI MA TRẬN: gốc (vị trí, hướng, tỉ lệ) × nghiêng hông × từng bộ phận
   // =====================================================================
   function writePilgrim(p, time) {
-    const a = p.a, s = p.scale, sl = p.slot, sit = a.sit;
+    const a = p.a, s = p.scale * HS, sl = p.slot, sit = a.sit; // HS: tỉ lệ người chung (G.chibi.k); p.scale chỉ còn là khác biệt lớn / bé giữa các khách
     const vy = p.gy + sit * (p.seatTop - 0.05 * s - p.gy) + p.bob * s; // ngồi: hạ thân xuống ngang mặt bồ đoàn / ghế
     const px = p.pos.x + p.ox, pz = p.pos.z + p.oz;
     const hy = p.yaw * 0.5;

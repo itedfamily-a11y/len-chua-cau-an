@@ -18,6 +18,7 @@
     ['trang trí sân chùa', typeof buildDecorInside === 'function' ? buildDecorInside : null],
     ['biển báo trước cổng', typeof buildGateSign === 'function' ? buildGateSign : null], // trước cảnh vật: quầy hàng tự lùi chỗ
     ['cảnh vật quanh chùa', typeof buildScenery === 'function' ? buildScenery : null],
+    ['cây mô hình 3D (sồi, thông)', typeof installCayMoHinh === 'function' ? installCayMoHinh : null], // 13-cay-mo-hinh.js: sau mọi nơi dựng cây (05, 09, 12, 13, 19): các nơi ấy đã ghi chỗ đứng từng cây vào G.cayDat; tải hai file mô hình sau khi game chạy, lỗi thì giữ cây dựng bằng mã
     ['hiệu ứng', installFx],
     ['hậu kỳ', typeof installHauKy === 'function' ? installHauKy : null], // 07-hau-ky.js: bloom / AO / MSAA / chỉnh màu phim, chỉ chạy trong chính điện (G.post); tải addon three/addons không đồng bộ, lỗi thì vẽ thẳng như cũ
     ['nhân vật', installPlayer],

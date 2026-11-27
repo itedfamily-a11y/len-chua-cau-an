@@ -187,3 +187,9 @@ Not part of the Bút Tháp / Phật Tích layout: the owner supplied a 3D model 
 ## Tỉ lệ người (2026-11-27)
 
 - Owner: people looked too big against the buildings. The buildings are at real size; the chibi figures were 1.57 m tall but 0.68 m wide. Every person (player, AI pilgrims, other players) is now drawn at 0.8: about 1.26 m tall, 0.54 m wide. One constant: `K` in `src/06-player.js` (`G.chibi.k`). Name tags, speech bubbles, seat heights and the follow camera (aims at 1.55·k, default distance 6.6) follow it; collision radius 0.35, walking speeds, buildings and props are unchanged. Details: `src/API.md`, bullet dated 2026-11-27 "People scaled to 0.8". Not play-tested.
+
+## Cây mô hình 3D — sồi và thông (2026-11-27)
+
+- Owner sent two Sketchfab files and asked to replace the trees. The round and dome trees are now oaks (about a quarter of them pines), the tall umbrella trees and every tùng are pines, the banyan at the entrance is an old oak (the red silk band is wrapped around the new trunk), the garden bodhi is a wide oak with its low leaves trimmed (the six code-built ribbon branches stay and are joined to the new trunk), potted trees are small pines. Palms, banana, bamboo, frangipani, mai, quất, the two red flame trees and the flower bushes are unchanged.
+- Positions, colliders and the rng order of the scenery did not change: each builder still builds its code tree (now in a mesh of its own, kept as the fallback) and records the spot in `G.cayDat`; `src/13-cay-mo-hinh.js` instances the models there and switches each tree between three detail levels by camera distance. Details and contracts: `src/API.md`, bullet dated 2026-11-27 "Trees replaced by downloaded oak and pine models".
+- Credit (CC BY 4.0): "Oak trees pack (17var, LODs, seasons, gameready)" by LOLIPOP and "Pine Forest at Sunset" by Jagobo, Sketchfab; shown at the end of the Settings panel while the models are in use.

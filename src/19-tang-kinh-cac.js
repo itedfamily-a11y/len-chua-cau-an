@@ -188,6 +188,7 @@ function buildTangKinhCac(G) {
 
   // ---------- Sân, tường, cổng, cây, bia ----------
   const S = U.batch(), F = U.batch(), IN = U.batch(), LB = U.batch(), own = [];
+  const TR = U.batch(); // 2026-11-27: chín cây tán tròn của sân đi riêng một lưới 'tkc:cay' để 13-cay-mo-hinh.js ẩn đi khi mô hình cây tải xong; chỗ đứng ghi vào G.cayDat
   function wall(x0, z0, x1, z1) { // như tường bao của 05-world.js: chân đá, thân vàng đất, mái ngói, cột mỗi 6 m
     const lx = Math.abs(x1 - x0), lz = Math.abs(z1 - z0), cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, alongX = lx > lz, L = Math.max(lx, lz);
     const sz = (a, b) => (alongX ? [a, b] : [b, a]);
@@ -233,12 +234,13 @@ function buildTangKinhCac(G) {
   safe('cây, đèn đá, bia', () => {
     const tree = (x, z, s, k) => { // cây tán tròn ở dải cỏ sát tường bắc và tường đông
       const trunk = new THREE.CylinderGeometry(0.16 * s, 0.24 * s, 2.6 * s, 6); own.push(trunk);
-      S.add(trunk, 0x6b4a2e, { p: [x, 1.3 * s, z] });
+      TR.add(trunk, 0x6b4a2e, { p: [x, 1.3 * s, z] });
       const blob = new THREE.IcosahedronGeometry(1, 1); own.push(blob);
       const g = [0x4f7f36, 0x5b8c3d, 0x467231];
-      S.add(blob, g[k % 3], { p: [x, 3.5 * s, z], s: [1.9 * s, 1.5 * s, 1.9 * s] });
-      S.add(blob, g[(k + 1) % 3], { p: [x + 0.9 * s, 3.0 * s, z + 0.4 * s], s: [1.3 * s, 1.0 * s, 1.3 * s] });
-      S.add(blob, g[(k + 2) % 3], { p: [x - 0.8 * s, 3.1 * s, z - 0.5 * s], s: [1.2 * s, 1.0 * s, 1.2 * s] });
+      TR.add(blob, g[k % 3], { p: [x, 3.5 * s, z], s: [1.9 * s, 1.5 * s, 1.9 * s] });
+      TR.add(blob, g[(k + 1) % 3], { p: [x + 0.9 * s, 3.0 * s, z + 0.4 * s], s: [1.3 * s, 1.0 * s, 1.3 * s] });
+      TR.add(blob, g[(k + 2) % 3], { p: [x - 0.8 * s, 3.1 * s, z - 0.5 * s], s: [1.2 * s, 1.0 * s, 1.2 * s] });
+      (G.cayDat || (G.cayDat = [])).push({ k: 'tkc', x, y: -0.05, z, s, seed: 520 + k });
       col.circle(x, z, 0.3, 'tree');
     };
     let k = 0;
@@ -340,6 +342,7 @@ function buildTangKinhCac(G) {
   });
   safe('gom mesh', () => {
     if (S.list.length) { const m = S.mesh(G.mats.vc, { cast: true, receive: true }); m.name = 'tkc:than'; scene.add(m); }
+    if (TR.list.length) { const m = TR.mesh(G.mats.vc, { cast: true, receive: true }); m.name = 'tkc:cay'; scene.add(m); (G.cayCu || (G.cayCu = [])).push(m); } // cây dựng bằng mã (bản dự phòng của mô hình cây)
     if (F.list.length) { const m = F.mesh(G.mats.vc, { cast: false, receive: true }); m.name = 'tkc:phang'; scene.add(m); }
     if (IN.list.length) { const m = IN.mesh(G.mats.vc, { cast: false, receive: true }); m.name = 'tkc:noi-that'; scene.add(m); V.interior = m; }
     if (LB.list.length) { const m = LB.mesh(G.mats.lantern, { cast: false, receive: false }); m.name = 'tkc:den'; scene.add(m); }

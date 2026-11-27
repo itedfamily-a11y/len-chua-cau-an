@@ -235,6 +235,8 @@ function buildVuonSau(G) {
   // S: cấu trúc (tường, cổng, sàn thủy tạ, bồn; đổ bóng) · Fl: phẳng/nhỏ (thảm cỏ, bờ hồ; không đổ bóng) · PATH: lối đá · LB: thân đèn (MeshBasic) · GD: kim loại / vàng
   // DEC: trang trí rắn (cây, tượng, ghế, đèn đá; đổ bóng) · DECF: trang trí phẳng/nhỏ (sen; không đổ bóng). GD, DEC, DECF nằm trong nhóm "near", ẩn khi máy quay còn ở phía trước chính điện (xem 'ẩn khi xa')
   const S = U.batch(), Fl = U.batch(), PATH = U.batch(), LB = U.batch(), GD = U.batch(), DEC = U.batch(), DECF = U.batch();
+  const CAY = U.batch(); // 2026-11-27: thân + tán của tùng, cây trong chậu cảnh và cây bồ đề (trừ 6 cành thấp buộc dải lụa, vẫn ở DEC) đi riêng một lưới 'vuonSau:cay' trong nhóm "near" để 13-cay-mo-hinh.js ẩn đi khi mô hình cây tải xong; chỗ đứng ghi vào G.cayDat (nhom: 'vuon' = mô hình cũng vào nhóm "near", ẩn hiện theo vườn)
+  const cayGhi = (o) => { (G.cayDat || (G.cayDat = [])).push(o); };
   const own = [];                                  // hình gốc tạm, giải phóng ở cuối
   const mk = (g) => (own.push(g), g);
   const _col = new THREE.Color();
@@ -251,7 +253,7 @@ function buildVuonSau(G) {
     return g;
   };
   const trisOf = (B) => { let n = 0; for (const g of B.list) n += g.attributes.position.count / 3; return n; };
-  const tally = V.tally, totalNow = () => trisOf(S) + trisOf(Fl) + trisOf(PATH) + trisOf(LB) + trisOf(GD) + trisOf(DEC) + trisOf(DECF);
+  const tally = V.tally, totalNow = () => trisOf(S) + trisOf(Fl) + trisOf(PATH) + trisOf(LB) + trisOf(GD) + trisOf(DEC) + trisOf(DECF) + trisOf(CAY);
   const count = (name, fn) => { const t0 = totalNow(); safe(name, fn); tally[name] = Math.round(totalNow() - t0); };
 
   // ---------- tường bao vườn: cùng kiểu và cùng chiều cao với tường sân chùa (wall() ở 05-world.js:349) ----------
@@ -383,9 +385,10 @@ function buildVuonSau(G) {
       const y = 0.82;
       put(DEC, POT, 0x3c6aa0, b.x, y, b.z, 1, 1, 1, { j: 0.05 }); cyl(DEC, b.x, y + 0.43, b.z, 0.49, 0.49, 0.04, 0xeef0f4, 10);
       const k = 0.85 + rnd() * 0.35;
-      branch(DEC, [b.x, y + 0.45, b.z], [b.x + 0.15 * k, y + 1.05 * k, b.z + 0.05], 0.07, 0.05, 0x6b5240, 5);
-      put(DEC, ICO, C.leaf[i % 4], b.x + 0.18, y + 0.45 + 0.7 * k + 0.1, b.z + 0.05, 0.42 * k, 0.21 * k, 0.34 * k, { j: 0.12 });
-      put(DEC, ICO, C.leaf[(i + 1) % 4], b.x - 0.18, y + 0.45 + 0.45 * k, b.z, 0.29 * k, 0.15 * k, 0.24 * k, { j: 0.12 });
+      branch(CAY, [b.x, y + 0.45, b.z], [b.x + 0.15 * k, y + 1.05 * k, b.z + 0.05], 0.07, 0.05, 0x6b5240, 5);
+      put(CAY, ICO, C.leaf[i % 4], b.x + 0.18, y + 0.45 + 0.7 * k + 0.1, b.z + 0.05, 0.42 * k, 0.21 * k, 0.34 * k, { j: 0.12 });
+      put(CAY, ICO, C.leaf[(i + 1) % 4], b.x - 0.18, y + 0.45 + 0.45 * k, b.z, 0.29 * k, 0.15 * k, 0.24 * k, { j: 0.12 });
+      cayGhi({ k: 'chau', x: b.x, y: y + 0.45, z: b.z, s: k, seed: 3301 + i, nhom: 'vuon' });
     });
   });
 
@@ -427,8 +430,9 @@ function buildVuonSau(G) {
   count('tùng', () => {
     for (const t of CYPRESS) {
       const r = U.rng(t.seed), s = t.s;
-      branch(DEC, [t.x, 0, t.z], [t.x, 1.2 * s, t.z], 0.16 * s, 0.12 * s, C.bark, 5);
-      for (let i = 0; i < 4; i++) { const w = (1.5 - i * 0.28) * s, h = (1.7 - i * 0.12) * s; put(DEC, CONE6, i % 2 ? 0x3a6232 : 0x355a2e, t.x + (r() - 0.5) * 0.06, (0.7 + i * 0.95) * s + h / 2, t.z + (r() - 0.5) * 0.06, w, h, w, { j: 0.1 }); }
+      branch(CAY, [t.x, 0, t.z], [t.x, 1.2 * s, t.z], 0.16 * s, 0.12 * s, C.bark, 5);
+      cayGhi({ k: 'tung', x: t.x, y: -0.04, z: t.z, s, seed: t.seed, nhom: 'vuon' });
+      for (let i = 0; i < 4; i++) { const w = (1.5 - i * 0.28) * s, h = (1.7 - i * 0.12) * s; put(CAY, CONE6, i % 2 ? 0x3a6232 : 0x355a2e, t.x + (r() - 0.5) * 0.06, (0.7 + i * 0.95) * s + h / 2, t.z + (r() - 0.5) * 0.06, w, h, w, { j: 0.1 }); }
     }
   });
 
@@ -449,16 +453,16 @@ function buildVuonSau(G) {
   // ---------- 7. Cây bồ đề ở bồn giữa (cao ≈ 12 m, tán rộng ≈ 14 m phủ bốn ghế đá): thân + rễ nổi + cành + 26 mảng lá + 6 cành thấp để buộc dải lụa cầu an (2026-11-23) ----------
   count('cây bồ đề', () => {
     const tx = PLANTER.x, tz = PLANTER.z, y0 = PLANTER.h, r = U.rng(6203), bark = C.bark;
-    branch(DEC, [tx, y0 - 0.1, tz], [tx + 0.15, 5.2, tz - 0.1], 1.25, 0.8, bark, 9);
-    for (let i = 0; i < 7; i++) { const a = (i / 7) * TAU + 0.3; branch(DEC, [tx + Math.cos(a) * 0.6, y0 + 0.4, tz + Math.sin(a) * 0.6], [tx + Math.cos(a) * 2.6, y0 - 0.02, tz + Math.sin(a) * 2.6], 0.4, 0.07, bark, 5); }
-    for (let i = 0; i < 9; i++) { const a = (i / 9) * TAU + r() * 0.4, d = 4.6 + r() * 1.4; branch(DEC, [tx, 4.4, tz], [tx + Math.cos(a) * d, 7.4 + r() * 1.6, tz + Math.sin(a) * d], 0.34, 0.14, bark, 6); }
-    for (let i = 0; i < 26; i++) { const a = i * 2.39996, rr = 1.5 + Math.sqrt(i / 26) * 5.4, rad = 2.0 + r() * 1.3; put(DEC, i < 12 ? ICO1 : ICO, C.leaf[i % 4], tx + Math.cos(a) * rr, 10.2 - rr * 0.42 + r() * 0.8, tz + Math.sin(a) * rr, rad, rad * 0.78, rad, { j: 0.12 }); }
+    branch(CAY, [tx, y0 - 0.1, tz], [tx + 0.15, 5.2, tz - 0.1], 1.25, 0.8, bark, 9);
+    for (let i = 0; i < 7; i++) { const a = (i / 7) * TAU + 0.3; branch(CAY, [tx + Math.cos(a) * 0.6, y0 + 0.4, tz + Math.sin(a) * 0.6], [tx + Math.cos(a) * 2.6, y0 - 0.02, tz + Math.sin(a) * 2.6], 0.4, 0.07, bark, 5); }
+    for (let i = 0; i < 9; i++) { const a = (i / 9) * TAU + r() * 0.4, d = 4.6 + r() * 1.4; branch(CAY, [tx, 4.4, tz], [tx + Math.cos(a) * d, 7.4 + r() * 1.6, tz + Math.sin(a) * d], 0.34, 0.14, bark, 6); }
+    for (let i = 0; i < 26; i++) { const a = i * 2.39996, rr = 1.5 + Math.sqrt(i / 26) * 5.4, rad = 2.0 + r() * 1.3; put(CAY, i < 12 ? ICO1 : ICO, C.leaf[i % 4], tx + Math.cos(a) * rr, 10.2 - rr * 0.42 + r() * 0.8, tz + Math.sin(a) * rr, rad, rad * 0.78, rad, { j: 0.12 }); }
     // 6 cành thấp để buộc dải lụa ("Viết lời cầu an"): mọc từ thân ở y 3,35…3,5, vươn ngang 3,7…4,0 m (không quá 4,3 m), 4 trong 6 cành ở nửa phía bắc (phía chỗ đứng). Bộ số ngẫu nhiên riêng (6204): thân, cành lớn và tán lá ở trên giữ nguyên.
     // Neo treo: mỗi cành 5 neo cách nhau 0,46…0,52 m dọc cành (t 0,35…0,95), thấp hơn cành 0,07 m; đáy dải dài nhất (0,75 × 1,12 = 0,84 m) còn cao hơn mặt đất trong bồn (y 0,5) 1,9 m trở lên; đầu cành ≤ 4,3 m nên không dải nào treo trên đầu người đi (vật cản bồn r 4,6 + 0,35).
-    const rl = U.rng(6204), anchors = [];
+    const rl = U.rng(6204), anchors = [], low = [];
     LOW.forEach(([a, R, ya, yb], b) => {
       const ca = Math.cos(a), sa = Math.sin(a), A0 = [tx + ca * 0.6, ya, tz + sa * 0.6], B0 = [tx + ca * R, yb, tz + sa * R];
-      branch(DEC, A0, B0, 0.2, 0.08, bark, 6);
+      branch(DEC, A0, B0, 0.2, 0.08, bark, 6); low.push(A0);
       const L = hypot(B0[0] - A0[0], B0[1] - A0[1], B0[2] - A0[2]), n = Math.floor((0.6 * L) / 0.46) + 1;
       for (let k = 0; k < n; k++) {
         const t = 0.35 + (0.6 * k) / (n - 1), side = (rl() - 0.5) * 0.04, dy = (rl() - 0.5) * 0.06;                                 // lệch ngang vuông góc cành và lệch dọc nhỏ: khoảng cách dọc cành không giảm
@@ -473,6 +477,7 @@ function buildVuonSau(G) {
       hidden: () => V.decorHidden,                                                                                                   // 40-activities-b.js ẩn dải lụa cùng lúc với nhóm "near" của vườn
     };
     W.petalSources.push({ x: tx, y: 7.5, z: tz, r: 5, kind: 'leaf' });
+    cayGhi({ k: 'bode', x: tx, y: y0 - 0.08, z: tz, s: 1, seed: 6203, nhom: 'vuon', low }); // low: gốc của 6 cành thấp (cách trục bồn 0,6 m): mô hình cây có thân mảnh hơn thân dựng bằng mã nên 13-cay-mo-hinh.js nối từng gốc cành vào thân mới
   });
 
   // ---------- 8. Đảo đá giữa hồ: chân đảo, gò rêu, tảng đá lớn nhỏ, ba mỏm đá phía sau tượng, vài bụi cây ----------
@@ -658,6 +663,7 @@ function buildVuonSau(G) {
     if (LB.list.length) addMesh(LB.mesh(G.mats.lantern, { cast: false, receive: false }), 'den');
     if (GD.list.length) addMesh(GD.mesh(G.mats.metal, { cast: true, receive: true }), 'kimloai', true);
     if (DEC.list.length) addMesh(DEC.mesh(G.mats.vc, { cast: true, receive: true }), 'trangtri', true);
+    if (CAY.list.length) { const m = CAY.mesh(G.mats.vc, { cast: true, receive: true }); addMesh(m, 'cay', true); (G.cayCu || (G.cayCu = [])).push(m); } // cây dựng bằng mã (bản dự phòng của mô hình cây)
     if (DECF.list.length) addMesh(DECF.mesh(G.mats.vc, { cast: false, receive: true }), 'trangtri-phang', true);
     if (waterMesh) addMesh(waterMesh, 'nuoc');
     scene.add(gFar, gNear);

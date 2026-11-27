@@ -13,6 +13,8 @@ function buildWorld2Geo(G) {
 
   // ---------- Bộ gom hình (5 mesh chính) + hình gốc dùng chung ----------
   const S = U.batch(), F = U.batch(), M = U.batch(), LB = U.batch();
+  const TR = U.batch(); // 2026-11-27: tùng và cây trong chậu cảnh đi riêng một lưới (W.meshes2.T) để 13-cay-mo-hinh.js ẩn đi khi mô hình cây tải xong; chỗ đứng ghi vào G.cayDat
+  const cayGhi = (o) => { (G.cayDat || (G.cayDat = [])).push(o); };
   const own = [], mk = (g) => (own.push(g), g);
   const PLANE = mk(new THREE.PlaneGeometry(1, 1).rotateX(-PI / 2));
   const SPH = mk(new THREE.SphereGeometry(1, 6, 4)), SPHS = mk(new THREE.SphereGeometry(1, 5, 3)), SPHH = mk(new THREE.SphereGeometry(1, 10, 7));
@@ -122,19 +124,21 @@ function buildWorld2Geo(G) {
   }
   function cypress(x, z, s, seed) { // cây tùng/bách thon cao
     const r = U.rng(seed);
-    branch(S, [x, 0, z], [x, 1.2 * s, z], 0.16 * s, 0.12 * s, C.bark, 5);
+    branch(TR, [x, 0, z], [x, 1.2 * s, z], 0.16 * s, 0.12 * s, C.bark, 5);
     for (let i = 0; i < 4; i++) {
       const w = (1.5 - i * 0.28) * s, h = (1.7 - i * 0.12) * s;
-      cone(S, 6, x + (r() - 0.5) * 0.06, (0.7 + i * 0.95) * s, z + (r() - 0.5) * 0.06, w, h, i % 2 ? 0x3a6232 : 0x355a2e, { j: 0.1 });
+      cone(TR, 6, x + (r() - 0.5) * 0.06, (0.7 + i * 0.95) * s, z + (r() - 0.5) * 0.06, w, h, i % 2 ? 0x3a6232 : 0x355a2e, { j: 0.1 });
     }
+    cayGhi({ k: 'tung', x, y: -0.04, z, s, seed });
     col.circle(x, z, 0.34 * s + 0.05, 'tree');
   }
   function bonsai(x, z) { // chậu cảnh như sân trước
     F.add(lathe2([[0, 0], [0.3, 0], [0.42, 0.12], [0.46, 0.42], [0.5, 0.46], [0, 0.46]], 10), 0x3c6aa0, { p: [x, 0, z] });
     cyl(F, x, 0.43, z, 0.49, 0.49, 0.04, 0xeef0f4, 10);
-    branch(S, [x, 0.45, z], [x + 0.15, 1.05, z + 0.05], 0.07, 0.05, 0x6b5240, 5);
-    S.add(new THREE.IcosahedronGeometry(0.34, 0), 0x4c7a35, { p: [x + 0.18, 1.15, z + 0.05], s: [1.2, 0.6, 1.0], j: 0.12 });
-    S.add(new THREE.IcosahedronGeometry(0.24, 0), 0x5d8c3d, { p: [x - 0.18, 0.9, z], s: [1.2, 0.6, 1.0], j: 0.12 });
+    branch(TR, [x, 0.45, z], [x + 0.15, 1.05, z + 0.05], 0.07, 0.05, 0x6b5240, 5);
+    TR.add(new THREE.IcosahedronGeometry(0.34, 0), 0x4c7a35, { p: [x + 0.18, 1.15, z + 0.05], s: [1.2, 0.6, 1.0], j: 0.12 });
+    TR.add(new THREE.IcosahedronGeometry(0.24, 0), 0x5d8c3d, { p: [x - 0.18, 0.9, z], s: [1.2, 0.6, 1.0], j: 0.12 });
+    cayGhi({ k: 'chau', x, y: 0.45, z, s: 1, seed: 340 + Math.round(x * 7 + z * 3) });
     col.circle(x, z, 0.46, 'pot');
   }
 
@@ -921,6 +925,7 @@ function buildWorld2Geo(G) {
   const add = (key, B, mat, opt) => { if (!B.list.length) return; const m = B.mesh(mat, opt); scene.add(m); meshes[key] = m; };
   add('S', S, G.mats.vc, { cast: true, receive: true }); add('F', F, G.mats.vc, { cast: false, receive: true });
   add('M', M, G.mats.metal, { cast: true, receive: true }); add('L', LB, G.mats.lantern, { cast: false, receive: false });
+  add('T', TR, G.mats.vc, { cast: true, receive: true }); if (meshes.T) { meshes.T.name = 'cay-cu:khu-mo-rong'; (G.cayCu || (G.cayCu = [])).push(meshes.T); } // cây dựng bằng mã (bản dự phòng của mô hình cây)
   W.meshes2 = meshes;
   for (const g of own) g.dispose();
 }

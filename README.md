@@ -49,6 +49,13 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
   giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã giảm số mặt (407 nghìn xuống 3 000), thu nhỏ ảnh bề mặt và nắn thẳng thân để cá tự bơi,
   lưu thành `assets/mo-hinh/ca-vang.glb` (212 KB, máy tính) và `assets/mo-hinh/ca-vang-nhe.glb` (106 KB, điện thoại);
   tải một bản khi người chơi tới gần hồ, lỗi thì game dùng cá dựng bằng mã. Sóng nước, phản chiếu và vòng sóng trên hồ đều viết bằng mã.
+  Cây sồi và cây thông trong cảnh (cây quanh tường, cây đa đầu lối vào, cây bồ đề ở vườn sau, tùng, cây trong chậu) lấy từ hai mô hình
+  [Oak trees pack (17var, LODs, seasons, gameready)](https://sketchfab.com/3d-models/oak-trees-pack-17var-lods-seasons-gameready-a5e4e64f9f1d4089bdcc6170a9333393) của LOLIPOP và
+  [Pine Forest at Sunset](https://sketchfab.com/3d-models/pine-forest-at-sunset-bef89be6b189456095db79107045d726) của Jagobo,
+  đều theo giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã chỉnh sửa (chọn 9 dáng sồi, tách 5 cây thông khỏi cảnh rừng, bỏ nhánh nhỏ, giảm số mặt, thu nhỏ ảnh bề mặt),
+  lưu thành `assets/mo-hinh/cay-soi.glb` (1,8 MB) và `assets/mo-hinh/cay-thong.glb` (0,8 MB) cho máy tính, `cay-soi-nhe.glb` (0,9 MB) và `cay-thong-nhe.glb` (0,3 MB) cho điện thoại;
+  game tải một cặp sau khi chạy vài giây (máy bật tiết kiệm dữ liệu thì không tải); chưa có file hoặc tải lỗi thì game giữ cây dựng bằng mã.
+  Cau, dừa, chuối, tre, hoa đại, mai, quất, phượng và bụi hoa vẫn dựng bằng mã.
 - Hậu kỳ trong chính điện: khử răng cưa MSAA, GTAO, bloom, đường cong màu mềm; tự hạ mức trên máy yếu
   hoặc khi trình duyệt không hỗ trợ, và vẫn chạy ở chế độ vẽ thường nếu phần phụ trợ không tải được.
 - Yêu cầu trình duyệt: Chrome / Edge 89+, Safari 16.4+, Firefox 108+ (cần import map và WebGL2).

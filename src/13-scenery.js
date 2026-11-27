@@ -1,7 +1,7 @@
 // =====================================================================
 //  CẢNH VẬT QUANH CHÙA: lối vào có hàng hương hoa, cây đa & miếu nhỏ, ruộng lúa bậc thang,
 //  xóm làng (nhà ngói, đình, luỹ tre, cau, chuối), con sông có thuyền nan & cầu cong,
-//  hàng cây sát tường, diều và cò trên trời. Mọi thứ dựng bằng code, gộp thành 6 lượt vẽ.
+//  hàng cây sát tường, diều và cò trên trời. Mọi thứ dựng bằng code, gộp thành 6 lượt vẽ (+ 2 lượt cây tán tròn / tán dù / cây đa, ẩn khi mô hình cây của 13-cay-mo-hinh.js tải xong).
 //  Chỉ đặt vật cản ở chỗ không chắn lối đi (canPlace); xa ngoài tầm đi bộ thì không cần vật cản.
 // =====================================================================
 function buildScenery(G) {
@@ -180,6 +180,8 @@ function buildScenery(G) {
 
   // ---------- Các lượt vẽ ----------
   const NR = mkRaw(), FR = mkRaw(), LF = mkRaw(), WR = mkRaw(), LR = mkRaw();   // hình thô
+  const TN = mkRaw(), TF = mkRaw();   // 2026-11-27: cây tán tròn, cây tán dù và cây đa đi riêng hai lưới (treesNear / treesFar) để 13-cay-mo-hinh.js ẩn đi khi mô hình cây tải xong; chỗ đứng từng cây ghi vào G.cayDat. Thứ tự gọi T3 / jr không đổi nên màu mọi vật khác giữ nguyên
+  const cayGhi = (o) => { (G.cayDat || (G.cayDat = [])).push(o); };
   const NU = U.batch(), FU = U.batch(), WU = U.batch(), LU = U.batch();         // + mảnh dựng sẵn (mái, đèn lồng)
   const glow = BD.glow;
   const LEAF = [0x3f6b30, 0x4c7a35, 0x5d8c3d, 0x6f9a45, 0x35602b, 0x56883a], LEAF_L = [0x7aa84a, 0x86b050, 0x9ab855];
@@ -190,7 +192,8 @@ function buildScenery(G) {
   //  CÂY CỐI: tán tròn, tán dù, cau, dừa, chuối, khóm tre
   // =====================================================================
   function domeTree(x, z, s, seed, near, collide) {
-    const r = U.rng(seed), y0 = gy(x, z) - 0.05, f = fr(near ? NR : FR, x, y0, z, 0), h = 2.6 * s;
+    const r = U.rng(seed), y0 = gy(x, z) - 0.05, f = fr(near ? TN : TF, x, y0, z, 0), h = 2.6 * s;
+    cayGhi({ k: 'vom', x, y: y0, z, s, seed, near: !!near });
     f.cyl(0, 0, 0, 0.34 * s, 0.2 * s, h, near ? 7 : 5, C.bark, { lx: (r() - 0.5) * 0.4, lz: (r() - 0.5) * 0.4 });
     const n = near ? 5 : 3;
     for (let i = 0; i < n; i++) {
@@ -200,7 +203,8 @@ function buildScenery(G) {
     if (collide) solid(x, z, 0.36 * s + 0.12, 'tree');
   }
   function umbrellaTree(x, z, s, seed, near, collide, pal) {  // cây xoan/phượng: thân cao, tán dẹt (pal: bảng màu hoa)
-    const r = U.rng(seed), y0 = gy(x, z) - 0.05, f = fr(near ? NR : FR, x, y0, z, 0), h = 5.2 * s;
+    const r = U.rng(seed), y0 = gy(x, z) - 0.05, f = fr(pal ? (near ? NR : FR) : (near ? TN : TF), x, y0, z, 0), h = 5.2 * s; // cây có bảng màu hoa (phượng đỏ) vẫn dựng bằng mã
+    if (!pal) cayGhi({ k: 'du', x, y: y0, z, s, seed, near: !!near });
     f.cyl(0, 0, 0, 0.26 * s, 0.14 * s, h, 5, C.bark, { lx: (r() - 0.5) * 0.8, lz: (r() - 0.5) * 0.8 });
     for (let i = 0; i < 3; i++) { const a = r() * TAU, d = i ? 1.2 * s : 0; f.blob(Math.cos(a) * d, h + i * 0.25 * s, Math.sin(a) * d, (2.4 - i * 0.2) * s, 0.9 * s, (2.4 - i * 0.2) * s, pal ? pal[i % pal.length] : LEAF[(i + seed + 1) % 6], { hex2: pal ? pal[(i + 1) % pal.length] : LEAF_L[(i + 1) % 3] }); }
     if (collide) solid(x, z, 0.26 * s + 0.12, 'tree');
@@ -573,7 +577,7 @@ function buildScenery(G) {
     col.box(horiz ? x - 0.3 : x - 0.9, horiz ? z - 0.9 : z - 0.3, horiz ? x + 0.3 : x + 0.9, horiz ? z + 0.9 : z + 0.3, 'bike');
   }
   function banyan(bx, bz) {
-    const y0 = gy(bx, bz), f = fr(NR, bx, y0, bz, 0), r = U.rng(4242), bark = 0x7a6450, bark2 = 0x6b5240;
+    const y0 = gy(bx, bz), f = fr(TN, bx, y0, bz, 0), fa = fr(NR, bx, y0, bz, 0), r = U.rng(4242), bark = 0x7a6450, bark2 = 0x6b5240, pc = []; // f: thân, rễ, tán, dải lụa (ẩn khi mô hình cây tải xong); fa: bàn thờ dưới gốc (luôn hiện)
     f.cyl(0, -0.1, 0, 2.1, 1.35, 1.8, 9, bark, { j: 0.06 }); f.cyl(0, 1.6, 0, 1.35, 1.0, 3.6, 9, bark2, { j: 0.06 });
     f.cyl(0, 1.7, 0, 1.43, 1.4, 0.3, 9, 0xb8281f, { j: 0.02 });  // dải lụa đỏ quấn gốc
     for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU + 0.3; f.cyl(Math.cos(a) * 1.25, 0, Math.sin(a) * 1.25, 0.5, 0.28, 3.4 + r() * 0.8, 6, bark, { lx: -Math.cos(a) * 0.5, lz: -Math.sin(a) * 0.5 }); }
@@ -581,13 +585,14 @@ function buildScenery(G) {
     for (let i = 0; i < 15; i++) { const a = i * 2.39996 + 0.5, d = Math.sqrt(i / 15) * 4.6, rad = 1.9 + r() * 1.2; f.blob(Math.cos(a) * d, 6.4 + r() * 1.5 - d * 0.1, Math.sin(a) * d, rad, rad * 0.7, rad, LEAF[i % 6], { d1: i < 6, hex2: LEAF_L[i % 3] }); }
     for (let i = 0; i < 18; i++) { const a = r() * TAU, d = 1.3 + r() * 3.2, top = 4.6 + r() * 1.2, b = r() < 0.45 ? 0 : 0.9 + r() * 2.2; f.cyl(Math.cos(a) * d, b, Math.sin(a) * d, 0.04 + r() * 0.03, 0.05, top - b, 4, 0x8a7458, { lx: (r() - 0.5) * 0.2, lz: (r() - 0.5) * 0.2 }); }
     const props = [[-2.2, 1.0], [1.4, 2.0], [1.0, -2.2]];
-    for (const [px, pz] of props) { f.cyl(px, 0, pz, 0.3, 0.17, 4.8, 6, bark, { lx: -px * 0.15, lz: -pz * 0.15 }); col.circle(bx + px, bz + pz, 0.5, 'banyan'); }
+    for (const [px, pz] of props) { f.cyl(px, 0, pz, 0.3, 0.17, 4.8, 6, bark, { lx: -px * 0.15, lz: -pz * 0.15 }); pc.push(col.circle(bx + px, bz + pz, 0.5, 'banyan')); }
     for (let i = 0; i < 7; i++) { const a = (i / 7) * TAU + 0.6; f.blob(Math.cos(a) * 2.5, 0.12, Math.sin(a) * 2.5, 1.5, 0.22, 0.36, bark, { ry: -a }); }
     // bàn thờ nhỏ dưới gốc đa, quay về phía lối vào
-    f.box(-2.7, 0.2, -0.6, 0.9, 0.4, 0.7, 0xa89d8b, { top: 0xc2b8a5 }); f.box(-2.7, 0.7, -0.6, 0.62, 0.6, 0.42, 0x7a2418); f.cyl(-2.7, 1.0, -0.6, 0.45, 0, 0.3, 4, 0x6e2a1c, { bot: true });
-    f.cyl(-2.45, 0.4, -0.2, 0.1, 0.08, 0.1, 6, C.bronze, { top: true }); for (let i = 0; i < 3; i++) f.box(-2.45 + (i - 1) * 0.03, 0.62, -0.2, 0.012, 0.3, 0.012, 0x7a2a1a);
+    fa.box(-2.7, 0.2, -0.6, 0.9, 0.4, 0.7, 0xa89d8b, { top: 0xc2b8a5 }); fa.box(-2.7, 0.7, -0.6, 0.62, 0.6, 0.42, 0x7a2418); fa.cyl(-2.7, 1.0, -0.6, 0.45, 0, 0.3, 4, 0x6e2a1c, { bot: true });
+    fa.cyl(-2.45, 0.4, -0.2, 0.1, 0.08, 0.1, 6, C.bronze, { top: true }); for (let i = 0; i < 3; i++) fa.box(-2.45 + (i - 1) * 0.03, 0.62, -0.2, 0.012, 0.3, 0.012, 0x7a2a1a);
     for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU + 0.2; f.box(Math.cos(a) * 1.2, 3.0, Math.sin(a) * 1.2, 0.09, 0.9, 0.02, 0xc8302a, { ry: a }); }
     col.circle(bx, bz, 2.0, 'banyan'); col.box(bx - 3.25, bz - 1.05, bx - 2.15, bz - 0.15, 'banyan');
+    cayGhi({ k: 'da', x: bx, y: y0 - 0.1, z: bz, s: 1, seed: 4242, near: true, cols: pc }); // cols: vật cản của ba rễ chống (mô hình cây không có rễ chống: 13-cay-mo-hinh.js gỡ khi hiện mô hình)
     if (G.cam && G.cam.blockers) G.cam.blockers.push(new THREE.Box3(new THREE.Vector3(bx - 1.7, y0, bz - 1.7), new THREE.Vector3(bx + 1.7, y0 + 4.5, bz + 1.7)));
     EXC.push({ x: bx, z: bz, r: 6.8 });
     W.fireflyAreas.push({ x: bx, z: bz, r: 5 });
@@ -864,6 +869,8 @@ function buildScenery(G) {
   addMesh('near', NR, NU, G.mats.vc, true, true);
   addMesh('far', FR, FU, G.mats.vc, false, false);
   addMesh('foliage', LF, U.batch(), G.mats.vcDouble, false, false);
+  addMesh('treesNear', TN, U.batch(), G.mats.vc, true, true); addMesh('treesFar', TF, U.batch(), G.mats.vc, false, false); // cây dựng bằng mã (bản dự phòng của mô hình cây)
+  for (const k of ['treesNear', 'treesFar']) if (meshes[k]) (G.cayCu || (G.cayCu = [])).push(meshes[k]);
   const waterMat = new THREE.MeshPhongMaterial({ vertexColors: true, color: 0x2a6a86, emissive: 0x0b2c38, shininess: 90, specular: 0x8a7a60 });
   addMesh('water', WR, WU, waterMat, false, false);
   addMesh('lights', LR, LU, G.mats.lantern, false, false);
@@ -913,7 +920,7 @@ function buildScenery(G) {
     if (skyMesh) stepSky(t);
   }, 58);
 
-  for (const R of [NR, FR, LF, WR, LR, SB]) { R.p.length = 0; R.c.length = 0; if (R.w) R.w.length = 0; }  // giải phóng bộ nhớ tạm
+  for (const R of [NR, FR, LF, WR, LR, SB, TN, TF]) { R.p.length = 0; R.c.length = 0; if (R.w) R.w.length = 0; }  // giải phóng bộ nhớ tạm
   W.scenery = { meshes, river: RIVER, bridge: BRIDGE, villages: VILL, roads: ROADS, paddies: nPaddy, boats: BOATS, strips: STRIPS, grid: { size: GRID, cell: CELL }, gy, canPlace };
   G.nav.built = false;  // dựng lại đồ thị dẫn đường khi bắt đầu, có tính vật cản mới
 }

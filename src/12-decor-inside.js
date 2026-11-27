@@ -19,6 +19,7 @@ function buildDecorInside(G) {
   const ARC = new THREE.TorusGeometry(1, 0.2, 4, 8, PI); // nửa vòng ∩ (xoay π thành nụ cười ∪)
   const TET = new THREE.TetrahedronGeometry(1, 0), CIRC8 = new THREE.CircleGeometry(1, 8).rotateX(-PI / 2);
   const S = U.batch(), F = U.batch(), GD = U.batch(), LB = U.batch();
+  const TR = U.batch(); // 2026-11-27: thân + tán cây bồ đề nhỏ đi riêng một lưới để 13-cay-mo-hinh.js ẩn đi khi mô hình cây tải xong; chỗ đứng ghi vào G.cayDat
   const put = (B, g, color, x, y, z, sx, sy = sx, sz = sx, o) => B.add(g, color, Object.assign({ p: [x, y, z], s: [sx, sy, sz] }, o));
   const _mp = new THREE.Matrix4();
   // dựng một cụm theo toạ độ cục bộ rồi đặt tại (x,y,z), xoay yaw quanh trục đứng
@@ -328,9 +329,10 @@ function buildDecorInside(G) {
   function bodhi(x, z, seed) { // cây bồ đề nhỏ trong bồn đá tròn
     const r = U.rng(seed), y0 = hy(x, z);
     cyl(F, x, y0 + 0.18, z, 0.9, 0.98, 0.36, C.stone, 10); cyl(F, x, y0 + 0.37, z, 0.78, 0.78, 0.03, 0x5a4030, 10);
-    branch(S, [x, y0 + 0.3, z], [x + 0.08, y0 + 2.0, z - 0.05], 0.3, 0.2, C.bark, 7);
-    for (let i = 0; i < 3; i++) { const a = r() * 6.28; branch(S, [x + 0.08, y0 + 1.7, z], [x + Math.cos(a) * 1.0, y0 + 2.7 + r() * 0.5, z + Math.sin(a) * 1.0], 0.14, 0.07, C.bark, 5); }
-    for (let i = 0; i < 8; i++) { const a = i * 2.4, rr = 0.2 + (i / 8) * 1.1; put(S, ICO, C.leaf[i % 4], x + Math.cos(a) * rr, y0 + 3.0 + (i % 3) * 0.35, z + Math.sin(a) * rr, 0.85 + r() * 0.3, 0.7, 0.85 + r() * 0.3, { j: 0.12 }); }
+    branch(TR, [x, y0 + 0.3, z], [x + 0.08, y0 + 2.0, z - 0.05], 0.3, 0.2, C.bark, 7);
+    for (let i = 0; i < 3; i++) { const a = r() * 6.28; branch(TR, [x + 0.08, y0 + 1.7, z], [x + Math.cos(a) * 1.0, y0 + 2.7 + r() * 0.5, z + Math.sin(a) * 1.0], 0.14, 0.07, C.bark, 5); }
+    for (let i = 0; i < 8; i++) { const a = i * 2.4, rr = 0.2 + (i / 8) * 1.1; put(TR, ICO, C.leaf[i % 4], x + Math.cos(a) * rr, y0 + 3.0 + (i % 3) * 0.35, z + Math.sin(a) * rr, 0.85 + r() * 0.3, 0.7, 0.85 + r() * 0.3, { j: 0.12 }); }
+    (G.cayDat || (G.cayDat = [])).push({ k: 'bodenho', x, y: y0 + 0.34, z, s: 1, seed }); // gốc cây trên mặt đất trong bồn đá
     circ(x, z, 0.98, 'tree');
     W.petalSources.push({ x, y: y0 + 3.4, z, r: 1.6, kind: 'leaf' });
   }
@@ -642,6 +644,7 @@ function buildDecorInside(G) {
   const meshes = [];
   const addMesh = (m) => { scene.add(m); meshes.push(m); return m; };
   addMesh(S.mesh(G.mats.vc, { cast: true, receive: true }));
+  if (TR.list.length) { const m = addMesh(TR.mesh(G.mats.vc, { cast: true, receive: true })); m.name = 'cay-cu:trang-tri'; (G.cayCu || (G.cayCu = [])).push(m); } // cây dựng bằng mã (bản dự phòng của mô hình cây)
   addMesh(F.mesh(G.mats.vc, { cast: false, receive: true }));
   addMesh(GD.mesh(G.mats.gold, { cast: false, receive: false }));
   addMesh(LB.mesh(G.mats.lantern, { cast: false, receive: false }));

@@ -22,6 +22,8 @@ function buildWorld(G) {
     bronze: 0x8f6a36, leaf: [0x4c7a35, 0x5d8c3d, 0x3f6b30, 0x6f9a45], bark: 0x6b5240, red: 0xc8302a, cream: 0xf3e3c3,
   };
   const S = U.batch(), F = U.batch(), M = U.batch(), LB = U.batch(), FAR = U.batch();
+  const TR = U.batch(); // 2026-11-27: thân + tán của cây tròn và cây trong chậu cảnh đi riêng một lưới (W.meshes.T) để 13-cay-mo-hinh.js ẩn đi khi mô hình cây tải xong; chỗ đứng từng cây ghi vào G.cayDat
+  const cayGhi = (o) => { (G.cayDat || (G.cayDat = [])).push(o); };
   const BOX = new THREE.BoxGeometry(1, 1, 1);
   const box = (B, x, y, z, sx, sy, sz, color, o = {}) => B.add(BOX, color, Object.assign({ p: [x, y, z], s: [sx, sy, sz] }, o));
   const boxMM = (B, x0, y0, z0, x1, y1, z1, color, o) => box(B, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, Math.abs(x1 - x0), Math.abs(y1 - y0), Math.abs(z1 - z0), color, o);
@@ -773,16 +775,18 @@ function buildWorld(G) {
   function bonsai(x, z) {
     F.add(lathe([[0, 0], [0.3, 0], [0.42, 0.12], [0.46, 0.42], [0.5, 0.46], [0, 0.46]], 10), 0x3c6aa0, { p: [x, 0, z] });
     cyl(F, x, 0.43, z, 0.49, 0.49, 0.04, 0xeef0f4, 10);
-    branch(S, [x, 0.45, z], [x + 0.15, 1.05, z + 0.05], 0.07, 0.05, 0x6b5240, 5);
-    S.add(new THREE.IcosahedronGeometry(0.34, 0), 0x4c7a35, { p: [x + 0.18, 1.15, z + 0.05], s: [1.2, 0.6, 1.0], j: 0.12 });
-    S.add(new THREE.IcosahedronGeometry(0.24, 0), 0x5d8c3d, { p: [x - 0.18, 0.9, z], s: [1.2, 0.6, 1.0], j: 0.12 });
+    branch(TR, [x, 0.45, z], [x + 0.15, 1.05, z + 0.05], 0.07, 0.05, 0x6b5240, 5);
+    TR.add(new THREE.IcosahedronGeometry(0.34, 0), 0x4c7a35, { p: [x + 0.18, 1.15, z + 0.05], s: [1.2, 0.6, 1.0], j: 0.12 });
+    TR.add(new THREE.IcosahedronGeometry(0.24, 0), 0x5d8c3d, { p: [x - 0.18, 0.9, z], s: [1.2, 0.6, 1.0], j: 0.12 });
+    cayGhi({ k: 'chau', x, y: 0.45, z, s: 1, seed: 300 + Math.round(x * 7 + z * 3) });
     col.circle(x, z, 0.46, 'pot');
   }
   for (const sx of [-1, 1]) { bonsai(sx * 4.7, 23.2); bonsai(sx * 4.7, 12.3); bonsai(sx * 10.0, -6.9); }
   function roundTree(x, z, s, seed, collide = true) {
     const rnd = U.rng(seed);
-    branch(S, [x, 0, z], [x, 2.2 * s, z], 0.3 * s, 0.2 * s, C.bark, 6);
-    for (let i = 0; i < 4; i++) S.add(new THREE.IcosahedronGeometry((1.3 + rnd() * 0.6) * s, 0), C.leaf[(i + seed) % 4], { p: [x + (rnd() - 0.5) * 1.6 * s, (2.8 + rnd() * 1.4) * s, z + (rnd() - 0.5) * 1.6 * s], j: 0.12 });
+    branch(TR, [x, 0, z], [x, 2.2 * s, z], 0.3 * s, 0.2 * s, C.bark, 6);
+    for (let i = 0; i < 4; i++) TR.add(new THREE.IcosahedronGeometry((1.3 + rnd() * 0.6) * s, 0), C.leaf[(i + seed) % 4], { p: [x + (rnd() - 0.5) * 1.6 * s, (2.8 + rnd() * 1.4) * s, z + (rnd() - 0.5) * 1.6 * s], j: 0.12 });
+    cayGhi({ k: 'tron', x, y: -0.05, z, s, seed, ua: collide ? 'soi' : '' }); // hai cây góc sân trước (có vật cản) luôn là cây tán rộng
     if (collide) col.circle(x, z, 0.6 * s, 'tree');
   }
   function bamboo(x, z, seed, collide = true) {
@@ -857,7 +861,8 @@ function buildWorld(G) {
   const meshM = M.mesh(G.mats.metal, { cast: true, receive: true }); scene.add(meshM);
   const meshL = LB.mesh(G.mats.lantern, { cast: false, receive: false }); scene.add(meshL);
   const meshFar = FAR.mesh(G.mats.vc, { cast: false, receive: false }); scene.add(meshFar);
-  W.meshes = { S: meshS, F: meshF, M: meshM, L: meshL, FAR: meshFar };
+  const meshT = TR.mesh(G.mats.vc, { cast: true, receive: true }); meshT.name = 'cay-cu:san'; scene.add(meshT); (G.cayCu || (G.cayCu = [])).push(meshT); // cây dựng bằng mã (bản dự phòng của mô hình cây)
+  W.meshes = { S: meshS, F: meshF, M: meshM, L: meshL, FAR: meshFar, T: meshT };
 
   // =====================================================================
   //  ĐIỂM MỐC DẪN ĐƯỜNG + VỊ TRÍ HOẠT ĐỘNG CHO KHÁCH AI

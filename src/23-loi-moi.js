@@ -132,7 +132,7 @@ function installLoiMoi(G) {
   }
 
   // ---------- "Tạo mã nhóm mới" ----------
-  function createGroup() {
+  function createGroup(after) { // after(code) (tuỳ chọn, module 25): gọi ngay sau khi vào nhóm mới, vẫn trong cú chạm của người chơi, thay cho câu báo "Đã tạo mã nhóm mới"
     if (!canMake()) return;
     const go = () => {
       const code = makeCode();
@@ -140,7 +140,8 @@ function installLoiMoi(G) {
       C.setCode(code);
       if (!C.on) C.enable(true); // đặt mã trước rồi mới bật: không qua phòng chung
       C.releaseDefault(); // đang giữ phòng mặc định (lời mời chưa trả lời): vào thẳng nhóm mới bằng một lần connect(); không giữ thì không làm gì
-      G.ui.toast(TEXT.created, 6000);
+      if (typeof after === 'function') { try { after(code); } catch (e) { /* bỏ qua */ } }
+      else G.ui.toast(TEXT.created, 6000);
     };
     if (C.list.some((p) => C.isLive(p))) {
       G.ui.panel({
@@ -237,5 +238,7 @@ function installLoiMoi(G) {
     ALPHABET, makeCode, linkFor, parseHash,
     get pending() { return pendingCode; }, // mã trong link mời đang chờ trả lời, hoặc null
     share,
+    createGroup, // createGroup(after?): tạo mã ngẫu nhiên và vào nhóm mới (hỏi lại nếu đang có người cùng phòng); module 25 gọi từ bảng "Nói chuyện bằng giọng nói"
+    get canMake() { return canMake(); }, // thiết bị có crypto.getRandomValues để tạo mã hay không
   };
 }

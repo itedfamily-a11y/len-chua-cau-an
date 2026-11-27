@@ -1,5 +1,8 @@
 // =====================================================================
-//  GIAO DIỆN GIỌNG NÓI (module 25): nút micro ở thanh dưới màn hình, phím V, nút "Micro đang mở · Tắt" khi đang làm hoạt động,
+//  GIAO DIỆN GIỌNG NÓI (module 25): nút micro có chữ ("Bật micro để nói") nằm riêng một hàng ngay trên thanh cử chỉ, hiện bất cứ khi nào đang
+//  bật đi chùa chung (2026-11-28: trước đó chỉ là một biểu tượng không chữ và ẩn hẳn ngoài nhóm riêng mã dài, nên người chơi không tìm thấy);
+//  chưa nói được (phòng chung, mã nhóm ngắn, tắt nghe) thì bấm nút sẽ mở bảng "Nói chuyện bằng giọng nói" kèm nút "Tạo nhóm và gửi link mời".
+//  Ngoài ra: phím V, nút "Micro đang mở · Tắt" khi đang làm hoạt động,
 //  khối "giọng nói" trong Cài đặt, nút "Tắt giọng" và chữ "đang nói" trong danh sách người, dấu sóng vàng cạnh bảng tên, và mọi câu báo.
 //  Động cơ (module 24, G.voice) không có chữ: nó phát 'voice:notice' kèm mã; ở đây đổi mã thành câu (G.voiceUI.TEXT) và hiện bằng G.ui.toast.
 //  Chạy sau module 22 (G.chung: sự kiện 'ui:chung-settings', 'ui:chung-person', G.chung.anchor) và module 24 (G.voice).
@@ -39,13 +42,24 @@ function installGiongNoiUI(G) {
   const IOS_DENIED = 'Bạn chưa cho phép dùng micro. Trên iPhone: bấm aA trên thanh địa chỉ → Cài đặt trang web → Micro → Cho phép.'; // thay cho TEXT['err-NotAllowedError'] trên iPhone / iPad
   const UI = { // chữ cố định của nút, danh sách và khối cài đặt (không phải câu báo)
     // nút micro, nút nổi, danh sách người
-    micLabel: 'Micro', micAria: 'Micro nói chuyện', micTitle: 'Bật/tắt micro', micKey: ' (phím V)',
+    micOff: 'Bật micro để nói', micOpening: 'Đang mở micro…', micOn: 'Micro đang bật · Tắt', // chữ trên nút micro theo trạng thái (nút luôn có chữ, ở mọi cỡ màn)
+    micAria: 'Micro nói chuyện', micTitle: 'Bật/tắt micro', micKey: ' (phím V)',
+    hintMic: 'Trong nhóm đã có bạn rồi. Bấm "Bật micro để nói" ở dưới màn hình để nói chuyện với nhau.', // nhắc một lần mỗi lần tải trang, khi có người cùng nhóm mà micro của mình chưa mở
+    // bảng "Nói chuyện bằng giọng nói": hiện khi bấm nút micro lúc chưa nói được (phòng chung, mã nhóm ngắn, đang tắt nghe)
+    needTitle: 'Nói chuyện bằng giọng nói',
+    needGroup: 'Giọng nói chỉ dùng trong nhóm riêng với người bạn mời, không dùng ở phòng chung có người lạ.',
+    needLong: 'Mã nhóm bạn đang dùng ngắn nên người lạ dễ đoán, vì vậy nhóm này chưa dùng được giọng nói. Những người đang ở nhóm cũ cần mở link mời mới để sang nhóm mới.',
+    needSteps: 'Bấm nút dưới đây để tạo nhóm riêng và gửi link mời cho bạn bè. Khi mọi người đã vào nhóm, mỗi người bấm "Bật micro để nói" ở dưới màn hình là nói chuyện được với nhau.',
+    needManual: 'Mở Cài đặt, mục "Đi chùa cùng mọi người", đặt mã nhóm dài ít nhất 10 chữ hoặc số rồi báo mã đó cho bạn bè. Khi mọi người đã vào nhóm, mỗi người bấm "Bật micro để nói" là nói chuyện được với nhau.',
+    needYes: 'Tạo nhóm và gửi link mời', needLater: 'Để sau', needOk: 'Đã hiểu',
+    needListen: 'Bạn đang tắt "Nghe giọng nói trong nhóm" trong Cài đặt nên chưa mở được micro.', needListenYes: 'Bật lại và mở micro',
+    micNeed: 'Bấm để xem cách nói chuyện bằng giọng nói',
     pill: '🎙 Micro đang mở · Tắt', pillAria: 'Micro đang mở. Bấm để tắt micro',
     dimInApp: 'Micro chưa dùng được trong trình duyệt này', dimNoDevices: 'Trình duyệt này không mở được micro',
     dimCap: 'Đang đủ 6 người nói', dimGroup: 'Nhóm đang có hơn 8 người nên chưa mở được micro',
     mute: 'Tắt giọng', unmute: 'Nghe lại', speaking: '· đang nói', mark: '🎙', markAria: 'đang mở micro',
     // khối trong Cài đặt
-    listenL: 'Nghe giọng nói trong nhóm', listenD: 'Nghe người cùng nhóm nói chuyện. Muốn nói thì bấm nút micro ở dưới màn hình.',
+    listenL: 'Nghe giọng nói trong nhóm', listenD: 'Nghe người cùng nhóm nói chuyện. Muốn nói thì bấm nút "Bật micro để nói" ở dưới màn hình.',
     quietL: 'Tự im khi ngồi thiền / tụng kinh', quietD: 'Khi bạn ngồi thiền hoặc tụng kinh, micro của bạn tự tắt; tiếng trong nhóm im hẳn khi thiền và nhỏ lại khi tụng kinh. Xong bạn bấm micro nếu muốn nói tiếp.',
     shortHint: 'Mã nhóm này ngắn nên người lạ dễ đoán. Bấm "Tạo mã nhóm mới" để dùng giọng nói.',
     // Ghi chú riêng tư (thiết kế 3.6, rev 4): chọn LÚC VẼ khối theo G.chung.relay (có danh sách máy chủ chuyển tiếp dùng được hay không); phần sau giống nhau
@@ -75,6 +89,13 @@ function installGiongNoiUI(G) {
 
   // ---------- Kiểu dáng ----------
   G.ui.addStyle(`
+  /* Nút micro: một viên dài CÓ CHỮ nằm riêng một hàng ngay trên thanh cử chỉ, giữa màn hình (neo vào #chungBar nên đi theo thanh ở mọi vị trí và ẩn cùng thanh). */
+  #chungMic{position:absolute;left:0;right:0;bottom:calc(100% + 8px);margin:0 auto;width:max-content;max-width:calc(100vw - 24px);height:44px;padding:0 16px 0 12px;gap:8px;border-radius:22px;border:2px solid var(--gold2);font-size:14.5px;font-weight:700}
+  #chungMic .l{display:inline}
+  /* ô nói (module 22) nhường chỗ cho hàng micro: cao thêm 52px ở cả ba vị trí của nó */
+  #chungChat{bottom:calc(156px + var(--sb))}
+  body.touch #chungChat{bottom:calc(266px + var(--sb))}
+  body:not(.touch) #actionBtn.show ~ #chungChat{bottom:calc(222px + var(--sb))}
   #chungMic.dim{opacity:.5}
   #chungMic[aria-busy="true"]{opacity:.65}
   #chungMic.on{background:linear-gradient(180deg,#f6cf7c,#e0a344);border-color:#fff0c8;color:var(--ink);box-shadow:0 0 0 calc(2px + var(--lv,0) * 9px) rgba(247,215,147,.55),var(--shadow)}
@@ -100,31 +121,61 @@ function installGiongNoiUI(G) {
   const SVG_MIC = '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3"/><path d="M9 21h6"/></svg>';
   const bar = document.getElementById('chungBar'), talk = document.getElementById('chungTalk');
   const mic = U.el('button', 'ibtn chung-g chung-mic hidden'); mic.type = 'button'; mic.id = 'chungMic';
-  mic.innerHTML = SVG_MIC; mic.appendChild(U.el('span', 'l', UI.micLabel));
+  const micL = U.el('span', 'l', UI.micOff);
+  mic.innerHTML = SVG_MIC; mic.appendChild(micL);
   mic.setAttribute('aria-label', UI.micAria); mic.setAttribute('aria-pressed', 'false'); mic.setAttribute('aria-busy', 'false');
   const micTitle = UI.micTitle + (G.isTouch ? '' : UI.micKey);
   mic.title = micTitle;
   if (bar) bar.insertBefore(mic, talk && talk.parentNode === bar ? talk : null);
   const DIM = { 'in-app': UI.dimInApp, 'no-devices': UI.dimNoDevices, 'cap': UI.dimCap, 'group': UI.dimGroup }; // bốn lý do làm nút mờ (nút vẫn hiện và bấm được: bấm để biết lý do)
-  function paintMic() {
-    const show = V.available, st = V.state, why = V.blockReason;
+  function paintMic() { // nút hiện bất cứ khi nào đang bật đi chùa chung (thanh #chungBar tự ẩn khi chưa vào phòng); chưa nói được thì bấm vào sẽ có bảng chỉ cách
+    const show = C.on, st = V.state, why = V.blockReason;
     mic.classList.toggle('hidden', !show);
     const dim = show && st === 'off' && Object.prototype.hasOwnProperty.call(DIM, why);
     mic.classList.toggle('dim', dim);
     mic.classList.toggle('on', st === 'open');
     mic.setAttribute('aria-pressed', String(st === 'open'));
     mic.setAttribute('aria-busy', String(st === 'opening'));
-    const title = dim ? DIM[why] : micTitle;
+    const label = st === 'open' ? UI.micOn : st === 'opening' ? UI.micOpening : UI.micOff;
+    if (micL.textContent !== label) micL.textContent = label;
+    const title = dim ? DIM[why] : !V.available ? UI.micNeed : micTitle;
     if (mic.title !== title) mic.title = title;
     mic.dataset.reason = why;
   }
-  function toggle() { // bật khi đang tắt, tắt khi đang mở, bỏ qua khi đang mở dở
+  // Bảng "Nói chuyện bằng giọng nói": vì sao chưa nói được và một nút làm giúp phần còn lại. true = đã mở bảng.
+  function explain(why) {
+    if (G.ui.panelOpen || tutOpen() || G.activity.current) return false;
+    const L = G.loiMoi, canMake = !!(L && L.canMake && typeof L.createGroup === 'function' && typeof L.share === 'function');
+    const body = U.el('div', 'col');
+    let actions;
+    if (why === 'switch-off') {
+      body.appendChild(U.el('div', null, UI.needListen));
+      actions = [{ label: UI.needListenYes, primary: true, onClick: (close) => {
+        close(); C.setVoiceCfg({ voice: true }); // vẫn trong cú chạm: mở micro luôn
+        if (V.available && V.state === 'off') Promise.resolve(V.openMic()).catch(() => { /* module 24 tự ghi lỗi */ });
+      } }, { label: UI.needLater }];
+    } else if (why === 'public' || why === 'short-code') {
+      body.appendChild(U.el('div', null, why === 'public' ? UI.needGroup : UI.needLong));
+      body.appendChild(U.el('div', 'small muted', canMake ? UI.needSteps : UI.needManual));
+      actions = canMake
+        ? [{ label: UI.needYes, primary: true, onClick: (close) => { close(); L.createGroup((code) => { Promise.resolve(L.share(code)).catch(() => { /* bỏ qua */ }); }); } }, { label: UI.needLater }]
+        : [{ label: UI.needOk, primary: true }];
+    } else return false;
+    G.ui.panel({ title: UI.needTitle, body, actions });
+    return true;
+  }
+  function toggle() { // bật khi đang tắt, tắt khi đang mở, bỏ qua khi đang mở dở; chưa nói được (phòng chung, mã ngắn, tắt nghe) thì mở bảng chỉ cách. true = đã mở bảng
     if (V.state === 'open') Promise.resolve(V.closeMic('')).catch(() => { /* module 24 tự ghi lỗi */ });
-    else if (V.state === 'off') Promise.resolve(V.openMic()).catch(() => { /* module 24 tự ghi lỗi */ });
+    else if (V.state === 'off') {
+      if (!V.available) return explain(V.blockReason);
+      Promise.resolve(V.openMic()).catch(() => { /* module 24 tự ghi lỗi */ });
+    }
+    return false;
   }
   mic.onclick = () => {
-    toggle(); // phải gọi ngay trong cú chạm: iOS chỉ cho AudioContext và micro bắt đầu từ đây
-    mic.blur(); const cv = document.getElementById('c'); if (cv) cv.focus({ preventScroll: true }); // Space / Enter (phím hành động của lõi) không bấm lại nút này
+    const panel = toggle(); // phải gọi ngay trong cú chạm: iOS chỉ cho AudioContext và micro bắt đầu từ đây
+    mic.blur();
+    if (!panel) { const cv = document.getElementById('c'); if (cv) cv.focus({ preventScroll: true }); } // Space / Enter (phím hành động của lõi) không bấm lại nút này
   };
 
   // ---------- Phím V ----------
@@ -287,7 +338,18 @@ function installGiongNoiUI(G) {
     if (Math.abs(v - ringV) < 0.02 && !(v === 0 && ringV !== 0)) return;
     ringV = v; mic.style.setProperty('--lv', v.toFixed(2));
   }
-  G.onUpdate((dt) => { updateSprites(); updateRing(dt); }, 23); // sau lúc module 22 (thứ tự 22) ghi vị trí người
+  let hintAcc = 0, hintDone = false;
+  function updateHint(dt) { // một lần mỗi lần tải trang: nhóm đã có người mà micro của mình chưa mở thì chỉ chỗ nút micro (xem mỗi giây)
+    if (hintDone) return;
+    hintAcc += dt;
+    if (hintAcc < 1) return;
+    hintAcc = 0;
+    if (V.state !== 'off') { hintDone = true; return; } // đã tự tìm thấy nút
+    if (!G.started || !V.available || V.blockReason || G.activity.current || G.ui.panelOpen || tutOpen()) return;
+    const l = C.list;
+    for (let i = 0; i < l.length; i++) if (C.isLive(l[i]) && !C.isHidden(l[i].id)) { hintDone = true; G.ui.toast(UI.hintMic, 7000); return; }
+  }
+  G.onUpdate((dt) => { updateSprites(); updateRing(dt); updateHint(dt); }, 23); // sau lúc module 22 (thứ tự 22) ghi vị trí người
 
   // ---------- Vẽ lại theo trạng thái ----------
   function paintAll() { paintMic(); paintPill(); }

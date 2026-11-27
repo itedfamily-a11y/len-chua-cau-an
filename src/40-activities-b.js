@@ -1,5 +1,5 @@
 // =====================================================================
-//  HOẠT ĐỘNG B: viết lời cầu an (dải lụa đỏ trên cây bồ đề / hoa đăng trên hồ sen),
+//  HOẠT ĐỘNG B: viết lời cầu an (dải lụa đỏ trên cây bồ đề / hoa đăng trên hồ sen — cả hai trong vườn sau chùa từ 2026-11-23),
 //  xin quẻ đầu năm, "Sổ cầu an của tôi" và ảnh chia sẻ
 // =====================================================================
 function installActivitiesB(G) {
@@ -10,9 +10,14 @@ function installActivitiesB(G) {
   // Times New Roman đứng trước Georgia vì Georgia thiếu nhiều chữ Việt có dấu chồng (ầ, ế, ố…)
   const SERIF = '"Noto Serif", "Times New Roman", Georgia, serif';
   const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+  // TREE / POND: cây bồ đề và hồ sen NƠI hoạt động diễn ra. Từ 2026-11-23 là cây và hồ trong vườn sau chùa (19-vuon-sau.js đặt W.tree = G.vuonSau.ribbonTree, W.pond = G.vuonSau.lanternPond);
+  // cây và hồ ở sân trước đã bỏ 2026-11-25, nên nếu vườn dựng lỗi thì không có hai hoạt động này (dừng cài ở dưới). Đối tượng có thể có thêm: floatY (độ cao đèn nổi), avoid [{x,z,r}] (vật tròn đèn phải tránh),
+  // hidden() (đang bị ẩn cùng nhóm "near" của vườn); neo của cây có thể có b (số cành).
   const TREE = W.tree, POND = W.pond, FORT = W.fortune;
-  const MAX_RIB = 12, MAX_LAN = 6, N_PIL_RIB = 45, N_PIL_LAN = 18, LMAX = MAX_LAN + N_PIL_LAN;
-  const WY = POND.waterY + 0.02; // độ cao đèn nổi trên mặt nước
+  if (!TREE || !POND) { console.warn('[hoạt động B] vườn sau chùa thiếu cây bồ đề hoặc hồ sen: bỏ qua phần này'); return; }
+  // bớt dải lụa cho cây khỏi rối (2026-11-23): khách 45 → 14, người chơi 12 → 6, neo dành riêng cho người chơi 14 → 8, phục hồi từ lần trước 6 → 4; hai neo đang dùng không gần nhau hơn 0,42 m
+  const MAX_RIB = 6, MAX_LAN = 6, N_PIL_RIB = 14, N_PIL_LAN = 18, LMAX = MAX_LAN + N_PIL_LAN, N_RES = 8, N_REST = 4, MIN_AGAP = 0.42;
+  const WY = POND.floatY != null ? POND.floatY : POND.waterY + 0.02; // độ cao đèn nổi trên mặt nước (hồ trong vườn: trên đỉnh lá sen)
   const LS = 0.95; // cỡ đèn hoa đăng (đường kính khoảng 0,67 m cho dễ nhìn)
   const ui = () => G.audio?.play?.('ui');
   const pname = () => G.save.data.name || G.player.name || 'Phật tử';
@@ -323,20 +328,23 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
     c.fillStyle = '#f7d793'; c.fillText(name, w / 2, h - 28, maxW);
   }
 
-  // ---------- Neo treo trên cây: giữ chỗ gần chỗ đứng cho người chơi ----------
+  // ---------- Neo treo trên cây: giữ chỗ gần chỗ đứng cho người chơi; hai neo đang dùng không gần nhau hơn MIN_AGAP ----------
   const A = TREE.anchors;
   const aUse = new Uint8Array(A.length); // 0 trống, 1 dải của khách, 2 dải của người chơi
   const aReserved = new Uint8Array(A.length);
   let minAY = 1e9; for (const a of A) if (a.y < minAY) minAY = a.y;
   const aOrder = A.map((a, i) => i).sort((i, j) => aScore(A[i]) - aScore(A[j]));
   function aScore(a) { return Math.hypot(a.x - TREE.stand.x, a.z - TREE.stand.z) + (a.y - minAY) * 0.6; }
-  for (let i = 0; i < Math.min(14, aOrder.length); i++) aReserved[aOrder[i]] = 1;
+  const aFar = (i, list) => list.every((j) => Math.hypot(A[i].x - A[j].x, A[i].y - A[j].y, A[i].z - A[j].z) >= MIN_AGAP);
+  const aRes = []; // N_RES neo gần chỗ đứng nhất (cách nhau ≥ MIN_AGAP), gần trước: dành cho dải của người chơi
+  for (const i of aOrder) { if (aRes.length >= N_RES) break; if (aFar(i, aRes)) { aRes.push(i); aReserved[i] = 1; } }
   function pickAnchor() {
-    for (let i = 0; i < aOrder.length; i++) if (!aUse[aOrder[i]]) return aOrder[i];
+    for (const i of aRes) if (!aUse[i]) return i;
+    for (const i of aOrder) if (!aUse[i]) return i;
     return aOrder[0];
   }
 
-  // ---------- 45 dải lụa của khách: một InstancedMesh, dải vàng bằng thuộc tính đỉnh ----------
+  // ---------- 14 dải lụa của khách (rải đều theo vòng tròn qua các cành): một InstancedMesh, dải vàng bằng thuộc tính đỉnh ----------
   const goldLin = new THREE.Color(0xe6b64f);
   const pilMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
   pilMat.onBeforeCompile = (sh) => {
@@ -349,8 +357,17 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
   pilMesh.frustumCulled = false; pilMesh.castShadow = false; pilMesh.receiveShadow = false;
   const pil = [];
   {
-    const cand = []; for (let i = 0; i < A.length; i++) if (!aReserved[i]) cand.push(i);
-    U.shuffle(cand);
+    // mỗi cành một hàng đợi neo trống (xáo trộn; neo không có số cành coi như cùng một cành), lấy lần lượt mỗi cành một neo; bỏ neo cách neo dành riêng hoặc neo khách đã chọn dưới MIN_AGAP
+    const byB = new Map();
+    for (let i = 0; i < A.length; i++) if (!aReserved[i] && aFar(i, aRes)) { const b = A[i].b != null ? A[i].b : 0; if (!byB.has(b)) byB.set(b, []); byB.get(b).push(i); }
+    const qs = U.shuffle([...byB.values()].map((q) => U.shuffle(q))), cand = [];
+    for (let any = true; any && cand.length < N_PIL_RIB;) {
+      any = false;
+      for (const q of qs) {
+        if (cand.length >= N_PIL_RIB) break;
+        while (q.length) { const i = q.shift(); if (aFar(i, cand)) { cand.push(i); any = true; break; } }
+      }
+    }
     const cRed = new THREE.Color(0xc8302a), cDeep = new THREE.Color(0x9a1f1a), cYel = new THREE.Color(0xe9bd42);
     const n = Math.min(N_PIL_RIB, cand.length);
     for (let k = 0; k < n; k++) {
@@ -363,7 +380,7 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
     scene.add(pilMesh);
   }
 
-  // ---------- Dải lụa của người chơi (tối đa 12) ----------
+  // ---------- Dải lụa của người chơi (tối đa 6) ----------
   const ribbons = []; // cũ nhất ở đầu
   function createRibbon(text) {
     while (ribbons.length >= MAX_RIB) removeRibbon(ribbons[0]);
@@ -541,11 +558,14 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
     r.t = 0; r.mesh.position.set(x, POND.waterY + 0.03, z); r.mesh.visible = true;
   }
 
-  // ---------- Mười lăm đèn trên hồ: 9 của khách + tối đa 6 của người chơi ----------
+  // ---------- 24 đèn trên hồ: 18 của khách + tối đa 6 của người chơi ----------
   for (let i = 0; i < N_PIL_LAN; i++) { const pt = pondPoint(0.9, 1.1); addLantern({ x: pt.x, z: pt.z }); }
 
   // ---------- Cập nhật mỗi khung ----------
   const SEP = 0.8, SEP2 = SEP * SEP;
+  const KEEP = []; // vật tròn đèn phải tránh: đảo nhỏ và (hồ trong vườn) thủy tạ
+  if (POND.island) KEEP.push(POND.island);
+  if (POND.avoid) for (const q of POND.avoid) KEEP.push(q);
   function updateRibbons(t) {
     const gust = 0.65 + 0.35 * Math.sin(t * 0.31);
     for (let i = 0; i < pil.length; i++) {
@@ -571,10 +591,19 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
       L.vx += (dx / d) * f; L.vz += (dz / d) * f;
       L.heading = U.angleDamp(L.heading, Math.atan2(dx, dz), 0.9, dt);
     }
-    const IS = POND.island; // né đảo nhỏ giữa hồ
-    if (IS) { const ix = L.x - IS.x, iz = L.z - IS.z, id = Math.hypot(ix, iz) || 1, lim = IS.r + 0.7; if (id < lim + 0.8) { const f = (lim + 0.8 - id) * 0.6 * dt; L.vx += (ix / id) * f; L.vz += (iz / id) * f; } if (id < lim) { L.x = IS.x + (ix / id) * lim; L.z = IS.z + (iz / id) * lim; } }
+    for (const IS of KEEP) { // né đảo nhỏ giữa hồ và thủy tạ
+      const ix = L.x - IS.x, iz = L.z - IS.z, id = Math.hypot(ix, iz) || 1, lim = IS.r + 0.7;
+      if (id < lim + 0.8) { const f = (lim + 0.8 - id) * 0.6 * dt; L.vx += (ix / id) * f; L.vz += (iz / id) * f; }
+      if (id < lim) { L.x = IS.x + (ix / id) * lim; L.z = IS.z + (iz / id) * lim; }
+    }
+    const px = L.x, pz = L.z;
     L.x += L.vx * dt; L.z += L.vz * dt;
     if (k > 1.4) { const s = Math.sqrt(1.4 / k); L.x = POND.x + (L.x - POND.x) * s; L.z = POND.z + (L.z - POND.z) * s; }
+    // bảo đảm cuối cùng: đèn không bao giờ rời mặt nước trống (không lên đảo, sàn thủy tạ, lan can hay bờ đá); bước nào đưa đèn ra khỏi mặt nước thì bỏ, đèn quay đầu về giữa hồ
+    if (POND.inside && !POND.inside(L.x, L.z, 0.15)) {
+      L.x = px; L.z = pz; L.vx *= -0.3; L.vz *= -0.3;
+      L.heading = Math.atan2(POND.x - L.x, POND.z - L.z) + U.rand(-0.5, 0.5);
+    }
     L.yaw += (0.06 + Math.sin(t * 0.17 + L.ph) * 0.05) * dt;
   }
   function updateLanterns(dt, t) {
@@ -628,6 +657,17 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
       if (k >= 1) { r.t = -1; r.mesh.visible = false; r.mat.opacity = 0; continue; }
       r.mesh.scale.setScalar(0.6 + k * 3.2); r.mat.opacity = 0.5 * (1 - k) * (1 - k);
     }
+  }
+  // dải lụa, đèn, nhãn, quầng sáng và gợn nước theo CÙNG quy tắc ẩn với cảnh chứa chúng: vườn ẩn nhóm "near" (cây bồ đề, ...) khi máy quay còn ở sân trước hoặc trong chính điện (19-vuon-sau.js,
+  // order 76), nên các thứ này cũng phải ẩn, không được lơ lửng giữa trời. hidden() có ở đối tượng của vườn; cây / hồ ở sân trước không có nên không bao giờ ẩn. Chạy ngay sau quy tắc của vườn (order 77).
+  const farHidden = (o) => !!(o && typeof o.hidden === 'function' && o.hidden());
+  function applyFarHide() {
+    const hr = farHidden(TREE), hl = farHidden(POND);
+    pilMesh.visible = !hr;
+    for (const r of ribbons) if (r.ready) r.mesh.visible = !hr;
+    bodyIM.visible = flameIM.visible = lanGlow.points.visible = !hl;
+    for (const L of lanterns) if (hl && L.tag) L.tag.mesh.visible = false;
+    for (const q of ripples) q.mesh.visible = q.t >= 0 && !hl;
   }
 
   // =====================================================================
@@ -703,9 +743,10 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
       if (!text) { setHint('Bạn viết đôi dòng hoặc chọn một gợi ý nhé.'); ta.focus(); return; }
       if (G.text.hasBad(text)) { setHint('Lời cầu an nên nhẹ nhàng, bạn viết lại giúp mình nhé.'); ta.focus(); return; }
       const dst = kind === 'lua' ? TREE : POND;
-      if (!beginRun('cau-an', dst.cam)) { setHint('Lúc này chưa viết được, bạn thử lại sau một chút nhé.'); return; }
+      const far = Math.hypot(G.player.pos.x - dst.stand.x, G.player.pos.z - dst.stand.z) > 8; // đổi từ lụa sang đèn (hoặc ngược lại) phải đi ~64 m: máy quay theo người đi, tới nơi mới chuyển sang góc nhìn của hoạt động
+      if (!beginRun('cau-an', far ? null : dst.cam)) { setHint('Lúc này chưa viết được, bạn thử lại sau một chút nhé.'); return; }
       close();
-      prayerSequence(text, cat, kind);
+      prayerSequence(text, cat, kind, far);
     };
     composer = G.ui.panel({
       title: 'Viết lời cầu an', body: box,
@@ -715,7 +756,7 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
   }
 
   // đi tới nơi gửi gắm → viết → chắp tay → thả lụa / thả đèn → lưu → báo nhẹ nhàng
-  async function prayerSequence(text, cat, kind) {
+  async function prayerSequence(text, cat, kind, focusLate) {
     const my = run.id, alive = () => run.active && run.id === my;
     const P = G.player, isRibbon = kind === 'lua', dest = isRibbon ? TREE : POND;
     let item = null, saved = false;
@@ -729,6 +770,7 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
     });
     try {
       if (!(await goStand(dest.stand, alive))) return;
+      if (focusLate) G.cam.focus(dest.cam);
       item = isRibbon ? holdRibbon(text) : holdLantern(text);
       P.setPose('write');
       await G.wait(1.2); if (!alive()) return;
@@ -766,7 +808,7 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
   // phục hồi dải lụa / đèn đã gửi từ những lần trước
   function restoreSaved() {
     const ps = (G.save.data.prayers || []).filter((p) => p && p.text);
-    for (const p of ps.filter((q) => q.kind === 'lua').slice(0, 6).reverse()) placeRibbon(createRibbon(String(p.text)));
+    for (const p of ps.filter((q) => q.kind === 'lua').slice(0, N_REST).reverse()) placeRibbon(createRibbon(String(p.text)));
     for (const p of ps.filter((q) => q.kind === 'hoadang').slice(0, 3).reverse()) {
       const pt = pondPoint(0.9, 1.1); createOwnLantern(String(p.text), { x: pt.x, z: pt.z, age: 10 });
     }
@@ -1066,7 +1108,7 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
     // --- lời cầu an đã viết ---
     box.appendChild(U.el('h3', 'bk-h', 'Lời cầu an đã viết'));
     const prayers = newestFirst(d.prayers || []);
-    if (!prayers.length) box.appendChild(U.el('div', 'bk-empty', 'Bạn chưa viết lời cầu an nào. Khi muốn, hãy ghé cây bồ đề hoặc hồ sen để gửi gắm tâm ý nhé.'));
+    if (!prayers.length) box.appendChild(U.el('div', 'bk-empty', 'Bạn chưa viết lời cầu an nào. Khi muốn, hãy ghé cây bồ đề hoặc hồ sen trong vườn sau chùa để gửi gắm tâm ý nhé.'));
     else {
       const list = U.el('div', 'col');
       for (const p of prayers) {
@@ -1267,13 +1309,19 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
   // =====================================================================
   //  ĐĂNG KÝ: điểm hoạt động, sự kiện, vòng cập nhật, phục hồi từ lần trước
   // =====================================================================
-  G.poi.add({ id: 'cau-an', label: 'Viết lời cầu an', icon: 'ribbon', x: TREE.poi.x, z: TREE.poi.z, r: TREE.poi.r, desc: 'Treo dải lụa đỏ lên cây bồ đề', onAction: () => openComposer('lua') });
-  G.poi.add({ id: 'hoa-dang', label: 'Thả hoa đăng', icon: 'lantern', x: POND.poi.x, z: POND.poi.z, r: POND.poi.r, desc: 'Thả đèn hoa đăng xuống hồ sen', onAction: () => openComposer('hoadang') });
+  G.poi.add({ id: 'cau-an', label: 'Viết lời cầu an', icon: 'ribbon', x: TREE.poi.x, z: TREE.poi.z, r: TREE.poi.r, desc: 'Treo dải lụa đỏ lên cây bồ đề trong vườn sau chùa', onAction: () => openComposer('lua') });
+  G.poi.add({ id: 'hoa-dang', label: 'Thả hoa đăng', icon: 'lantern', x: POND.poi.x, z: POND.poi.z, r: POND.poi.r, desc: 'Thả đèn hoa đăng xuống hồ sen trước tượng Quan Âm', onAction: () => openComposer('hoadang') });
   G.poi.add({ id: 'xin-que', label: 'Xin quẻ đầu năm', icon: 'fortune', x: FORT.poi.x, z: FORT.poi.z, r: FORT.poi.r, desc: 'Lắc ống xăm, nhận một lời chúc (giải trí)', onAction: () => startFortune() });
   G.events.on('ui:book', openBook);
   G.events.on('enter', () => { try { redrawRibbonNames(); } catch (e) { console.error(e); } });
   G.events.on('ui:share', openShare);
   G.onUpdate((dt, t) => { updateRibbons(t); updateLanterns(dt, t); updateRipples(dt); updateFortune(dt, t); }, 32);
-  G.activitiesB = { openComposer, startFortune, openBook, openShare, drawShareImage, fortunes: FORTUNES };
+  G.onUpdate(applyFarHide, 77);
+  G.activitiesB = {
+    openComposer, startFortune, openBook, openShare, drawShareImage, fortunes: FORTUNES, restoreSaved, clearPlayerItems,
+    // chỉ để đọc (bài kiểm tra g04-cau-an.mjs): các mảng là mảng thật đang chạy, đừng sửa
+    state: () => ({ tree: TREE, pond: POND, anchors: A, anchorUse: aUse, reserved: aRes, visitors: pil, ribbons, lanterns, MAX_RIB, MAX_LAN, N_PIL_RIB, N_PIL_LAN, N_REST, MIN_AGAP, WY,
+      meshes: { pil: pilMesh, body: bodyIM, flame: flameIM, glow: lanGlow.points, ripples: ripples.map((q) => q.mesh) } }),
+  };
   try { restoreSaved(); } catch (e) { console.error(e); }
 }

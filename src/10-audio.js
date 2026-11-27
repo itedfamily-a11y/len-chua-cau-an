@@ -787,8 +787,12 @@ function installAudio(G) {
   function surfaceAt(p) {
     if (!p) return 'stone';
     if (G.insideHall && G.insideHall(p.x, p.z)) return 'hall';
+    const gs = G.vuonSau && G.vuonSau.surfaceAt ? G.vuonSau.surfaceAt(p.x, p.z) : null; // vườn sau chùa (19-vuon-sau.js): lối đá 'stone', cỏ 'grass'; null nếu ngoài vườn
+    if (gs) return gs;
     const ax = Math.abs(p.x);
-    if ((ax < 24 && p.z > -118 && p.z < 31) || (ax < 2.4 && p.z >= 31)) return 'stone'; // tường bao sau ở z = −118 (v4; v3: −100)
+    const tk = G.world && G.world.tangKinhCac; // 2026-11-27: sân Tàng Kinh Các phía đông (19-tang-kinh-cac.js): phần lát đá 'stone', dải cỏ sát tường 'grass'
+    if (tk && tk.paved && p.x > tk.paved.x0 && p.x < tk.paved.x1 && p.z > tk.paved.z0 && p.z < tk.paved.z1) return 'stone';
+    if ((ax < 36.3 && p.z > -118.3 && p.z < 31) || (ax < 2.4 && p.z >= 31)) return 'stone'; // 2026-11-26: sân chùa rộng ra tới tường bên x ±36,3 (trước ±24); tường bao sau ở z = −118 (v4; v3: −100); −118,3 = mép vườn sau chùa (G.vuonSau.inside), kể cả ngưỡng đá trong hai cổng nách
     return 'grass';
   }
   function onFootstep(pos) {

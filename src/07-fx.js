@@ -152,7 +152,7 @@ function installFx(G) {
   }, 63);
 
   // ---------- Cánh hoa sứ / lá bồ đề rơi nhẹ ----------
-  const PN = 80;
+  const PN = 100; // v5: 80 → 100; 13 nguồn của vườn sau chùa chiếm ~24 % bể dùng chung, sân chùa vẫn có khoảng 76 cánh hoa rơi (trước vườn: 80)
   const petalGeo = new THREE.BufferGeometry();
   petalGeo.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, -0.07, 0.045, 0, 0, 0, 0, 0.07, 0, 0, -0.07, 0, 0, 0.07, -0.045, 0, 0], 3));
   petalGeo.computeVertexNormals();

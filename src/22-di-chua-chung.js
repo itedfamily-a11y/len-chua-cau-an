@@ -345,7 +345,7 @@ function installDiChuaChung(G) {
     const b = G.collide && G.collide.bounds;
     const x = num(data.x), z = num(data.z), yaw = num(data.y), h = num(data.h);
     if (x !== null && z !== null) {
-      p.tx = b ? clamp(x, b.x0, b.x1) : x; p.tz = b ? clamp(z, b.z0, b.z1) : z;
+      p.tx = b ? clamp(x, b.x0, G.collide.x1At ? G.collide.x1At(z) : b.x1) : x; p.tz = b ? clamp(z, b.z0, b.z1) : z; // x1At: trong dải z của sân Tàng Kinh Các (19-tang-kinh-cac.js) ranh giới đông nới tới tường sân
       if (!p.got) { p.got = true; p.x = p.px = p.tx; p.z = p.pz = p.tz; p.y = p.gy = G.heightAt(p.x, p.z); if (statusMsg && status === 'on') setStatus('on', ''); } // có người nối được → xoá lời báo "chưa nối được"
     }
     if (yaw !== null) { p.tyaw = yaw; if (!p.got) p.yaw = yaw; }
@@ -1005,7 +1005,7 @@ function installDiChuaChung(G) {
       const dx = p.x - p.px, dz = p.z - p.pz; p.px = p.x; p.pz = p.z;
       p.speed = damp(p.speed, dt > 0 ? Math.hypot(dx, dz) / dt : 0, 8, dt);
       const seat = p.seat >= 0 ? seats[p.seat] : null;
-      const ground = G.heightAt(p.x, p.z);
+      const ground = p.hGot && G.heightAtY ? G.heightAtY(p.x, p.z, p.h) : G.heightAt(p.x, p.z); // heightAtY: chỗ có hai tầng (Tàng Kinh Các, 19-tang-kinh-cac.js) thì chọn tầng theo độ cao bên kia gửi
       const gy = seat ? (seat.y || ground) : ground;
       p.gy = damp(p.gy, gy, 14, dt);
       // độ cao: bồ đoàn → mặt bồ đoàn; còn lại dùng độ cao bên kia gửi (ghế đá, bậc…), kẹp quanh mặt đất để không bay / chui

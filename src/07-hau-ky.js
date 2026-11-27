@@ -28,7 +28,7 @@ function installHauKy(G) {
     exposure: 0.9, aces: 0.0, knee: 0.55, contrast: 1.06, ceil: 0.88, desat: 0.45, vig: 0.25, vigStart: 0.55, sharp: 0.18,
     ao: 0.6, aoRadius: 0.55, aoSamples: 12, aoScale: 0.5,
     bloomDay: 0.2, bloomNight: 0.14, bloomThr: 1.3, bloomKnee: 0.5, bloomRadius: 0.3,
-    zoneX: 19.5, zoneY: 18, zoneZ0: -116, zoneZ1: -84, mixZ0: -85.5, mixZ1: -87.2, // dốc trộn -85.5 → -87.2 xong trước máy quay chân dung anh hùng (z ≈ -87.35) và máy quay ngồi / tụng kinh (z ≈ -87.3) nên hai máy này có mix 1; cửa (z -84.3) có mix 0 → chuỗi tắt hẳn, vẽ thẳng
+    zoneX: 18.5, zoneY: 18, zoneZ0: -113.2, zoneZ1: -84, mixZ0: -85.5, mixZ1: -87.2, // v5: vùng = lòng chính điện (|x| < 18,5; −113,2 < z < −84): máy quay ở vườn sau chùa không bật AO / bloom. Dốc trộn -85.5 → -87.2 xong trước máy quay chân dung anh hùng (z ≈ -87.35) và máy quay ngồi / tụng kinh (z ≈ -87.3) nên hai máy này có mix 1; cửa (z -84.3) có mix 0 → chuỗi tắt hẳn, vẽ thẳng
   };
   const P = (G.post = {
     level: 0, maxLevel: 0, active: false, mix: 0, enabled: true, ready: false, loaded: false, reason: 'đang tải',

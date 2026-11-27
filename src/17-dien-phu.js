@@ -238,7 +238,7 @@ function buildDienPhu(G) {
     const c1 = tf + 1.4, c2 = c1 + 1.3;                      // hai hàng bồ đoàn
     cushion(T, 0, fh, c1, true); cushion(T, -1.7, fh, c1); cushion(T, 1.7, fh, c1); cushion(T, 0, fh, c2);
     if (sp.deity) putFigure(T, sp.deity, 0, fh + ph + 0.08, pzc, sp.scale || 0.62);
-    glow(0, fh + ph + 0.08 + (sp.haloY || 1.6), pzc + 0.3, 3.0, [1.0, 0.78, 0.36], false);
+    { const hl = sp.halo || {}; glow(0, fh + ph + 0.08 + (hl.y != null ? hl.y : sp.haloY || 1.6), pzc + (hl.z != null ? hl.z : 0.3), hl.r || 3.0, hl.c || [1.0, 0.78, 0.36], false); } // sp.halo (tuỳ chọn): đặt lại quầng sáng cho tượng lớn để không loá mặt tượng
     flush(T, fr); toWorldFx(fr, g0, s0);
     // vật cản, kính chắn máy quay, độ cao, vùng mái, dẫn đường, vùng chừa, chỗ đứng cho khách
     const wy1 = wt, eyeY = fh + 1.9;
@@ -262,9 +262,13 @@ function buildDienPhu(G) {
     if (ex && ex.statue) { // tượng nghìn tay dựng sẵn ở 09: đặt lên bệ, quay mặt ra cửa; hoạt động lần chuỗi hạt chuyển vào trong điện
       const st = ex.statue, sy = fh + ph + 0.08, ss = sp.scale || 1, sa = { x: fr.X(0, tf + 0.5), z: fr.Z(0, tf + 0.5) };
       st.position.set(alt.x, sy, alt.z); st.rotation.y = fr.yaw; st.scale.setScalar(ss); scene.add(st);
+      { // 2026-11-27: tượng dựng bằng vật liệu PBR; mượn bản đồ phản chiếu "phòng ấm" của ban thờ chính điện (18 đã dựng trước 17). Không có thì giữ vật liệu dự phòng (bán kim loại, tự sáng nhẹ)
+        const env = W.banTho && W.banTho.envTex && W.banTho.envTex();
+        if (env && ex.mats) for (const m of ex.mats) { m.envMap = env; if (m.userData.metalEnv != null) m.metalness = m.userData.metalEnv; m.emissive.setHex(0x000000); m.needsUpdate = true; W.banTho.envMats.push(m); }
+      }
       ex.poi = { x: fr.X(0, -2.1), z: fr.Z(0, -2.1), r: 2.2 };                                              // trước hàng bồ đoàn, cách POI Lễ ngoài thềm hơn 4 m
       ex.stand = { x: sa.x, z: sa.z, yaw: U.yawTo(sa.x, sa.z, alt.x, alt.z) };                               // sát bàn thờ, quay vào tượng
-      ex.cam = { pos: [fr.X(0.8, -0.2), fh + 2.85, fr.Z(0.8, -0.2)], look: [alt.x, sy + 1.3 * ss, alt.z] };    // sát cửa (cách tượng ~7,5 m), lệch một bên, nhìn từ trên xuống thân tượng để thấy cả người chơi
+      ex.cam = { pos: [fr.X(0.8, -0.2), fh + 2.85, fr.Z(0.8, -0.2)], look: [alt.x, sy + 2.05 * ss, alt.z] };   // sát cửa (cách tượng ~7,5 m), lệch một bên, nhìn từ trên xuống thân tượng để thấy cả người chơi (2026-11-27: bản quét cao 3,65 m, mặt ở khoảng 2,5 m; nhìn cao hơn 0,4 m để mặt nằm dưới hạt đỉnh của vòng chuỗi. Đừng quá 2,2 * ss: người chơi sẽ bị nút bấm che)
     }
     const lp = [fr.X(0, -D / 2 - 0.5), fh + (two ? 3.8 : 3.2), fr.Z(0, -D / 2 - 0.5)];
     const h = { id: sp.id, title: sp.title, extra: sp.extra || [], lamp: lp, cushion: { x: fr.X(0, c1), z: fr.Z(0, c1), y: fh + 0.16, yaw: U.yawTo(fr.X(0, c1), fr.Z(0, c1), alt.x, alt.z) }, altar: alt, front, nodes: nodes.map(([x, z, id]) => ({ x: fr.X(x, z), z: fr.Z(x, z), id })), spots: sp3,
@@ -286,12 +290,12 @@ function buildDienPhu(G) {
     candleAt(T, -0.45, fy + 0.66, -0.52); candleAt(T, 0.45, fy + 0.66, -0.52); bowlAt(T, 0, fy + 0.66, -0.52, 1.1);
     cushion(T, 0, fy, 1.0, true);
     hangLanternInto(T.S, T.L, 0, fy + 3.58, 0.2, 0.55, 0.9);
-    addSign(['ĐIỆN VĂN THÙ'], 1.3, 0.34, BN.x, fy + 2.62, BN.z + 1.79, 0, { ppu: 300 });
+    addSign(['ĐIỆN VĂN THÙ'], 1.3, 0.34, BN.x, fy + 2.05, BN.z + 1.96, 0, { ppu: 300 }); // gắn trên lanh-tô cửa lõi tháp (cửa cao 1,95), dưới trần hành lang vòm (y 2,53): thấy khi bước vào hành lang
     flush(T, fr); toWorldFx(fr, g0, s0);
     const cush = { x: BN.x, z: BN.z + 1.0, y: fy + 0.16, yaw: PI };
     colBox(fr, -0.6, -1.5, 0.6, -0.4, 'altar');
-    floors.push((x, z) => { const dx = x - BN.x, dz = z - BN.z; if (Math.abs(dx) < 1.5 && Math.abs(dz) < 1.5) return fy; if (Math.abs(dx) <= 1.15 && dz >= 1.5 && dz < 3.0) return fy * U.clamp((3.0 - dz) / 0.9, 0, 1); return null; });
-    G.roofZones.push([BN.x - 2.1, BN.x + 2.1, BN.z - 2.1, BN.z + 2.1]);
+    floors.push((x, z) => { const dx = x - BN.x, dz = z - BN.z; const r = Math.hypot(dx, dz); if (r < 3.62) return fy; if (r < 3.98) return fy * U.clamp((3.98 - r) / 0.36, 0, 1); return null; }); // 2026-11-26: bệ bát giác hai cấp (trung đoạn 3,70 / 3,95): mặt bệ gồm cả hành lang vòm quanh lõi, lên được từ mọi phía
+    G.roofZones.push([BN.x - 3.5, BN.x + 3.5, BN.z - 3.5, BN.z + 3.5]); // 2026-11-26: cả hành lang vòm dưới mái thứ nhất
     const h = { id: 'van-thu', title: 'Văn Thù Sư Lợi Bồ Tát', lamp: [BN.x, fy + 3.0, BN.z + 0.6], lampK: 0.3, cushion: cush, altar: { x: BN.x, z: BN.z - 0.95 }, front: { x: BN.x, z: BN.z + 4.8 }, poi: { x: BN.x, z: BN.z + 4.4 },
       nodes: [{ x: BN.x, z: BN.z + 2.6, id: 'vanThuDoor' }, { x: BN.x, z: BN.z + 0.8, id: 'vanThuIn' }], spots: [],
       cam: { pos: [BN.x, fy + 1.6, BN.z + 4.6], look: [BN.x + 2.0, fy + 1.55, BN.z - 1.0] }, camP: { pos: [BN.x, fy + 1.5, BN.z + 9.5], look: [BN.x, fy - 1.4, BN.z - 1.0] } };
@@ -303,7 +307,7 @@ function buildDienPhu(G) {
   const specs = [
     { id: 'duoc-su', title: 'Dược Sư Lưu Ly Quang Vương Phật', name: 'ĐIỆN DƯỢC SƯ', x0: 11.5, x1: 19.5, z0: -26, z1: -18, face: 'S', floorH: 0.45, tiers: 1, deity: drugBuddha, scale: 0.62, haloY: 1.8, extra: [[16.8, -27.4, 'dsBack']] },
     { id: 'dia-tang', title: 'Địa Tạng Vương Bồ Tát', name: 'ĐIỆN ĐỊA TẠNG', x0: -19.5, x1: -11.5, z0: -26, z1: -18, face: 'S', floorH: 0.45, tiers: 1, deity: diaTang, scale: 0.6, haloY: 1.8, extra: [[-16.8, -27.4, 'dtBack']] },
-    { id: 'quan-am-cac', title: 'Quan Thế Âm Bồ Tát', name: 'QUAN ÂM CÁC', x0: 12.5, x1: 21.5, z0: -1.0, z1: 7.2, face: 'W', floorH: 0.45, tiers: 2, deity: null, ext: 'quanAm', scale: 1.0, haloY: 1.75, back: 2.2, extra: [[22.0, -2.4, 'qaE1'], [22.0, 3.0, 'qaE2'], [22.0, 10.0, 'qaE3']] }, // ao sen lớn tới z 7.2 nên điện lùi lên 1 m; lối bên đông 2,2 m
+    { id: 'quan-am-cac', title: 'Quan Thế Âm Bồ Tát', name: 'QUAN ÂM CÁC', x0: 12.5, x1: 21.5, z0: -1.0, z1: 7.2, face: 'W', floorH: 0.45, tiers: 2, deity: null, ext: 'quanAm', scale: 1.12, haloY: 2.2, halo: { y: -0.05, z: 1.35, r: 1.5, c: [0.5, 0.36, 0.16] }, back: 2.2, extra: [[22.0, -2.4, 'qaE1'], [22.0, 3.0, 'qaE2'], [22.0, 10.0, 'qaE3']] }, // ao sen lớn tới z 7.2 nên điện lùi lên 1 m; lối bên đông 2,2 m
   ];
   // dọn nút dẫn đường / chỗ đứng cũ nằm trong khuôn viên các toà mới (phải làm trước khi thêm nút mới)
   const preFp = [];
@@ -347,7 +351,7 @@ function buildDienPhu(G) {
     'quan-am-cac': { short: 'Quan Âm', desc: 'Vào Quan Âm Các, lễ Quan Thế Âm Bồ Tát', place: 'Quan Âm Các',
       intro: ['Quan Thế Âm Bồ Tát là biểu tượng của lòng từ bi: lắng nghe tiếng kêu của thế gian và đưa tay giúp đỡ.', 'Tượng nghìn mắt nghìn tay phỏng theo tượng ở chùa Bút Tháp: muôn bàn tay xoè ra như muốn lắng nghe và giúp đỡ muôn người. Đứng trước Ngài, ta nhắc nhau lắng nghe và thương yêu nhiều hơn.'],
       wishes: ['Mong gia đình hòa thuận', 'Mong mình biết lắng nghe', 'Mong người khó khăn được che chở'] },
-    'van-thu': { short: 'Văn Thù', desc: 'Vào lòng tháp Báo Nghiêm, lễ Văn Thù Sư Lợi Bồ Tát', place: 'Tháp Báo Nghiêm – điện Văn Thù',
+    'van-thu': { short: 'Văn Thù', desc: 'Vào lòng bảo tháp trong vườn sau chùa, lễ Văn Thù Sư Lợi Bồ Tát', place: 'Bảo tháp – điện Văn Thù',
       intro: ['Văn Thù Sư Lợi Bồ Tát là biểu tượng của trí tuệ. Thanh kiếm tượng trưng cho trí tuệ cắt đứt phiền não; cuốn kinh trên đóa sen nhắc việc học hỏi và hiểu đúng.', 'Nhiều người đến trước Ngài với mong muốn học hành sáng suốt, làm việc tỉnh táo và rõ ràng.'],
       wishes: ['Mong học hành sáng suốt', 'Mong tâm trí tỉnh táo', 'Mong biết lắng nghe và hiểu đúng'] },
   };
@@ -383,6 +387,19 @@ function buildDienPhu(G) {
       if (r.dead) return;
       const body = U.el('div'), chips = U.el('div', 'chips');
       for (const t of info.intro) body.append(U.el('p', 'small', t));
+      { // Quan Âm Các đang hiển thị bản quét 3D (17-quan-am-quet.js): ghi công tác giả mô hình theo giấy phép CC BY 4.0
+        const cr = h.id === 'quan-am-cac' && W.ext && W.ext.quanAm && W.ext.quanAm.credit;
+        if (cr) {
+          const p = U.el('p', 'muted small', cr.text + ' ');
+          [['Xem mô hình gốc', cr.href], ['Giấy phép CC BY 4.0', cr.licence]].filter((l) => l[1]).forEach(([label, href], i) => {
+            const a = U.el('a', null, label); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
+            a.style.cssText = 'color:inherit;display:inline-block;padding:13px 4px;margin:-13px -4px'; // vùng chạm cao khoảng 45 px, bố cục dòng không đổi
+            if (i) p.append(' · ');
+            p.append(a);
+          });
+          body.append(p);
+        }
+      }
       body.append(U.el('div', 'muted small', 'Chọn một lời mong nhẹ nhàng (không bắt buộc), rồi lễ:'));
       info.wishes.forEach((t) => { const c = U.el('button', 'chip', t); c.type = 'button'; c.onclick = () => { for (const o of chips.children) o.classList.toggle('on', o === c && !o.classList.contains('on')); sfx('ui'); }; chips.append(c); });
       body.append(chips, U.el('div', 'note small', 'Lời mong là tấm lòng của riêng bạn; điều lành đến từ việc làm lành mỗi ngày.'));

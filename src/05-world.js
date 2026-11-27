@@ -1,6 +1,6 @@
 // =====================================================================
 //  CẢNH CHÙA: trời hoàng hôn → đêm, ánh sáng, sân gạch, tam quan, chính điện,
-//  tượng Phật, lư hương, gác chuông, cây bồ đề, hồ sen, bàn xin quẻ, đèn lồng
+//  tượng Phật, lư hương, gác chuông, bàn xin quẻ, đèn lồng
 //  (mọi hình khối dựng bằng code, gộp lại để vẽ ít lần cho nhẹ máy)
 // =====================================================================
 function buildWorld(G) {
@@ -271,7 +271,7 @@ function buildWorld(G) {
     for (const m of signs) m.emissiveIntensity = 0.18 + tod.night * 0.32;
     if (W.water) { _wc.copy(waterDeep).lerp(cur.top, 0.25).multiplyScalar(0.75 - tod.night * 0.3); W.water.material.color.copy(_wc); }
     if (G.player) { // tâm vùng bóng bám theo người chơi, bước 12 m
-      const sx = Math.round(G.player.pos.x / 12) * 12, sz = U.clamp(Math.round((G.player.pos.z - 16) / 12) * 12, -94, 4); // tới −94 (v4): chính điện lùi sâu đến z ≈ −113 vẫn nằm trong hộp bóng ±40 m
+      const sx = Math.round(G.player.pos.x / 12) * 12, sz = U.clamp(Math.round((G.player.pos.z - 16) / 12) * 12, -160, 4); // tới −160 (v5): vườn sau chùa z −118…−188 nằm trong hộp bóng ±40 m (v4: −94, chính điện lùi sâu đến z ≈ −113)
       if (sx !== tod.shX || sz !== tod.shZ) { tod.shX = sx; tod.shZ = sz; sun.target.position.set(sx, 0, sz); sun.target.updateMatrixWorld(); tod.lastShadowT = -1; }
     }
     sun.position.add(sun.target.position);
@@ -280,8 +280,8 @@ function buildWorld(G) {
   G.onUpdate(updateTod, 5);
   { // ảnh chụp chia sẻ: dời vùng bóng về chỗ chính điện rồi trả lại
     const saved = new V3();
-    G.events.on('snapshot:before', () => {
-      saved.copy(sun.target.position); sun.target.position.set(0, 0, -96); sun.target.updateMatrixWorld();
+    G.events.on('snapshot:before', (sc) => { // sc: máy quay chụp. Vùng bóng đi theo máy quay (bước 12 m, −160…−96) để ảnh chụp trong vườn sau chùa vẫn có bóng; ảnh bưu thiếp / sân trước vẫn −96
+      saved.copy(sun.target.position); sun.target.position.set(0, 0, sc && sc.position ? U.clamp(Math.round((sc.position.z - 16) / 12) * 12, -160, -96) : -96); sun.target.updateMatrixWorld();
       sun.position.copy(_ld).multiplyScalar(90).add(sun.target.position); G.renderer.shadowMap.needsUpdate = true;
     });
     G.events.on('snapshot:after', () => {
@@ -293,14 +293,14 @@ function buildWorld(G) {
 
   // độ cao mặt cỏ (phẳng khắp vùng đi lại được, nhấp nhô dần ra xa) — dùng chung cho cảnh vật bên ngoài
   G.terrainY = (x, z) => {
-    const ox = Math.max(0, Math.abs(x) - 32), oz = Math.max(0, z - 77, -109 - z), dOut = Math.hypot(ox, oz);
+    const ox = Math.max(0, Math.abs(x) - (x > 0 && typeof TKC_SITE !== 'undefined' ? TKC_SITE.flatX : 32)), oz = Math.max(0, z - 77, -197.2 - z), dOut = Math.hypot(ox, oz); // 2026-11-27: phía đông phẳng tới x 87 cho sân Tàng Kinh Các (19-tang-kinh-cac.js) // v5: −197,2 = tường sau vườn (−188,2) − 9 m (v4: −109 = tường bao −118 + 9): phẳng (−0,03) khắp vườn và quanh vườn |x| ≤ 57, z ≥ −222,2
     return (Math.sin(x * 0.031) * Math.cos(z * 0.027) * 3.2 + Math.sin(x * 0.012 + 1.3) * 4) * U.smoothstep(25, 120, dOut) - 0.03;
   };
   // =====================================================================
   //  MẶT ĐẤT: cỏ, sân gạch, lối đi
   // =====================================================================
   {
-    const g = new THREE.PlaneGeometry(470, 470, 47, 47); g.rotateX(-PI / 2);
+    const g = new THREE.PlaneGeometry(570, 570, 57, 57); g.rotateX(-PI / 2); // v5: 570 = 470 + 2 × 50, cùng lưới ô 10 m (13-scenery.js lặp lại GRID = 570: sửa cả hai nơi cùng lúc)
     const p = g.attributes.position, cArr = new Float32Array(p.count * 3), c = new THREE.Color(), a = new THREE.Color(0x5f8a3a), b = new THREE.Color(0x7d9a45), dk = new THREE.Color(0x4a7034);
     for (let i = 0; i < p.count; i++) {
       const x = p.getX(i), z = p.getZ(i), d = Math.hypot(x, z - 18);
@@ -322,9 +322,9 @@ function buildWorld(G) {
       for (let k = 0; k < 90; k++) { g.fillStyle = `rgba(${rnd() < 0.5 ? '70,55,40' : '255,245,225'},${rnd() * 0.09})`; g.fillRect(i * s + rnd() * s, j * s + rnd() * s, 3, 3); }
     }
   });
-  tileTex.wrapS = tileTex.wrapT = THREE.RepeatWrapping; tileTex.repeat.set(48 / 2.4, 58 / 2.4);
+  tileTex.wrapS = tileTex.wrapT = THREE.RepeatWrapping; tileTex.repeat.set(72 / 2.4, 58 / 2.4); // 2026-11-26: sân rộng ra x ±36 (72 m; trước 48 m), cỡ viên gạch giữ 2,4 m
   tileTex.anisotropy = Math.min(8, G.renderer.capabilities.getMaxAnisotropy());
-  const court = new THREE.Mesh(new THREE.PlaneGeometry(48, 58), new THREE.MeshLambertMaterial({ map: tileTex }));
+  const court = new THREE.Mesh(new THREE.PlaneGeometry(72, 58), new THREE.MeshLambertMaterial({ map: tileTex }));
   court.rotation.x = -PI / 2; court.position.set(0, 0.005, 2); court.receiveShadow = true; court.matrixAutoUpdate = false; court.updateMatrix(); scene.add(court);
   const slabTex = U.canvasTex(256, 512, (g, w, h) => {
     g.fillStyle = '#6f6455'; g.fillRect(0, 0, w, h);
@@ -346,7 +346,7 @@ function buildWorld(G) {
   // =====================================================================
   //  TƯỜNG BAO
   // =====================================================================
-  function wall(x0, z0, x1, z1) {
+  function wall(x0, z0, x1, z1, o) { // o.posts (tuỳ chọn): toạ độ các cột dọc theo tường; mặc định mỗi 6 m kể từ đầu mút
     const lx = Math.abs(x1 - x0), lz = Math.abs(z1 - z0), cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, alongX = lx > lz, L = Math.max(lx, lz);
     const sz = (a, b) => (alongX ? [a, 0, b] : [b, 0, a]);
     const s1 = sz(L, 0.45), s2 = sz(L + 0.1, 0.62), s3 = sz(L + 0.2, 0.8), s4 = sz(L + 0.2, 0.22);
@@ -354,15 +354,29 @@ function buildWorld(G) {
     box(S, cx, 1.05, cz, s1[0], 1.3, s1[2], C.ochre);
     box(S, cx, 1.78, cz, s3[0], 0.18, s3[2], C.roof);
     box(S, cx, 1.93, cz, s4[0], 0.14, s4[2], C.ridge);
-    for (let t = 0; t <= L + 0.01; t += 6) {
-      const px = alongX ? Math.min(x0, x1) + t : cx, pz = alongX ? cz : Math.min(z0, z1) + t;
+    const lo = alongX ? Math.min(x0, x1) : Math.min(z0, z1), posts = [];
+    if (o && o.posts) posts.push(...o.posts); else for (let t = 0; t <= L + 0.01; t += 6) posts.push(lo + t);
+    for (const q of posts) {
+      const px = alongX ? q : cx, pz = alongX ? cz : q;
       box(S, px, 1.0, pz, 0.62, 2.0, 0.62, C.ochreD);
       box(S, px, 2.08, pz, 0.78, 0.16, 0.78, C.ridge);
     }
     col.box(Math.min(x0, x1) - (alongX ? 0 : 0.3), Math.min(z0, z1) - (alongX ? 0.3 : 0), Math.max(x0, x1) + (alongX ? 0 : 0.3), Math.max(z0, z1) + (alongX ? 0.3 : 0), 'wall');
   }
-  wall(-24, 31, -7.0, 31); wall(7.0, 31, 24, 31);
-  wall(-24, -118, -24, 31); wall(24, -118, 24, 31); wall(-24, -118, 24, -118); // tường sau lùi từ z −84 về −100 (v3), rồi về −118 (v4: sân chính điện sâu 12 m, chính điện sâu 27 m trên nền ba bậc)
+  // 2026-11-26 (tháp phù văn ra sân sau; sân chùa rộng bằng vườn sau chùa): tường bên dời từ x ±24 ra x ±36,3 (mặt trong ±36,0, vật cản 36,0…36,6), nối thẳng với tường bên của vườn (19-vuon-sau.js);
+  // tường trước z 31 kéo dài tới ±36,3, cổng ±7 giữ nguyên
+  const WALL_X = 36.3;
+  wall(-WALL_X, 31, -7.0, 31); wall(7.0, 31, WALL_X, 31, { posts: [7, 13, 19, 25, 31, WALL_X] }); // phía đông thêm cột góc (36,3; 31); phía tây cột mặc định mỗi 6 m từ đầu mút, đã gồm cột góc
+  { // tường bên: cột mỗi 6 m từ z −112 tới 26, thêm cột góc z 31; cột góc (±36,3; −118) do đoạn tường z −118 của 19-vuon-sau.js dựng
+    const sidePosts = []; for (let z = -112; z < 26.01; z += 6) sidePosts.push(z); sidePosts.push(31);
+    wall(-WALL_X, -118, -WALL_X, 31, { posts: sidePosts });
+    const eg = typeof TKC_SITE !== 'undefined' ? TKC_SITE.gate : null; // 2026-11-27: cổng nách sang sân Tàng Kinh Các (19-tang-kinh-cac.js dựng trụ, mái cổng): tường đông chừa khoảng z 9…13, giữa hai cột z 8 và z 14
+    if (eg) { wall(WALL_X, -118, WALL_X, eg.z0, { posts: sidePosts.filter((z) => z < eg.z0) }); wall(WALL_X, eg.z1, WALL_X, 31, { posts: sidePosts.filter((z) => z > eg.z1) }); }
+    else wall(WALL_X, -118, WALL_X, 31, { posts: sidePosts }); // tường sau lùi từ z −84 về −100 (v3), rồi về −118 (v4: sân chính điện sâu 12 m, chính điện sâu 27 m trên nền ba bậc)
+    col.box(36.6, 30.7, 37.4, 31.3, 'wall'); col.box(-37.4, 30.7, -36.6, 31.3, 'wall'); // 2026-11-26: chặn khe 0,4 m giữa mặt ngoài tường bên và ranh giới đi lại ±37 ở hai góc trước (như hai hộp chặn của vườn ở z −118)
+  }
+  // v5 (vườn sau chùa): tường sau chia ba đoạn, chừa hai cổng nách x ±(21,4…23,4) rộng 2,0 m, cột x −18…18 như cũ. 2026-11-26: tường z −118 nay chạy suốt bề ngang sân — hai đoạn ngoài (|x| 24,3…36,6) do 19-vuon-sau.js dựng, hai đoạn ngắn 0,9 m ở đây nối vào cổng nách; không còn tường bên x ±24 nên không còn cột góc ±24
+  wall(-24.3, -118, -23.4, -118, { posts: [] }); wall(-21.4, -118, 21.4, -118, { posts: [-18, -12, -6, 0, 6, 12, 18] }); wall(23.4, -118, 24.3, -118, { posts: [] });
 
   // ---------- Cột gỗ đỏ ----------
   function column(x, z, y0, h, r = 0.24, collide = true) {
@@ -659,102 +673,24 @@ function buildWorld(G) {
     hangLantern(-13.1, 4.58, -0.9, 0.35, 0.8);
   }
 
-  // =====================================================================
-  //  CÂY BỒ ĐỀ LỚN (có điểm treo dải lụa)
-  // =====================================================================
-  {
-    const tx = 15.5, tz = -5;
-    F.add(new THREE.CylinderGeometry(2.3, 2.42, 0.46, 18), C.stone, { p: [tx, 0.23, tz] });
-    F.add(new THREE.CircleGeometry(2.14, 18), 0x5a4030, { p: [tx, 0.47, tz], r: [-PI / 2, 0, 0] });
-    col.circle(tx, tz, 2.45, 'tree');
-    const bark = C.bark, rnd = U.rng(21);
-    branch(S, [tx, 0.4, tz], [tx + 0.1, 3.5, tz - 0.1], 0.9, 0.55, bark, 9);
-    branch(S, [tx + 0.4, 0.45, tz + 0.2], [tx + 0.9, 3.4, tz + 0.6], 0.45, 0.32, bark);
-    branch(S, [tx - 0.4, 0.45, tz - 0.3], [tx - 0.8, 3.2, tz - 0.7], 0.42, 0.3, bark);
-    for (let i = 0; i < 7; i++) { const a = (i / 7) * PI * 2 + 0.3; branch(S, [tx + Math.cos(a) * 0.5, 0.62, tz + Math.sin(a) * 0.5], [tx + Math.cos(a) * 1.8, 0.48, tz + Math.sin(a) * 1.8], 0.3, 0.06, bark, 5); }
-    for (let i = 0; i < 7; i++) {
-      const a = (i / 7) * PI * 2 + rnd() * 0.4, r = 3.2 + rnd() * 0.8;
-      branch(S, [tx, 3.1, tz], [tx + Math.cos(a) * r, 5.0 + rnd() * 1.2, tz + Math.sin(a) * r], 0.26, 0.12, bark, 6);
-    }
-    // cành thấp để buộc lụa
-    const anchors = [];
-    const low = [PI, PI + 0.95, PI - 0.95, 0.35, -0.65, 1.65, -1.75];
-    for (const a of low) {
-      const len = 3.7 + rnd() * 0.9, y0 = 2.75 + rnd() * 0.55, y1 = y0 + 0.15 + rnd() * 0.35;
-      const ax = [tx + Math.cos(a) * 0.4, y0, tz + Math.sin(a) * 0.4], bx = [tx + Math.cos(a) * len, y1, tz + Math.sin(a) * len];
-      branch(S, ax, bx, 0.18, 0.07, bark, 6);
-      for (let t = 0.32; t <= 0.96; t += 0.065) {
-        anchors.push({ x: U.lerp(ax[0], bx[0], t) + (rnd() - 0.5) * 0.12, y: U.lerp(ax[1], bx[1], t) - 0.07, z: U.lerp(ax[2], bx[2], t) + (rnd() - 0.5) * 0.12 });
-      }
-    }
-    // tán lá
-    for (let i = 0; i < 20; i++) {
-      const a = i * 2.39996, rr = 1.2 + Math.sqrt(i / 20) * 3.4, r = 1.5 + rnd() * 1.1;
-      S.add(new THREE.IcosahedronGeometry(r, 1), C.leaf[i % 4], { p: [tx + Math.cos(a) * rr, 6.9 - rr * 0.38 + rnd() * 0.6, tz + Math.sin(a) * rr], s: [1, 0.78, 1], j: 0.12 });
-    }
-    W.tree = {
-      x: tx, z: tz, anchors, poi: { x: 11.6, z: tz, r: 3.1 }, stand: { x: 11.85, z: tz, yaw: PI / 2 },
-      cam: { pos: [8.4, 2.9, -1.2], look: [14.2, 2.8, -5.4] },
-    };
-    W.petalSources.push({ x: tx, y: 4.6, z: tz, r: 4.2, kind: 'leaf' });
-    W.fireflyAreas.push({ x: tx, z: tz, r: 5.5 });
-  }
+  // (2026-11-25: cây bồ đề lớn ở sân trước (15,5; −5) đã bỏ theo ý chủ chùa. "Viết lời cầu an" treo dải lụa trên cây bồ đề trong vườn sau chùa: 19-vuon-sau.js đặt W.tree.)
 
   // =====================================================================
-  //  HỒ SEN THẢ HOA ĐĂNG (rộng, có đảo nhỏ với thuỷ đình)
+  //  BÊN ĐÔNG SÂN TRƯỚC: ba đèn đá + hai ghế đá. Hồ sen (có đảo nhỏ, thuỷ đình) ở đây đã bỏ ngày 2026-11-25 theo ý chủ chùa;
+  //  "Thả hoa đăng" diễn ra trên hồ sen trước tượng Quan Âm trong vườn sau chùa (19-vuon-sau.js đặt W.pond).
+  //  W.water chỉ còn giữ CHẤT LIỆU nước (không còn mặt nước ở sân trước): hồ Long Trì (09-world2-geo.js) và hồ trong vườn dùng chung, màu đổi theo giờ ở vòng cập nhật phía trên.
   // =====================================================================
   {
-    const px = 15.2, pz = 16.2, rx = 6.8, rz = 8.6;
-    const isl = { x: 18.0, z: 19.4, r: 1.8 };
-    const water = new THREE.Mesh(new THREE.CircleGeometry(1, 64), new THREE.MeshPhongMaterial({ color: 0x1f5566, emissive: 0x0b2c38, shininess: 90, specular: 0x8a7a60 }));
-    water.rotation.x = -PI / 2; water.scale.set(rx, rz, 1); water.position.set(px, 0.05, pz); water.receiveShadow = true;
-    water.matrixAutoUpdate = false; water.updateMatrix(); scene.add(water); W.water = water;
-    const rnd = U.rng(31);
-    // bờ đá quanh hồ: hai lớp đá xếp
-    for (let i = 0; i < 70; i++) {
-      const a = (i / 70) * PI * 2 + rnd() * 0.03;
-      F.add(new THREE.DodecahedronGeometry(0.36, 0), i % 3 ? 0x8d8576 : 0x9d9585, { p: [px + Math.cos(a) * (rx + 0.24), 0.1, pz + Math.sin(a) * (rz + 0.24)], s: [1.3, 0.55, 0.95], r: [rnd(), a, rnd()], j: 0.1 });
-      if (i % 2 === 0) F.add(new THREE.DodecahedronGeometry(0.26, 0), 0x7d7566, { p: [px + Math.cos(a) * (rx + 0.62), 0.07, pz + Math.sin(a) * (rz + 0.62)], s: [1.2, 0.45, 0.9], r: [rnd(), a, rnd()], j: 0.1 });
-    }
-    const inPond = (x, z, m = 0) => ((x - px) * (x - px)) / ((rx - m) * (rx - m)) + ((z - pz) * (z - pz)) / ((rz - m) * (rz - m)) < 1;
-    const offIsle = (x, z, m = 0) => Math.hypot(x - isl.x, z - isl.z) > isl.r + m;
-    // lá sen nổi, lá sen vươn cao, hoa sen, nụ sen
-    const pads = [];
-    for (let i = 0; i < 46; i++) {
-      let x, z, tries = 0;
-      do { x = px + (rnd() * 2 - 1) * rx; z = pz + (rnd() * 2 - 1) * rz; tries++; } while ((!inPond(x, z, 0.6) || !offIsle(x, z, 0.5) || Math.hypot(x - 9.0, z - pz) < 1.8) && tries < 40);
-      const r = 0.28 + rnd() * 0.34; pads.push([x, z, r]);
-      F.add(new THREE.CylinderGeometry(r, r, 0.03, 9, 1, false, 0.3, PI * 1.85), i % 2 ? 0x4f8a3c : 0x3f7a33, { p: [x, 0.08, z], r: [0, rnd() * 6, 0] });
-    }
-    for (let i = 0; i < 16; i++) {
-      const [x, z] = pads[i];
-      for (let k = 0; k < 7; k++) { const a = (k / 7) * PI * 2; S.add(new THREE.SphereGeometry(0.1, 6, 4), i % 4 ? 0xf29bb5 : 0xfbe4ea, { p: [x + Math.sin(a) * 0.08, 0.2, z + Math.cos(a) * 0.08], s: [1, 1.7, 0.5], r: [0.5, a, 0], order: 'YXZ' }); }
-      sph(S, x, 0.2, z, 0.06, 0xf5d03a, 6, 4);
-    }
-    for (let i = 16; i < 24; i++) { const [x, z] = pads[i]; cyl(S, x + 0.15, 0.3, z, 0.012, 0.012, 0.45, 0x4f8a3c, 4); S.add(new THREE.ConeGeometry(0.07, 0.22, 6), 0xf28aaa, { p: [x + 0.15, 0.6, z] }); }
-    for (let i = 24; i < 36; i++) { // lá sen vươn khỏi mặt nước
-      const [x, z] = pads[i], h = 0.35 + rnd() * 0.5;
-      cyl(S, x, 0.05 + h / 2, z, 0.014, 0.018, h, 0x4f7a34, 4);
-      S.add(new THREE.ConeGeometry(0.34 + rnd() * 0.12, 0.12, 9, 1, true), 0x5a9440, { p: [x, 0.08 + h, z], r: [PI + (rnd() - 0.5) * 0.4, rnd() * 6, (rnd() - 0.5) * 0.4] });
-    }
-    // đảo nhỏ với thuỷ đình mái cong (để ngắm, không lên được)
-    F.add(new THREE.CylinderGeometry(isl.r, isl.r + 0.25, 0.4, 14), 0x8d8576, { p: [isl.x, 0.05, isl.z] });
-    F.add(new THREE.CircleGeometry(isl.r - 0.1, 14), 0x6f9a45, { p: [isl.x, 0.26, isl.z], r: [-PI / 2, 0, 0] });
-    for (let i = 0; i < 14; i++) { const a = (i / 14) * PI * 2; F.add(new THREE.DodecahedronGeometry(0.3, 0), 0x9d9585, { p: [isl.x + Math.cos(a) * (isl.r + 0.1), 0.18, isl.z + Math.sin(a) * (isl.r + 0.1)], s: [1.2, 0.6, 1], r: [rnd(), a, 0], j: 0.1 }); }
-    for (let k = 0; k < 6; k++) { const a = (k / 6) * PI * 2 + PI / 6; cyl(S, isl.x + Math.cos(a) * 1.0, 1.35, isl.z + Math.sin(a) * 1.0, 0.09, 0.1, 2.2, C.wood, 6); }
-    cyl(F, isl.x, 0.3, isl.z, 1.2, 1.25, 0.1, C.stoneL, 6);
-    for (let k = 0; k < 6; k++) { const a = (k / 6) * PI * 2 + PI / 6, b = a + PI / 3; beam(S, [isl.x + Math.cos(a) * 1.0, 2.42, isl.z + Math.sin(a) * 1.0], [isl.x + Math.cos(b) * 1.0, 2.42, isl.z + Math.sin(b) * 1.0], 0.12, 0.14, C.woodD); }
-    addRoof(S, isl.x, 2.5, isl.z, 3.0, 3.0, 1.15, { curl: 0.45, finial: true });
-    hangLantern(isl.x, 2.4, isl.z, 0.3, 0.8);
-    col.ellipse(px, pz, rx + 0.42, rz + 0.42, 'pond');
-    // đèn đá bên hồ
-    for (const [x, z] of [[7.6, 9.0], [9.4, 26.4], [22.9, 7.4]]) {
+    const px = 15.2, pz = 16.2; // tâm khoảng sân bên đông: hai ghế đá quay mặt về đây
+    W.water = { material: new THREE.MeshPhongMaterial({ color: 0x1f5566, emissive: 0x0b2c38, shininess: 90, specular: 0x8a7a60 }) };
+    // đèn đá
+    for (const [x, z] of [[7.6, 9.0], [9.4, 26.4], [35.2, 7.4]]) { // 2026-11-26: đèn đá sát tường đông dời theo tường bên (22,9 → 35,2); hai đèn kia đứng giữa sân nên giữ nguyên
       box(S, x, 0.15, z, 0.6, 0.3, 0.6, C.stoneD); box(S, x, 0.75, z, 0.28, 0.9, 0.28, C.stone);
       box(S, x, 1.32, z, 0.56, 0.12, 0.56, C.stone); LB.add(BOX, 0xffd98a, { p: [x, 1.6, z], s: [0.36, 0.4, 0.36] });
       S.add(new THREE.ConeGeometry(0.5, 0.36, 4), C.stoneD, { p: [x, 2.0, z], r: [0, PI / 4, 0] });
       glow(x, 1.6, z, 1.4, [1.0, 0.75, 0.38], true); col.circle(x, z, 0.42, 'stonelamp');
     }
-    // ghế đá ngắm hồ (bờ nam)
+    // ghế đá (quay mặt về giữa khoảng sân bên đông)
     W.benchSeats = [];
     for (const [x, z] of [[11.6, 27.2], [17.8, 27.4]]) {
       const yaw = U.yawTo(x, z, px, pz);
@@ -763,13 +699,6 @@ function buildWorld(G) {
       for (const s of [-0.75, 0.75]) col.circle(x + Math.cos(yaw) * s, z - Math.sin(yaw) * s, 0.22, 'bench');
       W.benchSeats.push({ x: x + Math.sin(yaw) * 0.05, z: z + Math.cos(yaw) * 0.05, yaw, y: 0.42 });
     }
-    W.pond = {
-      x: px, z: pz, rx, rz, waterY: 0.06, island: isl,
-      inside: (x, z, m = 0) => inPond(x, z, m) && offIsle(x, z, m + 0.3),
-      poi: { x: 7.1, z: pz, r: 3.0 }, stand: { x: 7.45, z: pz, yaw: PI / 2 }, release: { x: 8.8, z: pz },
-      cam: { pos: [4.4, 3.9, 23.8], look: [14.0, 0.3, 15.4] },
-    };
-    W.fireflyAreas.push({ x: px, z: pz, r: 8.5 });
   }
 
   // =====================================================================
@@ -865,8 +794,8 @@ function buildWorld(G) {
     }
     if (collide) col.circle(x, z, 0.85, 'bamboo');
   }
-  roundTree(-21, 27.5, 1, 61); roundTree(21, 27.5, 1, 62);
-  bamboo(-22.2, 6, 71); bamboo(-22.2, -8.0, 72);
+  roundTree(-33.3, 27.5, 1, 61); roundTree(33.3, 27.5, 1, 62); // 2026-11-26: cây tròn góc sân trước dời theo tường bên (±21 → ±33,3)
+  bamboo(-34.5, 6, 71); bamboo(-34.5, -8.0, 72); // 2026-11-26: hai khóm tre sát tường tây dời theo tường (−22,2 → −34,5)
   // cây cối bên ngoài tường
   {
     const rnd = U.rng(91);
@@ -878,6 +807,8 @@ function buildWorld(G) {
         const onPath = Math.abs(x) < 6 && z > 30;
         if (!insideWalls && !onPath) break;
       }
+      if (x > -38.5 && x < 38.5 && z > -121 && z < 34) x += Math.sign(x) * 12.3; // 2026-11-26: tường bên ra x ±36,3: cây rơi vào phần sân mới (gồm dải đi bộ 1,65 m ngoài tường) lùi ra 12,3 m như tường; mẫu giữ y hệt bản cũ để cây ở đường vào, cây đa, miếu, hàng quán không đổi chỗ
+      if (typeof TKC_SITE !== 'undefined' && x > TKC_SITE.keep.x0 && x < TKC_SITE.keep.x1 && z > TKC_SITE.keep.z0 && z < TKC_SITE.keep.z1) { if (i % 5) rnd(); continue; } // 2026-11-27: cây rơi vào sân Tàng Kinh Các thì bỏ (vẫn rút số ngẫu nhiên của nó để các cây sau không đổi chỗ; 13-scenery.js bỏ y hệt)
       if (i % 5 === 0) bamboo(x, z, 100 + i, false); else roundTree(x, z, 0.9 + rnd() * 0.6, 200 + i, false);
     }
     for (const z of [38, 46, 54, 62]) for (const sx of [-1, 1]) { const x = sx * 3.4; box(S, x, 0.5, z, 0.3, 1.0, 0.3, C.stoneD); LB.add(BOX, 0xffd98a, { p: [x, 1.12, z], s: [0.32, 0.26, 0.32] }); S.add(new THREE.ConeGeometry(0.34, 0.28, 4), C.stoneD, { p: [x, 1.4, z], r: [0, PI / 4, 0] }); glow(x, 1.12, z, 1.0, [1, 0.75, 0.38], true); }
@@ -892,20 +823,29 @@ function buildWorld(G) {
     // v4: sông chạy sau tường bao (z ≈ −136…−148, 13-scenery.js) nên chân núi xa (nơi mặt nón cắt mặt đất) không được trùm lên sông ở đoạn sau chùa / bên tây, cũng không lấn vào khuôn viên:
     // núi nào lấn vào thì lùi ra xa và phóng to theo (k ≤ 1,4 — hình dáng trên đường chân trời giữ nguyên), nếu chưa đủ thì thu hẹp chân; núi không lấn thì giữ nguyên như cũ
     // (KEEP = tim sông từ (100,−136) về tây rồi xuống (−68,−30) — cùng điểm điều khiển với 13-scenery.js, lề 12 m; và các góc tường bao, lề 6 m)
-    const KEEP = [];
+    // v5 (vườn sau chùa, tường sau vườn z −188,2): đường tim sông nay vòng ra sau vườn. W.riverCP là danh sách điểm điều khiển DUY NHẤT (13-scenery.js đọc lại nó); KEEP lấy đoạn (100,−136) → (−68,−30) theo đường cong Catmull-Rom
+    // như 13-scenery.js (lề 12 m), thêm viền vườn (lề 6 m). k tối đa 1,6 (v4: 1,4): núi 24 nằm ngay sau đoạn sông mới, ở k = 1,4 không thoát được dù thu chân còn 60 %. W.farCones: số đo từng nón cho kiểm thử
+    const KEEP = []; W.farCones = [];
     {
-      const cp = [[100, -136], [50, -140], [0, -144], [-42, -148], [-78, -128], [-76, -70], [-68, -30]];
-      for (let i = 0; i < cp.length - 1; i++) { const n = Math.ceil(Math.hypot(cp[i + 1][0] - cp[i][0], cp[i + 1][1] - cp[i][1]) / 10); for (let t = 0; t < n; t++) KEEP.push([cp[i][0] + ((cp[i + 1][0] - cp[i][0]) * t) / n, cp[i][1] + ((cp[i + 1][1] - cp[i][1]) * t) / n, 12]); }
+      const cp = (W.riverCP = [[205, -160], [150, -140], [100, -136], [84, -170], [64, -204], [34, -218], [0, -220], [-34, -218], [-64, -204], [-77, -170], [-78, -128], [-76, -70], [-68, -30], [-74, 8], [-70, 40], [-76, 76], [-92, 110], [-112, 140]]);
+      const i0 = cp.findIndex((p) => p[0] === 100 && p[1] === -136), i1 = cp.findIndex((p) => p[0] === -68 && p[1] === -30);
+      for (let i = i0; i < i1; i++) for (let k = 0; k < 8; k++) { // Catmull-Rom cùng công thức 13-scenery.js (điểm lân cận lấy từ cả danh sách), 8 điểm mỗi đoạn
+        const p0 = cp[Math.max(0, i - 1)], p1 = cp[i], p2 = cp[i + 1], p3 = cp[Math.min(cp.length - 1, i + 2)], u = k / 8, u2 = u * u, u3 = u2 * u;
+        KEEP.push([0, 1].map((c) => 0.5 * (2 * p1[c] + (-p0[c] + p2[c]) * u + (2 * p0[c] - 5 * p1[c] + 4 * p2[c] - p3[c]) * u2 + (-p0[c] + 3 * p1[c] - 3 * p2[c] + p3[c]) * u3)).concat(12));
+      }
       KEEP.push([-68, -30, 12]);
-      for (const [x, z] of [[-26, -120], [26, -120], [0, -120], [-26, -60], [26, -60], [-26, 0], [26, 0], [-26, 33], [26, 33]]) KEEP.push([x, z, 6]);
+      for (const [x, z] of [[-38.3, -60], [38.3, -60], [-38.3, 0], [38.3, 0], [-38.3, 33], [38.3, 33]]) KEEP.push([x, z, 6]); // 2026-11-26: tường bên ±36,3 → điểm cách tường 2 m (trước ±26, tường ±24); (±38,3; 33) ứng với góc trước (±36,3; 31), góc sau (±36,3; −118) đã nằm trong viền vườn ngay dưới
+      if (typeof TKC_SITE !== 'undefined') for (const z of [TKC_SITE.wallZN, (TKC_SITE.wallZN + TKC_SITE.wallZS) / 2, TKC_SITE.wallZS]) KEEP.push([TKC_SITE.wallX, z, 8]); // 2026-11-27: tường đông của sân Tàng Kinh Các
+      for (let t = 0; t <= 72; t += 12) KEEP.push([-36 + t, -118, 6], [-36 + t, -188, 6]); // viền vườn: cạnh trước (z −118) và cạnh sau (z −188), mỗi 12 m
+      for (let z = -130; z > -188; z -= 12) KEEP.push([-36.6, z, 6], [36.6, z, 6]);        // hai cạnh bên (x ±36,6)
     }
     for (let i = 0; i < 34; i++) {
       const a = (i / 34) * PI * 2 + rnd() * 0.15, d = 190 + rnd() * 120, h = 16 + rnd() * 34, r = 55 + rnd() * 45;
       const clear = (k, q) => { const cx = Math.cos(a) * d * k, cz = Math.sin(a) * d * k + 15, re = q * (1 - 3 / (h * k)); return KEEP.every((m) => Math.hypot(cx - m[0], cz - m[1]) >= re + m[2]); }; // re: bán kính chân thấy được (nón chìm 3 m)
       let k = 1, q;
-      while (k < 1.4 && !clear(k, r * k)) k += 0.02;
+      while (k < 1.6 && !clear(k, r * k)) k += 0.02;
       q = r * k; while (q > r * k * 0.6 && !clear(k, q)) q *= 0.96;
-      FAR.add(new THREE.ConeGeometry(q, h * k, 5 + (i % 3)), i % 2 ? 0x6a4a62 : 0x55405a, { p: [Math.cos(a) * d * k, (h * k) / 2 - 3, Math.sin(a) * d * k + 15], r: [0, rnd() * 3, 0], j: 0.1 });
+      W.farCones.push({ i, x: Math.cos(a) * d * k, z: Math.sin(a) * d * k + 15, h: h * k, k, q, foot: q * (1 - 3 / (h * k)) }); FAR.add(new THREE.ConeGeometry(q, h * k, 5 + (i % 3)), i % 2 ? 0x6a4a62 : 0x55405a, { p: [Math.cos(a) * d * k, (h * k) / 2 - 3, Math.sin(a) * d * k + 15], r: [0, rnd() * 3, 0], j: 0.1 });
     }
   }
 
@@ -917,7 +857,7 @@ function buildWorld(G) {
   const meshM = M.mesh(G.mats.metal, { cast: true, receive: true }); scene.add(meshM);
   const meshL = LB.mesh(G.mats.lantern, { cast: false, receive: false }); scene.add(meshL);
   const meshFar = FAR.mesh(G.mats.vc, { cast: false, receive: false }); scene.add(meshFar);
-  W.meshes = { S: meshS, F: meshF, M: meshM, L: meshL };
+  W.meshes = { S: meshS, F: meshF, M: meshM, L: meshL, FAR: meshFar };
 
   // =====================================================================
   //  ĐIỂM MỐC DẪN ĐƯỜNG + VỊ TRÍ HOẠT ĐỘNG CHO KHÁCH AI
@@ -939,6 +879,8 @@ function buildWorld(G) {
   N(0, -61.2, 'hallCourt'); N(-7.6, -61.2); N(7.6, -61.2);
   // (nút trong khuôn viên chính điện mới — x ±18,5, z −83,2…−61,8 — do 18-chinh-dien.js dọn rồi thêm lại; hai lối đi bên và bậc góc do 08-world2.js thêm)
   N(-17, 24); N(21.2, 28.6); N(-19, 10); N(19.8, 3.6);
+  // 2026-11-26: sân trước rộng ra x ±36 — mỗi bên ba nút ở x ±30 (cách nút cũ 10…13 m, nhìn thẳng được) để khách AI và đi tự động dùng dải sân mới
+  N(30, 25); N(30, 10); N(30, -5); N(-30, 25); N(-30, 10); N(-30, -5);
 
   const ring = (cx, cz, r, angs, toCenter = true) => angs.map((a) => { const x = cx + Math.sin(a) * r, z = cz + Math.cos(a) * r; return { x, z, yaw: toCenter ? U.yawTo(x, z, cx, cz) : a }; });
   const look = (x, z, lx, lz) => ({ x, z, yaw: U.yawTo(x, z, lx, lz) });
@@ -947,18 +889,17 @@ function buildWorld(G) {
     incense: ring(0, 4, 2.3, [0.75, -0.75, 1.35, -1.35, 1.95, -1.95, 2.6, -2.6]),
     hallFront: [...[-8.4, -6, -3.6, -1.2, 1.2, 3.6, 6, 8.4].map((x) => ({ x, z: -71.4, yaw: PI })), ...[-7.2, -4.8, -2.4, 0, 2.4, 4.8, 7.2].map((x) => ({ x, z: -72.6, yaw: PI }))], // sân chính điện (v4: sau Tích Thiện Am −57,6 … chân bậc thềm −74); hai hàng đứng sát chân bậc, nhìn về điện
     hallSeats: W.seats,
-    tree: [0, 0.9, 1.75, 2.5, -0.9, -1.75, -2.5].map((p) => { const x = 15.5 + Math.cos(p) * 3.3, z = -5 + Math.sin(p) * 3.3; return { x, z, yaw: U.yawTo(x, z, 15.5, -5) }; }),
-    pond: [[10.4, 6.6], [14.4, 6.2], [18.8, 6.8], [23.0, 14.0], [23.0, 18.6], [14.6, 26.4], [20.4, 25.6], [9.0, 25.0]].map(([x, z]) => ({ x, z, yaw: U.yawTo(x, z, 15.2, 16.2) })),
+    tree: [], pond: [], // cây bồ đề + hồ sen: chỗ đứng nằm trong vườn sau chùa (19-vuon-sau.js điền); cây và hồ ở sân trước đã bỏ 2026-11-25
     bell: [look(-11.2, -6.4, -15.6, -3), look(-11.4, 0.6, -15.6, -3), look(-13.2, 1.3, -15.6, -3)],
     fortune: [look(-15.3, 16.7, -14.35, 14.2), look(-12.7, 16.7, -14.35, 14.2)],
     photo: [
       { ...look(-8.2, -59.4, 0, -78), subject: { x: 0, z: -78 } }, { ...look(8.2, -59.4, 0, -78), subject: { x: 0, z: -78 } }, // v4: người chụp vẫn đứng cạnh hoa biểu, ngắm về chân bậc thềm (0, −78); người được chụp (cách 7,5 m) đứng giữa sân chính điện ≈ (±5,2; −66,3), điện ba tầng làm nền phía sau (đẩy chỗ chụp lùi theo sân thì ít người dùng hơn: khoảng cách tới cổng xa thêm 8 m → giảm gần 3 lần)
       { ...look(0, -3.5, 0, -17), subject: { x: 0, z: -17 } }, { ...look(-6.2, 6.6, 0, 4), subject: { x: 0, z: 4 } },
-      { ...look(10.3, 1.4, 15.5, -5), subject: { x: 15.5, z: -5 } }, { ...look(6.6, 9.6, 15.2, 16.2), subject: { x: 15.2, z: 16.2 } },
       { ...look(-8.6, -0.4, -15.6, -3), subject: { x: -15.6, z: -3 } }, { ...look(-3.5, 25.5, 0, 31), subject: { x: 0, z: 31 } },
     ],
     wander: [[-5, 18], [5, 18], [-4, 9.5], [4.5, 10.5], [-9, 3], [8, 3], [-6, -3], [6, -3], [-3, 24], [3, 24], [-12, 10], [11, 7],
-      [-16, 5], [19.8, 3.8], [-18, 22], [14.8, 28.6], [-18.5, -8], [-6, 13], [7, 26], [-13.5, -10.5], [13.5, -10.5]].map(([x, z]) => ({ x, z })),
+      [-16, 5], [19.8, 3.8], [-18, 22], [14.8, 28.6], [-18.5, -8], [-6, 13], [7, 26], [-13.5, -10.5], [13.5, -10.5],
+      [-30, 18], [30, 18], [-30, 3], [30, 3]].map(([x, z]) => ({ x, z })), // 2026-11-26: bốn chỗ dạo ở dải sân trước mới rộng ra (x ±30)
     bench: W.benchSeats,
   };
   W.places.push({ label: 'Cổng tam quan', desc: 'Lối vào chùa', icon: 'gate', x: 0, z: 27.5 });

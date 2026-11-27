@@ -265,13 +265,16 @@ function installCrowd(G) {
   const KINDS = {
     incense: S.incense || [], pray: S.hallFront || [], sit: S.hallSeats || [], photo: S.photo || [], tree: S.tree || [],
     pond: S.pond || [], bell: S.bell || [], fortune: S.fortune || [], bench: S.bench || [], wander: S.wander || [],
+    vuon: S.vuon || [], // vườn sau chùa (19-vuon-sau.js): ghế đá (kind 'bench') + điểm dạo (kind 'stroll'); cách cổng 150–220 m nên có dk riêng ở chooseActivity
   };
   const ACT_OF = { incense: 'incense', pray: 'pray', sit: 'sit', photo: 'photo', tree: 'tree', pond: 'pond', bell: 'bell', fortune: 'fortune', bench: 'bench', wander: 'idle' };
-  const ORDER = ['incense', 'pray', 'sit', 'photo', 'tree', 'pond', 'bell', 'fortune', 'bench', 'wander'];
+  // việc ở một chỗ (kiểu 'vuon' không có trong bảng): ghế đá trong vườn dùng tư thế ngồi + câu thoại của ghế đá; điểm dạo trong vườn là 'vuon' (đứng ngắm hồ)
+  const actOf = (kind, s) => (kind === 'vuon' ? (s.kind === 'bench' ? 'bench' : 'vuon') : ACT_OF[kind]);
+  const ORDER = ['incense', 'pray', 'sit', 'photo', 'tree', 'pond', 'bell', 'fortune', 'bench', 'wander', 'vuon'];
   const WEIGHTS = [
-    [14, 16, 12, 9, 9, 8, 6, 5, 5, 10],   // người lớn
-    [6, 7, 3, 4, 8, 15, 6, 2, 2, 18],     // trẻ em
-    [16, 18, 18, 4, 12, 6, 7, 5, 10, 6],  // người lớn tuổi
+    [14, 16, 12, 9, 9, 8, 6, 5, 5, 10, 3],   // người lớn (cột cuối: vườn sau chùa 3 / 1 / 3; mô hình Monte-Carlo: ≈ 4,4 % lượt chọn, khoảng 30,8 % khách có ghé vườn trong một chuyến; số đo thật của mô phỏng 480 giây ghi ở AREA2.md)
+    [6, 7, 3, 4, 8, 15, 6, 2, 2, 18, 1],     // trẻ em
+    [16, 18, 18, 4, 12, 6, 7, 5, 10, 6, 3],  // người lớn tuổi
   ];
   const taken = {};
   for (const k in KINDS) taken[k] = new Array(KINDS[k].length).fill(null);
@@ -321,8 +324,9 @@ function installCrowd(G) {
     releaseSpot(p);
     taken[kind][idx] = p; p.spotKind = kind; p.spotIdx = idx;
     const s = KINDS[kind][idx];
-    p.seatTop = kind === 'sit' ? (s.y || 0.6) + 0.14 : kind === 'bench' ? (s.y || 0.42) + 0.07 : 0;
-    if (kind === 'bench') p.benchSpot = s;
+    const isBench = kind === 'bench' || (kind === 'vuon' && s.kind === 'bench'); // ghế đá trong vườn sau chùa
+    p.seatTop = kind === 'sit' ? (s.y || 0.6) + 0.14 : isBench ? (s.y || 0.42) + 0.07 : 0;
+    if (isBench) p.benchSpot = s;
   }
   function releaseSpot(p) {
     if (p.spotIdx >= 0 && p.spotKind) {
@@ -389,7 +393,7 @@ function installCrowd(G) {
     for (let k = 0; k < ORDER.length; k++) {
       let w = wt[k];
       const d = nearestFree(ORDER[k], p);
-      const dk = k === 2 ? 60 : k === 1 ? 42 : 10; // 'sit'/'pray' ở chính điện (cuối sân, ~115–145 m từ cổng; v3: 50/35): giảm nhẹ theo khoảng cách để điện có người lễ, ngồi
+      const dk = k === 2 ? 60 : k === 1 ? 42 : k === 10 ? 60 : 10; // 'sit'/'pray' ở chính điện (cuối sân, ~115–145 m từ cổng; v3: 50/35): giảm nhẹ theo khoảng cách để điện có người lễ, ngồi
       w = d < 0 ? 0 : w / (1 + (d / dk) * (d / dk)); // việc ở gần được ưu tiên hơn việc ở xa
       if (ORDER[k] === p.lastKind) w *= 0.15;
       _w[k] = w; tot += w;
@@ -406,7 +410,7 @@ function installCrowd(G) {
   function startSpotActivity(p, kind, idx) {
     reserve(p, kind, idx);
     const s = KINDS[kind][idx];
-    p.act = ACT_OF[kind];
+    p.act = actOf(kind, s);
     travelTo(p, s.x, s.z, s.yaw);
     if (kind === 'photo' && Math.random() < 0.4) tryPair(p, s);
   }
@@ -510,6 +514,7 @@ function installCrowd(G) {
       case 'bell': p.dur = rand(9, 18); break;
       case 'fortune': p.shakeT = rand(3.5, 5.5); p.dur = p.shakeT + rand(4, 7); break;
       case 'bench': p.dur = rand(20, 45); break;
+      case 'vuon': p.dur = rand(8, 18); break; // dạo vườn sau chùa: đứng ngắm hồ sen một lúc
       case 'pose': p.dur = 120; p.waveT = rand(0.5, 2.5); break;
       default: p.act = 'idle'; p.dur = rand(1.5, 5); p.snap = false; break;
     }
@@ -805,6 +810,9 @@ function installCrowd(G) {
         case 'bench':
           T.sit = 1; arms(-0.55, -0.32, -0.55, 0.32); T.hip = 0.02; T.head = 0.06; T.hyaw = Math.sin(time * 0.35 + ph) * 0.4;
           break;
+        case 'vuon': // dạo vườn: đứng ngắm hồ, quay nhìn quanh chậm
+          T.head = 0.1; T.hip = 0.03; T.hyaw = Math.sin(time * 0.45 + ph) * 0.4;
+          break;
         case 'photo':
           T.phone = 1; T.hyaw = Math.sin(time * 0.4 + ph) * 0.08;
           if (p.phoneUp) { arms(-2.1, -0.38, -2.1, 0.38); T.head = -0.04; }
@@ -1009,8 +1017,9 @@ function installCrowd(G) {
     child: ['Mẹ ơi, chùa đẹp quá!', 'Con thích tiếng chuông', 'Xem cá bơi kìa!', 'Bà ơi, mình vào chùa nhé', 'Con thắp hương cho bà nhé'],
     family: ['Đi chậm thôi con', 'Con ngoan, chắp tay nào', 'Nắm tay mẹ nhé', 'Con nhớ đi nhẹ thôi nhé'],
     elder: ['Nam mô A Di Đà Phật', 'Cầu cho con cháu bình an', 'Chùa đông vui quá', 'Lên chùa thấy lòng nhẹ hẳn ra', 'Lên chùa thấy lòng thanh thản'],
-    pond: ['Sen nở đẹp quá', 'Cá bơi vui mắt ghê', 'Nước hồ trong quá', 'Hoa sen thơm dịu'],
-    bench: ['Ngồi nghỉ một chút nhé', 'Chỗ này mát quá', 'Ngắm hồ sen thật thư thái'],
+    pond: ['Sen nở đẹp quá', 'Tượng Quan Âm giữa hồ hiền từ quá', 'Nước hồ trong quá', 'Hoa sen thơm dịu'],
+    bench: ['Ngồi nghỉ một chút nhé', 'Chỗ này mát quá', 'Ngồi đây thật thư thái'],
+    vuon: ['Vườn sau chùa yên tĩnh quá', 'Hoa sen nở đẹp thật', 'Gió qua rừng trúc nghe mát lắm', 'Cây bồ đề này lớn thật', 'Ở đây thấy lòng nhẹ hẳn', 'Hồ sen thật thanh bình', 'Đèn hoa đăng trôi trên hồ đẹp quá', 'Cây bồ đề có dải lụa đỏ kìa', 'Vườn tháp trang nghiêm quá'],
     bell: ['Tiếng chuông ngân xa quá', 'Gác chuông đẹp ghê', 'Nghe chuông thấy lòng lắng lại'],
     fortune: ['Xin một quẻ đầu năm nhé', 'Xin một lời chúc đầu năm nhé'],
     guide: ['Mời cả đoàn đi theo tôi', 'Đoàn mình đi chậm thôi nhé', 'Cùng vào lễ Phật nhé cả nhà', 'Mọi người giữ yên tĩnh nhé'],
@@ -1029,6 +1038,7 @@ function installCrowd(G) {
       case 'pond': pl = r < 0.55 ? LINES.pond : p.kind === 1 ? LINES.child : LINES.ambient; break;
       case 'bell': pl = r < 0.6 ? LINES.bell : LINES.ambient; break;
       case 'bench': pl = r < 0.5 ? LINES.bench : LINES.ambient; break;
+      case 'vuon': pl = r < 0.7 ? LINES.vuon : LINES.ambient; break;
       case 'guide': pl = LINES.guide; break;
       default:
         pl = p.kind === 1 ? (r < 0.65 ? LINES.child : LINES.ambient)
@@ -1074,7 +1084,7 @@ function installCrowd(G) {
   function placeAtSpot(p, kind, idx) {
     const s = KINDS[kind][idx];
     reserve(p, kind, idx);
-    p.act = ACT_OF[kind];
+    p.act = actOf(kind, s);
     p.gx = s.x; p.gz = s.z; p.hasYaw = s.yaw !== undefined; p.gyaw = s.yaw || 0;
     p.pos.set(s.x, G.heightAt(s.x, s.z), s.z); p.gy = p.pos.y;
     p.yaw = p.hasYaw ? p.gyaw : rand(0, TAU);
@@ -1100,7 +1110,7 @@ function installCrowd(G) {
   }
   function seedInitial() {
     let paired = false; // thử ghép một cặp chụp ảnh (người chụp + người đứng làm mẫu)
-    const plan = [['incense', 4], ['pray', 6], ['sit', 10], ['photo', 3], ['tree', 3], ['pond', 2], ['bell', 1], ['fortune', 1], ['bench', 1], ['wander', 4]]; // chính điện 160 chỗ (v4; v3: 96): gieo sẵn 10 người ngồi
+    const plan = [['incense', 4], ['pray', 6], ['sit', 10], ['photo', 3], ['tree', 3], ['pond', 2], ['bell', 1], ['fortune', 1], ['bench', 1], ['wander', 4], ['vuon', 1]]; // chính điện 160 chỗ (v4; v3: 96): gieo sẵn 10 người ngồi
     for (let k = 0; k < plan.length; k++) {
       const kind = plan[k][0];
       for (let i = 0; i < plan[k][1]; i++) {

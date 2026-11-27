@@ -142,6 +142,7 @@ function buildBanTho(G, ctx) {
   //  → nửa dưới mọi mặt cong tối dần (sa-tanh), nửa trên đón ba mảng sáng lớn (không còn vệt kim). PMREM dựng MỘT lần. Hỏng → vật liệu dự phòng.
   // =====================================================================
   let envTex = null;
+  const envExtra = []; // vật liệu của toà khác mượn bản đồ phản chiếu này (17-dien-phu.js: tượng Quan Âm nghìn tay); được gán lại khi khôi phục ngữ cảnh WebGL
   const buildEnv = () => {
     const es = new THREE.Scene();
     const pane = (w, h, x, y, z, rx, ry, c, k = 1) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(k), side: THREE.DoubleSide })); m.position.set(x, y, z); m.rotation.set(rx, ry, 0); es.add(m); };
@@ -187,7 +188,7 @@ function buildBanTho(G, ctx) {
     // mất ngữ cảnh WebGL (máy ít bộ nhớ): bản đồ phản chiếu là render target nên không tự dựng lại như texture canvas → dựng lại rồi gán cho các vật liệu;
     // bản đồ bóng của đèn rọi (tĩnh) cũng dựng lại
     G.renderer.domElement.addEventListener('webglcontextrestored', () => safe('khôi phục (ban thờ)', () => {
-      if (envTex) { const old = envTex; envTex = buildEnv(); for (const m of [matGold, matFace, matHair, matGloss, matMatte, whiteMat, ornMat, discMat]) if (m && m.envMap) { m.envMap = envTex; m.needsUpdate = true; } if (old) old.dispose(); }
+      if (envTex) { const old = envTex; envTex = buildEnv(); for (const m of [matGold, matFace, matHair, matGloss, matMatte, whiteMat, ornMat, discMat].concat(envExtra)) if (m && m.envMap) { m.envMap = envTex; m.needsUpdate = true; } if (old) old.dispose(); }
       if (spotRef.l) { spotRef.l.shadow.needsUpdate = true; G.renderer.shadowMap.needsUpdate = true; }
     }));
   });
@@ -567,6 +568,7 @@ function buildBanTho(G, ctx) {
     if (W.statueFocus) W.statueFocus.set(0, SLABY + 3.58 * FS + DY, ZBUD + 0.4 * FS + DZ);                              // ngực pho giữa (THẾ GIỚI)
     // số đo cho máy quay chính điện (THẾ GIỚI): phiến đá, mặt bàn, đầu, ngực, đỉnh vòm, nửa rộng
     W.banTho = { slabTop: SLABY + DY, tableFront: ZT1 + DZ, headY: YHEAD + DY, chestY: SLABY + 3.58 * FS + DY, archTop: ARCHY + 0.38 + DY, halfWidth: SLW, archHalfWidth: ARCHHW, panelTop: PANTOP + DY, plaqueY: 12.395 + DY, centerZ: ZBUD + DZ, headZ: ZHEAD + DZ };
+  W.banTho.envTex = () => envTex; W.banTho.envMats = envExtra; // 2026-11-27: cho tượng Quan Âm (17) dùng chung bản đồ phản chiếu
   });
   const SPOT_I = 38; // cường độ đèn rọi ban ngày (một hằng cho cả lúc tạo lẫn bộ cập nhật ngày đêm)
   let spot = null, motes = null, moteMat = null, moteVel = null, lowFx = false; // lowFx: máy yếu đã tắt hạt bụi — giữ tắt dù setVis của điện bật lại khi vào/ra vùng 52 m

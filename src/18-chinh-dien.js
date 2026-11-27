@@ -750,9 +750,9 @@ function buildChinhDien(G) {
     G.nav.built = false;
   });
 
-  // cắt cảnh: nội thất chỉ vẽ khi máy quay cách tâm điện dưới 52 m — tâm (0, 7 + DY, −77,75 + DZ) = (0, 9,88, −99,75)
+  // cắt cảnh: nội thất chỉ vẽ khi máy quay cách tâm điện dưới 52 m — tâm (0, 7 + DY, −77,75 + DZ) = (0, 9,88, −99,75) — và còn ở trước tường sau điện (z > ZB + DZ = −113,2); v5: từ vườn sau chùa (z < −113,2) không vẽ nội thất và bàn thờ
   let shown = true;
-  const near = (p) => { const dx = p.x, dy = p.y - (7 + DY), dz = p.z - (-77.75 + DZ); return dx * dx + dy * dy + dz * dz < 52 * 52; };
+  const near = (p) => { const dx = p.x, dy = p.y - (7 + DY), dz = p.z - (-77.75 + DZ); return p.z > ZB + DZ && dx * dx + dy * dy + dz * dz < 52 * 52; };
   const setVis = (v) => { for (const m of meshIn) m.visible = v; };
   const CD = (W.chinhDien = { lightK: 0.35 });
   const gDay = new THREE.Color(0x38220a), gNight = new THREE.Color(0x4c3010), bDay = new THREE.Color(0x2a1a0a), bNight = new THREE.Color(0x4a3012), hl0 = W.lights && W.lights.hall;

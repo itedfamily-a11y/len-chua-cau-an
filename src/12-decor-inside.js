@@ -45,7 +45,10 @@ function buildDecorInside(G) {
   for (const v of Object.values(W)) if (v && typeof v === 'object') { addPt(v.poi); addPt(v.stand); addPt(v.release); }
   if (W.ext) for (const v of Object.values(W.ext)) if (v && typeof v === 'object') { addPt(v.poi); addPt(v.stand); }
   const E = [], adj = new Float32Array(NN * NN), cutAll = [];
-  for (let i = 0; i < NN; i++) for (const e of NODES[i].n) if (e.i > i) {
+  // 2026-11-26: tường bên ra ±36,3: đường đi nối với nút ở dải mới (|x| ≥ 26,5: sân trước ±30, sân hông ±27, hành lang ±34,5) không tính vào việc chọn chỗ đặt đồ.
+  // Các đường ấy dài, chéo qua sân cũ mà không có lối vòng 2 chặng, nên trước đây chặn mất hòn non bộ và đẩy lệch hoa sứ, bồn hoa. Đồ đặt xong, G.nav dựng lại theo vật cản mới nên nút ở dải mới vẫn nối được.
+  const wideNode = (n) => Math.abs(n.x) >= 26.5;
+  for (let i = 0; i < NN; i++) for (const e of NODES[i].n) if (e.i > i && !wideNode(NODES[i]) && !wideNode(NODES[e.i])) {
     const a = NODES[i], b = NODES[e.i];
     E.push({ a: i, b: e.i, ax: a.x, az: a.z, dx: b.x - a.x, dz: b.z - a.z, l2: (b.x - a.x) ** 2 + (b.z - a.z) ** 2, len: e.d,
       x0: Math.min(a.x, b.x), x1: Math.max(a.x, b.x), z0: Math.min(a.z, b.z), z1: Math.max(a.z, b.z), alive: true, via: -1 });
@@ -69,6 +72,7 @@ function buildDecorInside(G) {
   const segDist = (px, pz, e) => { const t = e.l2 > 0 ? U.clamp(((px - e.ax) * e.dx + (pz - e.az) * e.dz) / e.l2, 0, 1) : 0; return Math.hypot(px - e.ax - e.dx * t, pz - e.az - e.dz * t); };
   const inR = (x, z, r, x0, x1, z0, z1) => x > x0 - r && x < x1 + r && z > z0 - r && z < z1 + r;
   const BN = G.L2 && G.L2.baoNghiem;
+  const GI = (G.L2 && G.L2.corridors && G.L2.corridors.inner) || 33.1; // 2026-11-26: cột hành lang trong dời 20,8 → 33,1 (rộng ra cho bằng vườn sau)
   // vùng cấm: lối giữa, nền chính điện, cổng, cầu, bậc, hành lang, vòng nhiễu tháp
   function banned(x, z, r) {
     if (inR(x, z, r, -2.6, 2.6, -13.4, 31)) return true;     // lối giữa sân trước, đến đầu cầu
@@ -80,10 +84,11 @@ function buildDecorInside(G) {
     if (inR(x, z, r, -4.4, 4.4, -25.4, -22.6)) return true;  // bậc trước tầng nền
     if (inR(x, z, r, -13.3, -10.7, -43.3, -36.7)) return true; // bậc tây
     if (inR(x, z, r, 15.0, 19.0, -62.4, -59.2) || inR(x, z, r, -19.0, -15.0, -62.4, -59.2)) return true; // hai bậc góc lên tầng nền chính điện
-    if (Math.abs(x) > 20.3 - r && z < -11) return true;      // hành lang
-    if (BN && Math.hypot(x - BN.x, z - BN.z) < (BN.banR || 4.4) + r) return true;
+    if (Math.abs(x) > GI - 0.5 - r && z < -11) return true;  // hành lang (2026-11-26: |x| > 32,6 thay cho 20,3)
+    if (BN && Math.hypot(x - BN.x, z - BN.z) < (BN.banR || 4.4) + r) return true; // 2026-11-26: tháp dời vào vườn sau chùa, vùng cấm tự đi theo G.L2.baoNghiem (chỗ cũ x −20,4…−11,5 / z −45…−35 nay là sân lát trống)
     for (const b of G.decorBans || []) if (inR(x, z, r, b[0], b[1], b[2], b[3])) return true; // vùng chừa do toà khác đăng ký [x0, x1, z0, z1] (17-dien-phu.js)
-    return x < -23.0 + r || x > 23.0 - r || z > 30.0 - r || z < -117.0 + r; // (v4: tường bao sau ở z −118, mặt trong −117,7)
+    // 2026-11-26: tường bên dời ±24 → ±36,3 (mặt trong ±36,0): biên ±23,0 → ±35,4 (chừa 0,6 m trước mặt trong; 35,4 − 0,5 = 34,9 để chậu x ±34,8 qua được, không dính sai số số thực)
+    return x < -35.4 + r || x > 35.4 - r || z > 30.0 - r || z < -117.0 + r; // (v4: tường bao sau ở z −118, mặt trong −117,7)
   }
   const reserved = []; // chỗ chừa cho người đứng xem [x, z, r]
   const resv = (x, z, r) => { for (const q of reserved) if (Math.hypot(x - q[0], z - q[1]) < r + q[2]) return true; return false; };
@@ -217,7 +222,7 @@ function buildDecorInside(G) {
       box(S, hx, p[1] - 0.2, hz, 0.012, 0.22, 0.012, 0xd8c09a); box(S, hx, p[1] - 0.38, hz, 0.1, 0.15, 0.015, 0xd8322a); box(S, hx, p[1] - 0.33, hz, 0.1, 0.03, 0.018, C.gold);
     }
     circ(x, z, 0.5, 'pot');
-    W.petalSources.length < 40 && seed % 3 === 0 && W.petalSources.push({ x, y: y0 + 2.0, z, r: 1.4, kind: 'flower' });
+    W.petalSources.length < 40 + ((G.vuonSau && G.vuonSau.petalSources) || 0) /* trần 40 của sân chùa + số nguồn vườn sau chùa đã thêm trước 12 (13: 53 khi vườn dựng đủ) */ && seed % 3 === 0 && W.petalSources.push({ x, y: y0 + 2.0, z, r: 1.4, kind: 'flower' });
   }
   function quat(x, z, seed) {
     const r = U.rng(seed), y0 = hy(x, z);
@@ -531,16 +536,22 @@ function buildDecorInside(G) {
   });
   // 4. Ghế đá dưới các cây có sẵn
   safe('benches', () => {
-    placeBench(-20.8, 24.2, PI / 2, 2.5);   // dưới cây tròn góc tây sân trước, quay mặt vào sân
-    placeBench(20.9, 24.6, -PI / 2, 2.5);   // dưới cây tròn góc đông, nhìn ra hồ sen
-    placeBench(19.6, -8.6, -PI / 2, 3.0); // cạnh cây bồ đề lớn
+    // 2026-11-26: cây tròn góc sân trước (05-world.js roundTree ±21, 27,5) có thể đã dời theo tường mới (±33,3): nếu thấy cây ở chỗ mới thì ghế đi theo (DX = 12,3), không thì giữ chỗ cũ
+    const treeAt = (x, z) => col.list.some((c) => c.t === 0 && c.tag === 'tree' && Math.hypot(c.x - x, c.z - z) < 1.2);
+    const bx = (sx, x) => (treeAt(sx * 33.3, 27.5) ? x + sx * 12.3 : x);
+    placeBench(bx(-1, -20.8), 24.2, PI / 2, 2.5);   // dưới cây tròn góc tây sân trước, quay mặt vào sân
+    placeBench(bx(1, 20.9), 24.6, -PI / 2, 2.5);   // dưới cây tròn góc đông, quay mặt vào sân
+    placeBench(19.6, -8.6, -PI / 2, 3.0); // góc đông, trước gác bên đông
   });
   // 5. Hàng chậu mai – quất dọc tường trước, tường hai bên, hai bên bậc chính điện, bên cổng
   safe('pots', () => {
+    // 2026-11-26: tường bên rộng ra ±36: hàng chậu dọc tường trước giữ đoạn cũ (±10,4…±22,2) rồi nối thêm đoạn mới tới góc (±25,2…±34,5); hàng dọc tường bên dời theo (±22,5 → ±34,8)
     rowPots(-10.4, 29.3, -22.2, 29.3, 2.7, 0, 1.4);
     rowPots(10.4, 29.3, 22.2, 29.3, 2.7, 1, 1.4);
-    rowPots(-22.5, 25.0, -22.5, -8.0, 3.3, 0, 1.6);
-    rowPots(22.5, 27.0, 22.5, -8.0, 3.4, 1, 1.6);
+    rowPots(-34.8, 25.0, -34.8, -8.0, 3.3, 0, 1.6);
+    rowPots(34.8, 27.0, 34.8, -8.0, 3.4, 1, 1.6);
+    rowPots(-25.2, 29.3, -34.5, 29.3, 2.7, 1, 1.4);
+    rowPots(25.2, 29.3, 34.5, 29.3, 2.7, 0, 1.4);
   });
   safe('potsGate', () => {
     for (const s of [-1, 1]) { const p = find(s * 4.3, 27.6, pot1, 1.6, 0.3); if (p) { (s < 0 ? mai : quat)(p.x, p.z, potSeed++); mark(p.x, p.z, 0.6); } }
@@ -561,11 +572,13 @@ function buildDecorInside(G) {
     const d = W.decor || {};
     if (d.diLac) for (const s of [-1, 1]) { const o = rot(d.diLac.yaw, s * 2.3, 0.9); placeLamp(d.diLac.x + o[0], d.diLac.z + o[1], 1.2); }
     if (d.honNonBo) { placeLamp(d.honNonBo.x + 1.9, d.honNonBo.z - 2.9, 1.2); placeLamp(d.honNonBo.x + 1.9, d.honNonBo.z + 2.9, 1.2); }
-    for (const [x, z] of [[-21, 15], [21.5, -1], [-10.4, -59.3], [10.4, -59.3], [-8.5, -10], [8.5, -10], [-18, 0], [21, 12], [-12, 22], [-6.5, -28.5], [6.5, -28.5]]) placeLamp(x, z, 1.8);
+    // 2026-11-26: ba đèn đá sát tường bên dời theo tường mới (DX = 12,3): (−21, 15) → (−33,3, 15), (21,5, −1) → (33,8, −1), (21, 12) → (33,3, 12)
+    for (const [x, z] of [[-33.3, 15], [33.8, -1], [-10.4, -59.3], [10.4, -59.3], [-8.5, -10], [8.5, -10], [-18, 0], [33.3, 12], [-12, 22], [-6.5, -28.5], [6.5, -28.5]]) placeLamp(x, z, 1.8);
   });
   // 7b. Hoa văn sen lát trên lối giữa sân trước và sân sau
   safe('medallions', () => { medallion(0, 18.2, 1.85, 0.034); medallion(0, 11.0, 1.85, 0.034); medallion(0, -2.0, 1.85, 0.034); medallion(0, -9.0, 1.7, 0.044); });
-  // 8. Cột nêu + dây cờ
+  // 8. Cột nêu + dây cờ. 2026-11-25 bớt dây cho đỡ rối (24 → 15): chỉ còn dây chạy dọc hai bên lối giữa, dây từ mái cổng và một dây ngang trước cổng;
+  //    bỏ các dây chéo và dây ngang băng qua sân, bỏ dây từ cột nêu sang mái gác hai bên
   safe('flags', () => {
     const P = { W: [], E: [] };
     for (const s of [-1, 1]) {
@@ -578,13 +591,10 @@ function buildDecorInside(G) {
       const a = s < 0 ? P.W : P.E, T = (i) => a[i] && poleTop(a[i]);
       chain(s, [tru(s), T(0), T(1), T(2), T(3)]);
       if (T(0)) addString(gateEave(s * 3.0), T(0));
-      if (T(2)) addString(T(2), [s * 12.3, 4.74, -3.0]);
       chain(s, [T(3), T(4), T(5)]);
     }
     const x2 = (i, j) => { const w = P.W[i], e = P.E[j]; if (w && e) addString(poleTop(w), poleTop(e)); };
-    x2(0, 0); x2(2, 2); x2(3, 3); x2(4, 4); x2(0, 1); x2(5, 5);
-    if (P.E[1] && P.W[2]) addString(poleTop(P.E[1]), poleTop(P.W[2]));
-    if (P.W[1] && P.E[2]) addString(poleTop(P.W[1]), poleTop(P.E[2]));
+    x2(0, 0);
   });
   // 9. Đèn lồng nhỏ dưới mái hiên gác chuông + nhà xin quẻ
   safe('eaves', () => {

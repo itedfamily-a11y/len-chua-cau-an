@@ -291,7 +291,7 @@ function qualityTick(raw) {
 // =====================================================================
 G.collide = {
   list: [],
-  bounds: { x0: -31, x1: 31, z0: -119, z1: 76 }, // z0: tường bao phía sau đã lùi từ −84 ra −100 (v3) rồi ra −118 (v4: chính điện sâu 27 m, tường sau điện z −113,2; hành lang tới −113)
+  bounds: { x0: -37, x1: 37, z0: -189, z1: 76 }, // v5 vườn sau chùa: x ±37 (tường bên vườn x ±36,6), z0 −189 (tường sau vườn z −188,2). Trước đó x ±31, z0 −119 (v4: tường bao sau −118; v3: −101)
   circle(x, z, r, tag) { const c = { t: 0, x, z, r, tag }; this.list.push(c); return c; },
   box(x0, z0, x1, z1, tag) { const c = { t: 1, x0: Math.min(x0, x1), z0: Math.min(z0, z1), x1: Math.max(x0, x1), z1: Math.max(z0, z1), tag }; this.list.push(c); return c; },
   ellipse(x, z, rx, rz, tag) { const c = { t: 2, x, z, rx, rz, tag }; this.list.push(c); return c; },
@@ -752,7 +752,8 @@ function updateCamera(dt) {
 const actionBtn = $('#actionBtn'), poiLabelsEl = $('#poiLabels');
 const ringGeo = new THREE.RingGeometry(0.85, 1.12, 40); ringGeo.rotateX(-Math.PI / 2);
 const ringMat = new THREE.MeshBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
-const rings = new THREE.InstancedMesh(ringGeo, ringMat, 16); rings.count = 0; rings.frustumCulled = false; rings.renderOrder = 2;
+const MAX_RINGS = 24; // số vòng sáng tối đa dưới đất (v5: 17 điểm hoạt động — vườn sau chùa thêm "Ngồi ngắm hồ sen"; trước đó 16)
+const rings = new THREE.InstancedMesh(ringGeo, ringMat, MAX_RINGS); rings.count = 0; rings.frustumCulled = false; rings.renderOrder = 2;
 scene.add(rings);
 G.poi = {
   list: [], current: null, rings,
@@ -762,7 +763,7 @@ G.poi = {
     p.y = G.heightAt(p.x, p.z);
     const lab = U.el('div', 'plabel'); lab.innerHTML = G.icons[p.icon] || G.icons.dot; lab.appendChild(document.createTextNode(p.label));
     poiLabelsEl.appendChild(lab); p.labelEl = lab;
-    this.list.push(p); rings.count = Math.min(16, this.list.length);
+    this.list.push(p); rings.count = Math.min(MAX_RINGS, this.list.length);
     return p;
   },
   get(id) { return this.list.find((p) => p.id === id); },
@@ -784,7 +785,7 @@ function updatePoi() {
     const ok = p.enabled && (!p.available || p.available());
     const d = Math.hypot(P.pos.x - p.x, P.pos.z - p.z);
     if (free && ok && d < p.r && d < bd) { bd = d; best = p; }
-    if (i < 16) {
+    if (i < MAX_RINGS) {
       const s = 1 + Math.sin(G.time * 2.4 + i) * 0.08;
       _rm.makeScale(s, 1, s); _rm.setPosition(p.x, p.y + 0.04, p.z); rings.setMatrixAt(i, _rm);
     }
@@ -1005,7 +1006,7 @@ G.openMap = openMap;
 const TUT = [
   { t: 'Đi lại', p: G.isTouch ? 'Kéo cần điều khiển ở góc trái để đi. Kéo vào khoảng trống trên màn hình để xoay góc nhìn, chụm hai ngón để thu phóng.' : 'Dùng W A S D hoặc phím mũi tên để đi. Giữ chuột và kéo để xoay góc nhìn, lăn chuột để thu phóng.',
     i: '<svg viewBox="0 0 120 80"><circle cx="40" cy="44" r="28" fill="none" stroke="#f7d793" stroke-width="3" opacity=".6"/><circle cx="52" cy="34" r="12" fill="#e8b85c"/><path d="M80 44h26M98 36l8 8-8 8" stroke="#f7d793" stroke-width="3" fill="none" stroke-linecap="round"/></svg>' },
-  { t: 'Tới gần nơi có vòng sáng', p: 'Lư hương, gác chuông, chính điện, cây bồ đề, hồ sen và bàn xin quẻ đều có một hoạt động nhỏ. Biểu tượng bản đồ ở góc trên giúp bạn tự đi tới.',
+  { t: 'Tới gần nơi có vòng sáng', p: 'Lư hương, gác chuông, chính điện và bàn xin quẻ đều có một hoạt động nhỏ. Qua hai cổng nhỏ hai bên phía sau chính điện là tới vườn sau chùa: treo dải lụa cầu an trên cây bồ đề, thả hoa đăng trên hồ sen. Bản đồ ở góc trên giúp bạn tự đi tới.',
     i: '<svg viewBox="0 0 120 80"><ellipse cx="60" cy="62" rx="40" ry="10" fill="none" stroke="#ffd27a" stroke-width="3"/><path d="M48 60V30l12-10 12 10v30" fill="#b8322a"/><path d="M40 32h40l-20-16z" fill="#a7422c"/></svg>' },
   { t: 'Chạm nút hành động', p: G.isTouch ? 'Khi tới gần, một nút to màu vàng hiện ở góc phải. Chạm một lần là bắt đầu.' : 'Khi tới gần, một nút to màu vàng hiện ở góc phải. Bấm nút đó hoặc phím E là bắt đầu.',
     i: '<svg viewBox="0 0 120 80"><rect x="18" y="22" width="84" height="38" rx="19" fill="#e8b85c" stroke="#fff3cf" stroke-width="3"/><circle cx="40" cy="41" r="11" fill="#fff" opacity=".5"/><rect x="56" y="36" width="34" height="9" rx="4" fill="#2f1a0f" opacity=".8"/></svg>' },

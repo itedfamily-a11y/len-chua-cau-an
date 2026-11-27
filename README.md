@@ -29,13 +29,22 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
 
 - Một file `index.html` duy nhất, dựng từ các phần trong `src/` bằng `node build.js`.
 - Dùng [Three.js](https://threejs.org/) r160 tải từ CDN jsDelivr (kể cả phần phụ trợ `three/addons/` cho hậu kỳ);
-  không có tệp ảnh, mô hình hay phông chữ ngoài. Mọi hình khối, tranh phông và biểu tượng đều vẽ bằng mã.
+  không có tệp ảnh hay phông chữ ngoài. Mọi hình khối, tranh phông và biểu tượng đều vẽ bằng mã, trừ mô hình 3D do chủ chùa chọn:
+  tượng Quan Âm nghìn mắt nghìn tay ở Quan Âm Các là bản quét 3D pho tượng chùa Bút Tháp
+  ([Tuong Phat Ba 5K](https://sketchfab.com/3d-models/tuong-phat-ba-5k-da1a8fe064df40bf892adb03fa115e3d) của vudn54,
+  giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã giảm số mặt, cắt phần nền, thu nhỏ ảnh bề mặt và chỉnh vật liệu),
+  lưu thành hai bản trong `assets/mo-hinh/`: `quan-am-but-thap-4k.glb` (3,6 MB, máy tính) và `quan-am-but-thap.glb` (1,9 MB, điện thoại);
+  game chỉ tải một bản, khi người chơi tới gần; thiếu file hoặc tải lỗi thì game dùng tượng dựng bằng mã.
+  Tàng Kinh Các ở sân đông (qua cổng nách trên tường đông sân trước) dựng từ mô hình
+  [Procedural asian architecture test 11](https://sketchfab.com/3d-models/procedural-asian-architecture-test-11-fea52a7cf45a4f5893c872c84da501e0) của ghostnoface,
+  giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã giản lược từ 410 nghìn xuống 63 nghìn tam giác (vách cửa và lan can thành tấm phẳng dán ảnh),
+  lưu ở `assets/mo-hinh/tang-kinh-cac.glb`, tải sau khi game chạy vài giây; chưa có file hoặc tải lỗi thì game hiện bản dựng tạm bằng khối hộp.
 - Hậu kỳ trong chính điện: khử răng cưa MSAA, GTAO, bloom, đường cong màu mềm; tự hạ mức trên máy yếu
   hoặc khi trình duyệt không hỗ trợ, và vẫn chạy ở chế độ vẽ thường nếu phần phụ trợ không tải được.
 - Yêu cầu trình duyệt: Chrome / Edge 89+, Safari 16.4+, Firefox 108+ (cần import map và WebGL2).
 - Chế độ đi chùa chung dùng [Trystero](https://github.com/dmotz/trystero) 0.26.0 (MIT) tải từ jsDelivr khi công tắc đang bật (bật sẵn trên trang
   công khai, nên mỗi người vào chùa tải thêm khoảng 70 kB trừ khi đã tắt; bản chạy ngay trên máy tắt sẵn);
-  đây là ngoại lệ duy nhất của luật "không tài sản ngoài". Cần trang chạy qua https (GitHub Pages có sẵn) hoặc localhost. Hai người sau
+  đây là một trong hai ngoại lệ của luật "không tài sản ngoài" (ngoại lệ kia là các file mô hình 3D trong thư mục `assets/`). Cần trang chạy qua https (GitHub Pages có sẵn) hoặc localhost. Hai người sau
   mạng khắt khe (NAT đối xứng, thường gặp ở 4G/5G) chỉ nối được qua máy chủ chuyển tiếp TURN, khai trong `TURN_SERVERS`
   (`src/22-di-chua-chung.js`, cách khai ở `HUONG-DAN-CONG-KHAI.md`); khi danh sách còn trống họ có thể không nối được với nhau. Dữ liệu qua
   máy chủ chuyển tiếp vẫn mã hoá; máy chủ đó thấy IP của mọi người đang nối. Dòng "Chi tiết kết nối" trong *Cài đặt* cho biết có bao nhiêu

@@ -44,9 +44,10 @@ function installActivitiesC(G) {
     'linh-thu': { icon: 'beast', intro: 'Phỏng theo bộ linh thú đá thời Lý ở chùa Phật Tích.' },
     'tich-thien-am': { icon: 'wheel', intro: 'Phỏng theo Tích Thiện Am và toà Cửu phẩm liên hoa ở chùa Bút Tháp.' },
     'quan-am': { icon: 'beads', intro: 'Phỏng theo tượng Quan Âm nghìn mắt nghìn tay ở chùa Bút Tháp.' },
-    'bao-nghiem': { icon: 'stupa', intro: 'Phỏng theo tháp đá 8 mặt, 5 tầng của chùa Bút Tháp.' },
+    'bao-nghiem': { icon: 'stupa', intro: 'Phỏng theo bảo tháp chùa Phật Tích: tháp gạch đỏ tám mặt, mười ba tầng. Tháp đứng trong vườn sau chùa, phía sau chính điện.' }, // 2026-11-26: tháp dời từ sân hai vào vườn sau chùa
     'vuon-thap': { icon: 'stupa', intro: 'Phỏng theo vườn tháp ở chùa Phật Tích — một góc yên tĩnh để dừng chân.' },
     'hanh-lang': { icon: 'walk', intro: 'Phỏng theo hai dãy hành lang dài của chùa Bút Tháp.' },
+    'vuon-sau': { icon: 'lotus', intro: 'Hồ sen, cây bồ đề, vườn tháp, bảo tháp và tượng Quan Âm giữa hồ. Nơi dừng chân thong thả, nghe gió qua rừng trúc.' },
   };
 
   const SYL = ['Nam', 'mô', 'A', 'Di', 'Đà', 'Phật'];
@@ -494,9 +495,9 @@ function installActivitiesC(G) {
     const body = U.el('div');
     body.append(
       U.el('div', 'ac-line', 'Bạn đã đi nhiễu tháp ba vòng.'),
-      U.el('p', 'ac-p', 'Phỏng theo tháp Báo Nghiêm ở chùa Bút Tháp: tháp đá 8 mặt, 5 tầng, cao khoảng 13 m.'),
+      U.el('p', 'ac-p', 'Phỏng theo bảo tháp chùa Phật Tích (Bắc Ninh): tháp gạch đỏ tám mặt, mười ba tầng, tầng dưới có cửa vòm và điện Văn Thù.'),
       U.el('p', 'ac-p', 'Đi nhiễu quanh tháp là cách bày tỏ lòng thành kính và giữ tâm chánh niệm: bước chân chậm rãi, hơi thở nhẹ nhàng.'));
-    G.ui.panel({ title: 'Tháp Báo Nghiêm', body, actions: [{ label: 'Đóng', primary: true }] });
+    G.ui.panel({ title: 'Bảo tháp', body, actions: [{ label: 'Đóng', primary: true }] });
   }
   // mỗi khung khi hành trình đang chạy: không cấp phát đối tượng mới
   function updateQuest(dt) {
@@ -686,6 +687,55 @@ function installActivitiesC(G) {
   }
 
   // =====================================================================
+  //  4b) NGỒI NGẮM HỒ SEN — ngồi trên ghế đá trong thủy tạ của vườn sau chùa, nhìn qua hồ về tượng Quan Âm; vài câu nhẹ nhàng nhắc thở chậm
+  //  Không thắng thua, không hứa hẹn kết quả. Kết thúc bằng nút "Đứng dậy", nút ×, phím Esc, hoặc khi người chơi bước đi.
+  // =====================================================================
+  const NGAM_LINES = [
+    'Ngồi xuống chậm rãi. Mặt hồ phẳng lặng ở phía trước.',
+    'Thả lỏng đôi vai, để hai tay đặt nhẹ trong lòng.',
+    'Hít vào thật chậm… rồi thở ra dài hơn một chút.',
+    'Nhìn những lá sen nằm yên trên mặt nước.',
+    'Xa xa, tượng Quan Âm đứng lặng giữa hồ.',
+    'Nếu tâm trí đi lang thang, cứ nhẹ nhàng quay về với hơi thở.',
+    'Nghe gió qua rừng trúc, nghe lá khẽ động.',
+    'Mỗi hơi thở ra là một lần buông nhẹ.',
+    'Ngồi bao lâu tuỳ ý bạn. Khi muốn, hãy đứng dậy và đi tiếp.',
+  ];
+  const NGAM_GAP = 9;      // giây giữa hai câu (theo giờ trò chơi)
+  function startNgamSen() {
+    if (busy || G.activity.current) return;
+    busy = true;
+    launch('ngamHoSen', runNgamSen);
+  }
+  async function runNgamSen() {
+    const V = E.thuyTa;
+    if (!G.activity.begin('ngamHoSen', { cam: V.cam })) { busy = false; return; }
+    const r = newRun('ngamHoSen');
+    let seated = false, armed = false;
+    r.defer(() => { if (seated) G.player.placeAt(V.stand.x, V.stand.z, V.stand.yaw); });   // đứng dậy về chỗ cũ
+    const layer = mkLayer(r, true);
+    mkClose(layer, () => r.exit());
+    const P = G.player;
+    if (!(await goTo(r, V.stand))) return;
+    const seat = V.seat || V.stand;
+    P.placeAt(seat.x, seat.z, seat.yaw);
+    P.pos.y = (seat.y != null ? seat.y : 0.87) + (0.07 + 0.31) * (G.chibi.k || 1); // mặt ghế đá (trên sàn thủy tạ) + nửa độ hạ thân khi ngồi (theo tỉ lệ người)
+    seated = true;
+    P.poseParam = 0; P.setPose('sit');
+    const cap = mkCaption(layer);
+    const doneBtn = U.el('button', 'btn primary ac-donebtn', 'Đứng dậy'); doneBtn.type = 'button';
+    doneBtn.addEventListener('click', () => { sfx('ui'); r.exit(); });
+    layer.append(doneBtn);
+    sfx('bowlBell', { vol: 0.5 });
+    r.sleep(2).then((ok) => { if (ok) armed = true; });                                             // hai giây đầu bỏ qua phím đang giữ
+    r.frame(() => { if (armed && G.input && G.input.moveVector && G.input.moveVector().mag > 0.5) r.exit(); });   // bước đi thì đứng dậy
+    for (let i = 0; i < NGAM_LINES.length; i++) {
+      cap.say(NGAM_LINES[i]);
+      if (!(await r.sleep(NGAM_GAP))) return;
+    }
+  }
+
+  // =====================================================================
   //  5) LINH THÚ — lại gần mỗi loài lần đầu thì "gặp"; bảng giới thiệu 5 loài
   // =====================================================================
   const AN_R = 3.3, AN_HX = 0.95, AN_HZ = 0.65;       // bán kính gặp, nửa thân (khớp vật cản 'linhthu' ở 08-world2.js)
@@ -771,7 +821,7 @@ function installActivitiesC(G) {
       c.append(seal, U.el('div', 'ac-sn', s.name), U.el('div', 'ac-sd', typeof iso === 'string' ? U.dateVN(iso) : 'Chưa ghé'));
       grid.appendChild(c);
     }
-    box.append(U.el('div', 'ac-sub', got ? 'Đã nhận ' + got + '/' + S.length + ' dấu ấn ở khu Phật Tích – Bút Tháp' : 'Chưa có dấu ấn nào. Hãy dạo bước qua cầu đá, lên khu Phật Tích – Bút Tháp nhé.'), grid);
+    box.append(U.el('div', 'ac-sub', got ? 'Đã nhận ' + got + '/' + S.length + ' dấu ấn hành hương' : 'Chưa có dấu ấn nào. Hãy dạo bước quanh chùa, qua cầu đá, dọc các hành lang và tới vườn sau chùa nhé.'), grid);
     let animals = 0; for (let i = 0; i < SPECIES.length; i++) if (d.animals[SPECIES[i].kind]) animals++;
     box.appendChild(U.el('div', 'ac-prog', 'Linh thú đã gặp: ' + animals + '/' + SPECIES.length));
     const stats = U.el('div', 'ac-stats');
@@ -804,16 +854,26 @@ function installActivitiesC(G) {
   // =====================================================================
   //  ĐĂNG KÝ ĐIỂM HOẠT ĐỘNG
   // =====================================================================
+  // ---------- Vườn sau chùa (19-vuon-sau.js): một dấu ấn hành hương + một mục "Vườn sau chùa" trong bản đồ ----------
+  const VS = G.vuonSau;
+  if (VS && VS.rect && VS.place) {
+    if (E.sites && !E.sites.some((s) => s.id === 'vuon-sau')) E.sites.push({ id: 'vuon-sau', name: 'Vườn sau chùa', rects: [[VS.rect.x0, VS.rect.x1, VS.rect.z0, VS.rect.z1]] });
+    const pl = G.world.places;
+    if (pl && !pl.some((q) => q.label === 'Vườn sau chùa')) pl.push({ label: 'Vườn sau chùa', desc: 'Hồ sen, tượng Quan Âm, cây bồ đề, vườn tháp và bảo tháp sau chính điện', icon: 'lotus', x: VS.place.x, z: VS.place.z });
+  }
   const reg = (ok, def) => { if (ok) { try { G.poi.add(def); } catch (e) { console.error(e); } } };
   const C0 = E.cuuPham, B0 = E.baoNghiem, Q0 = E.quanAm, V0 = E.vuonThap, L0 = E.linhThu;
   reg(C0 && C0.poi, { id: 'cuu-pham', label: 'Xoay tháp Cửu phẩm', icon: 'wheel', x: C0 && C0.poi.x, z: C0 && C0.poi.z, r: C0 && C0.poi.r,
     desc: 'Đẩy toà tháp gỗ bát giác xoay quanh trục giữa, phỏng theo chùa Bút Tháp', onAction: startCuuPham });
   reg(B0 && B0.poi, { id: 'nhieu-thap', label: 'Đi nhiễu tháp', icon: 'walk', x: B0 && B0.poi.x, z: B0 && B0.poi.z, r: B0 && B0.poi.r,
-    desc: 'Đi ba vòng quanh tháp đá, giữ tháp ở bên tay phải', available: () => !quest.on, onAction: startNhieu });
+    desc: 'Đi ba vòng quanh bảo tháp trong vườn sau chùa, giữ tháp ở bên tay phải', available: () => !quest.on, onAction: startNhieu });
   reg(Q0 && Q0.poi, { id: 'quan-am', label: 'Lần chuỗi hạt', icon: 'beads', x: Q0 && Q0.poi.x, z: Q0 && Q0.poi.z, r: Q0 && Q0.poi.r,
     desc: 'Lần 21 hạt trước tượng Quan Âm, theo nhịp của riêng bạn', onAction: startChuoiHat });
   reg(V0 && V0.poi, { id: 'vuon-thap', label: 'Ngồi thở chánh niệm', icon: 'breath', x: V0 && V0.poi.x, z: V0 && V0.poi.z, r: V0 && V0.poi.r,
     desc: 'Ngồi trên ghế đá trong vườn tháp, hít vào 4 giây, thở ra 6 giây', onAction: startBreath });
   reg(L0 && L0.poi, { id: 'linh-thu', label: 'Sân linh thú', icon: 'beast', x: L0 && L0.poi.x, z: L0 && L0.poi.z, r: L0 && L0.poi.r,
     desc: 'Xem năm loài linh thú đá, phỏng theo chùa Phật Tích', onAction: openGallery });
+  const T0 = E.thuyTa;
+  reg(T0 && T0.poi, { id: 'ngam-ho-sen', label: 'Ngồi ngắm hồ sen', icon: 'lotus', x: T0 && T0.poi.x, z: T0 && T0.poi.z, r: T0 && T0.poi.r,
+    desc: 'Ngồi trên ghế đá trong thủy tạ, ngắm hồ sen và tượng Quan Âm giữa hồ', onAction: startNgamSen });
 }

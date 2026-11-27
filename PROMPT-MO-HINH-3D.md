@@ -136,3 +136,6 @@ mạng phải chép kèm thư mục `assets/`. Mọi thứ khác (không đăng 
 **Trạng thái:** bộ prompt này là **tuỳ chọn, chưa triển khai**. Trò chơi hiện vẫn theo quy tắc "không tệp ngoài" (chỉ Three.js
 từ CDN) và chưa có phần nạp GLB. Nếu bạn quyết định dùng mô hình ngoài, quy tắc đó sẽ được sửa trong `src/API.md` trước, rồi
 mới viết phần nạp; trước lúc đó, ban thờ dựng bằng hình học thủ tục (v6) là bản chính thức.
+
+**Cập nhật 2026-11-27:** quy tắc trong `src/API.md` đã sửa cho mô hình do chủ chùa chọn. Đầu tiên là tượng Quan Âm: `assets/mo-hinh/quan-am-but-thap-4k.glb` và `assets/mo-hinh/quan-am-but-thap.glb`
+(hai cỡ của bản quét tượng Quan Âm chùa Bút Tháp ở Quan Âm Các, nạp bằng `src/17-quan-am-quet.js`). Các mô hình ban thờ trong bộ prompt này vẫn chưa triển khai.

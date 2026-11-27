@@ -555,7 +555,7 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
   }
   function ripple(x, z) {
     const r = ripples.find((q) => q.t < 0) || ripples[0];
-    r.t = 0; r.mesh.position.set(x, POND.waterY + 0.03, z); r.mesh.visible = true;
+    r.t = 0; r.mesh.position.set(x, POND.waterY + 0.03, z); r.mesh.visible = true; if (G.hoNuoc && G.hoNuoc.ring) G.hoNuoc.ring(x, z, 1); // 19-nuoc-ca.js: vòng sóng lan trên mặt nước, cá gần đó tản ra
   }
 
   // ---------- 24 đèn trên hồ: 18 của khách + tối đa 6 của người chơi ----------

@@ -44,6 +44,11 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
   [Procedural asian architecture test 11](https://sketchfab.com/3d-models/procedural-asian-architecture-test-11-fea52a7cf45a4f5893c872c84da501e0) của ghostnoface,
   giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã giản lược từ 410 nghìn xuống 63 nghìn tam giác (vách cửa và lan can thành tấm phẳng dán ảnh),
   lưu ở `assets/mo-hinh/tang-kinh-cac.glb`, tải sau khi game chạy vài giây; chưa có file hoặc tải lỗi thì game hiện bản dựng tạm bằng khối hộp.
+  Đàn cá trong hồ sen vườn sau (hồ thả đèn hoa đăng) dùng mô hình
+  [Shiny Fish](https://sketchfab.com/3d-models/shiny-fish-e0bddbcafc5e48c097b40b4bada3811a) của GenEugene,
+  giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã giảm số mặt (407 nghìn xuống 3 000), thu nhỏ ảnh bề mặt và nắn thẳng thân để cá tự bơi,
+  lưu thành `assets/mo-hinh/ca-vang.glb` (212 KB, máy tính) và `assets/mo-hinh/ca-vang-nhe.glb` (106 KB, điện thoại);
+  tải một bản khi người chơi tới gần hồ, lỗi thì game dùng cá dựng bằng mã. Sóng nước, phản chiếu và vòng sóng trên hồ đều viết bằng mã.
 - Hậu kỳ trong chính điện: khử răng cưa MSAA, GTAO, bloom, đường cong màu mềm; tự hạ mức trên máy yếu
   hoặc khi trình duyệt không hỗ trợ, và vẫn chạy ở chế độ vẽ thường nếu phần phụ trợ không tải được.
 - Yêu cầu trình duyệt: Chrome / Edge 89+, Safari 16.4+, Firefox 108+ (cần import map và WebGL2).

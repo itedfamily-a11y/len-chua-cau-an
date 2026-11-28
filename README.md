@@ -42,7 +42,7 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
   cũng chỉ tải một bản khi người chơi tới gần, lỗi thì giữ tượng dựng bằng mã.
   Cổng ba gian sang sân Tàng Kinh Các (trên tường đông sân trước) dựng từ mô hình
   [Vietnam Temple Gate](https://sketchfab.com/3d-models/vietnam-temple-gate-4fad9643769f4ff5b71ea66d7f42b8c5) của ptdtch,
-  giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã chỉnh sửa (giảm từ 490 nghìn xuống 67 nghìn / 27 nghìn tam giác, đổi màu ngói và gỗ theo mái chùa,
+  giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã chỉnh sửa (giảm từ 490 nghìn xuống 67 nghìn / 27 nghìn tam giác, đổi sang màu gỗ cổ, ngói xám hợp với Tàng Kinh Các,
   gỡ chữ Hán trên bảng giữa và đôi câu đối để treo biển "Tàng Kinh Các" và câu đối tiếng Việt), lưu thành `assets/mo-hinh/cong-tkc.glb` (0,22 MB, máy tính) và `assets/mo-hinh/cong-tkc-nhe.glb` (0,10 MB, điện thoại);
   tải sau khi game chạy vài giây, chưa có file hoặc tải lỗi thì game hiện cổng dựng tạm bằng khối.
   Tàng Kinh Các ở sân đông (qua cổng ba gian nói trên) dựng từ mô hình

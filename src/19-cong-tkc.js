@@ -7,11 +7,12 @@
 //  - Mẫu trong đường dẫn ("璧鸡牌坊", bản quét cổng Bích Kê ở Côn Minh, của zhujiming79) không có giấy phép và không cho tải: chỉ dùng làm mẫu dáng
 //    và màu. Hình khối lấy từ file GLB chủ chùa tải (cùng kiểu cổng ba gian, mái giữa cao); màu đổi theo mẫu và theo mái chùa: ngói đỏ đất, gỗ son,
 //    bờ nóc nâu sẫm, nền đá, chữ vàng (bảng MAU; đặt MAU = null thì giữ màu gốc của file: ngói men xanh, gỗ đỏ hồng).
-//  - File: assets/mo-hinh/cong-tkc.glb (68 739 tam giác, 0,23 MB, máy tính) và cong-tkc-nhe.glb (29 091 tam giác, 0,11 MB: máy cảm ứng, máy yếu,
+//  - File: assets/mo-hinh/cong-tkc.glb (66 787 tam giác, 0,22 MB, máy tính) và cong-tkc-nhe.glb (27 494 tam giác, 0,10 MB: máy cảm ứng, máy yếu,
 //    tiết kiệm dữ liệu, lần thử lại). Đổi bằng tests-local/cong-tkc-tools/convert-gate.mjs từ file gốc 489 582 tam giác: giản lược (sai số 4 mm / 16 mm,
-//    phần mạ vàng 1,5 / 2,5 mm cho chữ câu đối còn sắc), bỏ pháp tuyến và UV (file không có ảnh bề mặt; game tô phẳng), tách nền đá thành vật liệu riêng,
+//    phần mạ vàng 1,5 / 2,5 mm cho viền bảng còn sắc), bỏ pháp tuyến và UV (file không có ảnh bề mặt; game tô phẳng), tách nền đá thành vật liệu riêng,
 //    gỡ chữ "阮大王祀" (đền thờ Nguyễn Đại Vương, không hợp cổng lầu kinh) trên bảng giữa: game treo biển "TÀNG KINH CÁC" vào đúng chỗ ấy.
-//    Đôi câu đối 一心報國 / 鐵石剛忠 giữ nguyên.
+//    Cùng đêm chủ chùa: "Sửa 2 câu đối 2 bên sang tiếng việt sao cho đúng ý nghĩa của tàng kinh các" — chữ Hán 一心報國 / 鐵石剛忠 (một lòng báo quốc /
+//    trung kiên như sắt đá) cũng gỡ khỏi file (giữ tấm và viền vàng); game treo đôi câu đối tiếng Việt (CAU_DOI) lên hai tấm ấy.
 //  - Hệ cục bộ của file: y lên, chân ở y 0, giữa ở x = z = 0, MẶT TRƯỚC (bảng, câu đối) = +z; rộng 7,32 (x) × cao 5,23 × sâu 3,13 m (cả mái vươn).
 //    Ra thế giới: xoay YAW = −π/2 quanh tâm (GX, GZ): thế giới x = GX − z, thế giới z = GZ + x, mặt trước nhìn về TÂY (ra sân trước).
 //  - Số đo cục bộ (đo từ file): nền đá |x| ≤ 3,02, |z| ≤ 0,9, cao 0,18; bốn cột cái x ±1,53, z ±0,77 (vuông 0,18, cao 3,83); bốn cột con x ±2,88,
@@ -52,6 +53,12 @@ function buildCongTKC(G, T) {
 
   // ---------- biển "TÀNG KINH CÁC" ở mặt trước bảng giữa (chữ gốc của file đã gỡ lúc chuyển đổi) ----------
   addSign(['TÀNG KINH CÁC'], 2.5, 0.36, wx(0, 0.9), 3.56, wz(0, 0.9), YAW, { ppu: 320, bg1: '#6e1c1e', bg2: '#561416', fg: '#ecc46e' });
+  // ---------- đôi câu đối tiếng Việt trên hai tấm ở gian bên (chữ Hán gốc đã gỡ lúc chuyển đổi) ----------
+  // Thất ngôn, đối thanh đủ ở chữ 2 / 4 / 6 / 7: vế trên (tấm TRÁI khi đứng ngoài sân nhìn vào, cục bộ x < 0; đọc trái sang phải) kết vần trắc,
+  // vế dưới (tấm phải) kết vần bằng. Nghĩa: lầu tàng kinh gìn giữ lời Phật dạy quý như vàng ngọc; học pháp để mở mang trí tuệ.
+  // Tấm gỗ x ±1,91…2,54, y 0,18…2,02, mặt trước z 0,04 (viền vàng 0,06): biển dọc 0,55 × 1,74 đặt ở z 0,07, mỗi chữ một dòng.
+  const CAU_DOI = [['Tàng', 'Kinh', 'Gìn', 'Giữ', 'Lời', 'Vàng', 'Ngọc'], ['Học', 'Pháp', 'Mở', 'Mang', 'Trí', 'Tuệ', 'Người']];
+  CAU_DOI.forEach((lines, i) => { const x = (i ? 1 : -1) * 2.225; addSign(lines, 0.55, 1.74, wx(x, 0.07), 1.1, wz(x, 0.07), YAW, { vertical: true, ppu: 360, bg1: '#6e1c1e', bg2: '#561416', fg: '#ecc46e' }); });
 
   // =====================================================================
   //  BẢN DỰNG TẠM bằng khối, cùng số đo (hiện ngay; ẩn khi mô hình tải xong; ở lại nếu tải lỗi)
@@ -82,7 +89,7 @@ function buildCongTKC(G, T) {
   //  MÔ HÌNH: tải sau khi game chạy; lỗi thì giữ bản tạm
   // =====================================================================
   const CREDIT = {
-    text: 'Cổng sân Tàng Kinh Các là mô hình "Vietnam Temple Gate" của ptdtch trên Sketchfab, giấy phép CC BY 4.0, đã chỉnh sửa cho vừa trò chơi (giảm số mặt, đổi màu theo mái chùa, thay chữ trên bảng giữa bằng biển "Tàng Kinh Các").',
+    text: 'Cổng sân Tàng Kinh Các là mô hình "Vietnam Temple Gate" của ptdtch trên Sketchfab, giấy phép CC BY 4.0, đã chỉnh sửa cho vừa trò chơi (giảm số mặt, đổi màu theo mái chùa, thay chữ trên bảng giữa bằng biển "Tàng Kinh Các" và đôi câu đối chữ Hán bằng câu đối tiếng Việt).',
     href: 'https://sketchfab.com/3d-models/vietnam-temple-gate-4fad9643769f4ff5b71ea66d7f42b8c5',
     licence: 'https://creativecommons.org/licenses/by/4.0/',
   };

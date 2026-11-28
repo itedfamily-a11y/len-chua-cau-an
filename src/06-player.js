@@ -129,6 +129,9 @@ function installPlayer(G) {
   // ---------- Tư thế ----------
   const A = { lx: 0.05, lz: 0.34, rx: 0.05, rz: -0.34, hip: 0, head: 0, sit: 0 };
   const Tg = { ...A };
+  // 06-nhan-vat.js (nhân vật mô hình 3D chọn được, 2026-11-28) đọc các phần bên trong của dáng chibi: nhóm thân, bảng tên, hai tay, bảy số tư thế A;
+  // di / pha (đang bước, pha bước) ghi lại mỗi khung ở dưới. Dáng chibi vẫn tính tư thế như cũ, chỉ bị giấu khi mô hình đang hiện.
+  P.than = { inner, tag, armL, armR, A, tagY: tag.position.y, di: false, pha: 0 };
   const set = (lx, lz, rx, rz, hipv = 0, headv = 0, sit = 0) => { Tg.lx = lx; Tg.lz = lz; Tg.rx = rx; Tg.rz = rz; Tg.hip = hipv; Tg.head = headv; Tg.sit = sit; };
   function poseTargets(t) {
     const prm = P.poseParam;
@@ -194,6 +197,7 @@ function installPlayer(G) {
       Tg.lx = s * 0.6; Tg.rx = -s * 0.6; Tg.lz = 0.3; Tg.rz = -0.3;
       if (Math.sign(s) !== lastStepSign) { lastStepSign = Math.sign(s); G.events.emit('footstep', P.pos); }
     }
+    P.than.di = walking; P.than.pha = phase;
     const k = 12;
     for (const key in A) A[key] = U.damp(A[key], Tg[key], key === 'sit' ? 6 : k, dt);
     if (tapT < 0.26) { tapT += dt; const p = tapT / 0.26; const o = p < 0.22 ? p / 0.22 : 1 - (p - 0.22) / 0.78; A.rx = Tg.rx + 0.62 * o; }

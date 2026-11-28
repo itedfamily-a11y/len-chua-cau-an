@@ -12,6 +12,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "9641", "--bind", "127.0.0.1", "--directory", "D:\\dichua"],
       "port": 9641
+    },
+    {
+      "name": "chua-nv",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "9652", "--bind", "127.0.0.1", "--directory", "D:\\dichua"],
+      "port": 9652
     }
   ]
 }

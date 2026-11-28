@@ -72,6 +72,13 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
   lưu thành `assets/mo-hinh/cay-soi.glb` (1,8 MB) và `assets/mo-hinh/cay-thong.glb` (0,8 MB) cho máy tính, `cay-soi-nhe.glb` (0,9 MB) và `cay-thong-nhe.glb` (0,3 MB) cho điện thoại;
   game tải một cặp sau khi chạy vài giây (máy bật tiết kiệm dữ liệu thì không tải); chưa có file hoặc tải lỗi thì game giữ cây dựng bằng mã.
   Cau, dừa, chuối, tre, hoa đại, mai, quất, phượng và bụi hoa vẫn dựng bằng mã.
+- Nhân vật người chơi chọn được ở màn chào và trong *Cài đặt* (10 nhân vật): hai mô hình
+  [AI Generated - Ancient Chinese Scholar](https://sketchfab.com/3d-models/ai-generated-ancient-chinese-scholar-a75bd588c991496f96f05ef92a23d910) của OGL (GaryLim) và
+  [Chinese dress with irregular hemline](https://sketchfab.com/3d-models/chinese-dress-with-irregular-hemline-9b53c1ae37a84c90ac6d112511fecaa6) của Style3D Meta,
+  đều theo giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã chỉnh sửa (giảm từ 1,48 triệu và 256 nghìn mặt xuống khoảng 25 nghìn, bỏ phần khuất,
+  vẽ lại thành một ảnh bề mặt 2048 px, gắn 12 xương để nhân vật đi, chắp tay, lạy, ngồi; thêm các màu áo bằng chương trình tô),
+  lưu thành `assets/nhan-vat/thu-sinh.glb` (0,6 MB) và `assets/nhan-vat/thieu-nu.glb` (0,5 MB), ảnh nhỏ từng nhân vật ở `assets/nhan-vat/anh/`;
+  file gốc không có xương và hoạt ảnh nên mọi cử động do game tính; chưa tải được mô hình thì game dùng nhân vật hoạt hình áo lam dựng bằng mã (vẫn là một lựa chọn trong danh sách).
 - Hậu kỳ trong chính điện: khử răng cưa MSAA, GTAO, bloom, đường cong màu mềm; tự hạ mức trên máy yếu
   hoặc khi trình duyệt không hỗ trợ, và vẫn chạy ở chế độ vẽ thường nếu phần phụ trợ không tải được.
 - Yêu cầu trình duyệt: Chrome / Edge 89+, Safari 16.4+, Firefox 108+ (cần import map và WebGL2).

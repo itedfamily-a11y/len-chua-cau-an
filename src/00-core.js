@@ -700,7 +700,7 @@ function updateCamera(dt) {
   if (P) {
     cam.target.x = U.damp(cam.target.x, P.pos.x, 9, dt);
     cam.target.z = U.damp(cam.target.z, P.pos.z, 9, dt);
-    cam.target.y = U.damp(cam.target.y, P.pos.y + 1.55 * (G.chibi ? G.chibi.k : 1), 7, dt); // ngang đỉnh đầu (người đã thu theo G.chibi.k)
+    cam.target.y = U.damp(cam.target.y, P.pos.y + (P.camY || 1.55 * (G.chibi ? G.chibi.k : 1)), 7, dt); // ngang đỉnh đầu (người đã thu theo G.chibi.k); P.camY: nhân vật mô hình 3D cao hơn dáng chibi (06-nhan-vat.js)
     // tự xoay nhẹ ra sau lưng khi đang đi tới
     if (P.moving && G.time - input.lastDrag > 1.4 && cam.blend < 0.01) {
       const diff = Math.abs(U.angleDiff(cam.yaw, P.yaw));

@@ -193,6 +193,20 @@ textarea.field{resize:none;min-height:96px;line-height:1.45}
 #enterBtn{width:100%;margin-top:14px;min-height:56px;font-size:19px}
 #nameErr{min-height:18px;font-size:13px;color:#ffb0a0;margin-top:6px}
 .sbox .fine{font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.45}
+/* Chọn nhân vật (06-nhan-vat.js): màn chào và bảng Cài đặt dùng chung lưới .nv-luoi; màn hẹp thì vuốt ngang, màn rộng thì xếp 5 cột */
+.sbox{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+#nvChon{margin-top:8px}
+.nv-luoi{display:grid;grid-auto-flow:column;grid-auto-columns:80px;gap:8px;overflow-x:auto;padding:3px 2px 8px;scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;scrollbar-width:thin}
+.nv-o{scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 4px 5px;border-radius:12px;
+  border:2px solid var(--line);background:rgba(0,0,0,.22);color:var(--cream);font-size:11px;line-height:1.2}
+.nv-o img{width:100%;height:auto;aspect-ratio:3/4;object-fit:cover;border-radius:8px;background:#3a2417;display:block;pointer-events:none}
+.nv-o span{display:block;min-height:2.4em;text-align:center}
+.nv-o.on{border-color:var(--gold2);background:rgba(232,184,92,.24);color:var(--gold2);font-weight:700}
+.nv-o:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.nv-cd .nv-luoi{margin-top:8px}
+.nv-cd .nv-gc{margin:2px 0 6px}
+@media (min-width:760px) and (min-height:640px){.sbox{width:min(92vw,560px)} #nvLuoi{grid-auto-flow:row;grid-template-columns:repeat(5,1fr);overflow:visible}}
 
 /* ---------- Hướng dẫn ---------- */
 #tut{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;background:rgba(15,8,4,.35);padding:16px;
@@ -261,8 +275,10 @@ textarea.field{resize:none;min-height:96px;line-height:1.45}
     <label for="nameInput">Tên của bạn</label>
     <input id="nameInput" class="field" maxlength="20" autocomplete="off" placeholder="Ví dụ: Minh An" enterkeyhint="go">
     <div id="nameErr"></div>
+    <div id="nvChon"><label id="nvNhan">Chọn nhân vật</label><div id="nvLuoi" class="nv-luoi"></div></div><!-- 06-nhan-vat.js điền các ô nhân vật -->
     <button id="enterBtn" class="btn primary" disabled>Đang mở cổng chùa…</button>
     <div class="fine">Trò chơi thư giãn. Không đăng nhập, không quảng cáo, không thu thập dữ liệu; tiến trình chơi chỉ lưu trên máy của bạn. Chế độ đi chùa cùng mọi người bật sẵn: người đang chơi khác thấy tên và nhân vật của bạn; muốn đi một mình thì tắt trong Cài đặt.</div>
+    <div class="fine" id="nvGhiCong"></div><!-- ghi công tác giả hai mô hình nhân vật (CC BY 4.0): 06-nhan-vat.js điền -->
   </div>
 </div>
 

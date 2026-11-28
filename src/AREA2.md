@@ -200,3 +200,9 @@ Not part of the Bút Tháp / Phật Tích layout: the owner supplied a 3D model 
 ## Nút micro dễ thấy (2026-11-28)
 
 - Owner: joining a group worked, but there was "no button" to turn voice on. The button existed (module 25) but was a small unlabeled icon in the gesture bar and was hidden outside a private group with a long code. It is now a labelled pill, "Bật micro để nói" / "Micro đang bật · Tắt", on its own row above the gesture bar, shown whenever "Đi chùa cùng mọi người" is on. In the public room or a short-code group a tap opens "Nói chuyện bằng giọng nói" with one button, "Tạo nhóm và gửi link mời". The chat box sits 52 px higher to leave room. Voice still needs a private group with a code of at least 10 letters or digits. Details: `src/API.md`, bullet dated 2026-11-28 "Mic button made findable".
+
+## Nhân vật chọn được (2026-11-28)
+
+- Owner: choose a character when entering the temple; model the characters on two downloaded figures (a scholar in a white robe, a young woman in a blue dress) and add more. Ten choices now: scholar in white / blue / brown / grey, young woman in blue / lotus pink / apricot yellow / purple / brown, and the old cartoon figure. The grid is on the splash screen under the name box and again in Settings ("Nhân vật"); the choice is saved on the device and other players see it.
+- The two downloads had no skeleton and no animation, so the game computes all movement itself (walk, pray, bow, incense, sit, wave). Details, limits and what was and was not checked: `src/API.md`, bullet dated 2026-11-28 "Selectable player characters from two downloaded models".
+- Credit (CC BY 4.0): "AI Generated - Ancient Chinese Scholar" by OGL and "Chinese dress with irregular hemline" by Style3D Meta, Sketchfab; shown on the splash screen, in Settings and in README.md.

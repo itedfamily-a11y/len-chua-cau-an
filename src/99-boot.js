@@ -23,6 +23,7 @@
     ['hiệu ứng', installFx],
     ['hậu kỳ', typeof installHauKy === 'function' ? installHauKy : null], // 07-hau-ky.js: bloom / AO / MSAA / chỉnh màu phim, chỉ chạy trong chính điện (G.post); tải addon three/addons không đồng bộ, lỗi thì vẽ thẳng như cũ
     ['nhân vật', installPlayer],
+    ['chọn nhân vật', typeof installNhanVat === 'function' ? installNhanVat : null], // 06-nhan-vat.js: ngay sau nhân vật (đọc G.player.than): lưới chọn ở màn chào + Cài đặt, hai mô hình 3D có xương (tải sau, lỗi thì giữ dáng hoạt hình), G.nhanVat cho 22 vẽ người chơi khác
     ['âm thanh', typeof installAudio === 'function' ? installAudio : null],
     ['nhạc nền', typeof installMusic === 'function' ? installMusic : null],
     ['văn kinh', typeof installKinhVan === 'function' ? installKinhVan : null], // 21: dữ liệu kinh, chú, kệ Hán-Việt (G.kinh) — trước khách AI (bong bóng tụng) và hoạt động tụng kinh

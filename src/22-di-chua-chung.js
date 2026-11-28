@@ -255,6 +255,7 @@ function installDiChuaChung(G) {
       pose: 'idle', poseT: 0, act: '', seat: -1, seatMarked: -1, markTry: 0, gest: '', gestT: 0, lastGe: -9,
       last: now(), gone: false, vis: 0, visT: 1, wedged: false, said: false, heard: false, lastChat: -9, stN: 0, stWin: 0, bv: new V3(), getBV: null, bub: null, // last = lúc vào phòng: không bị coi là im lặng 30 giây rồi gỡ ngay khi vừa nối
       a: { lx: 0.05, lz: 0.34, rx: 0.05, rz: -0.34, hip: 0, head: 0, sit: 0 },
+      nv: '', nvCao: 0, // nv: mã nhân vật mô hình 3D người kia chọn ('' = dáng hoạt hình); nvCao: đỉnh đầu cao hơn dáng hoạt hình bao nhiêu mét (06-nhan-vat.js ghi mỗi khung)
     };
     p.getBV = () => p.bv;
     return p;
@@ -277,6 +278,7 @@ function installDiChuaChung(G) {
     mShadow.setMatrixAt(sl, ZERO); mBody.setMatrixAt(sl, ZERO); mHead.setMatrixAt(sl, ZERO); mHair.setMatrixAt(sl, ZERO); mFace.setMatrixAt(sl, ZERO); mLegs.setMatrixAt(sl, ZERO);
     for (let k = 0; k < 2; k++) { mArms.setMatrixAt(sl * 2 + k, ZERO); mHands.setMatrixAt(sl * 2 + k, ZERO); mFeet.setMatrixAt(sl * 2 + k, ZERO); }
     if (tags[sl]) tags[sl].sprite.visible = false;
+    if (G.nhanVat) G.nhanVat.bo(p); // trả thân mô hình 3D của người này (06-nhan-vat.js); có ô lại thì dựng lại
     slotOf[sl] = null; p.slot = -1; p.vis = 0;
   }
   function removePeer(p) {
@@ -335,7 +337,7 @@ function installDiChuaChung(G) {
     stStats.recv++;
     // 1) loại ngay gói sai kiểu / quá dài, TRƯỚC mọi xử lý chuỗi
     if (!data || typeof data !== 'object' || typeof peerId !== 'string' || !peerId || peerId.length > LIM.id
-      || badStr(data.n, LIM.n) || badStr(data.a, LIM.a) || badStr(data.p, LIM.p)) { stStats.dropped++; lastHandlerMs = performance.now() - t0; return; }
+      || badStr(data.n, LIM.n) || badStr(data.a, LIM.a) || badStr(data.p, LIM.p) || badStr(data.c, 24)) { stStats.dropped++; lastHandlerMs = performance.now() - t0; return; }
     const p = addPeer(peerId);
     if (!p) { stStats.dropped++; lastHandlerMs = performance.now() - t0; return; }
     // 2) hạn mức theo từng người: > 25 gói / giây → bỏ
@@ -353,6 +355,7 @@ function installDiChuaChung(G) {
     const pose = typeof data.p === 'string' && POSES.has(data.p) ? data.p : 'idle';
     if (pose !== p.pose) { p.pose = pose; p.poseT = 0; }
     p.act = typeof data.a === 'string' ? data.a.replace(/[^a-zA-Z]/g, '').slice(0, 16) : '';
+    p.nv = typeof data.c === 'string' && G.nhanVat && G.nhanVat.hopLe(data.c) ? data.c : ''; // nhân vật người kia chọn: chỉ nhận mã có trong danh sách của 06-nhan-vat.js; thiếu / lạ → dáng hoạt hình
     const s = Number.isInteger(data.s) && data.s >= 0 && data.s < seats.length ? data.s : -1;
     if (s !== p.seat) { unmarkSeat(p); p.seat = s; p.markTry = 0; }
     if (s >= 0) { const st = seats[s]; p.tx = st.x; p.tz = st.z; p.tyaw = st.yaw != null ? st.yaw : PI; }
@@ -392,7 +395,7 @@ function installDiChuaChung(G) {
     // KHÔNG xét độ mờ hiện tại: người vừa xuất hiện còn đang hiện dần (≈ 0,5–1 giây) — câu chào gửi ngay lúc đó trước đây bị bỏ im lặng.
     if (p.slot < 0 || !p.got || p.wedged || p.gone || t - p.last >= STALE_S) { chatStats.unseen++; return; }
     chatStats.shown++; lastShown = f;
-    p.bub = G.ui.bubble(p.getBV, f, bubbleMs(f), 2.35 - HDROP); // hệ bong bóng của khách AI (00-core): textContent, ẩn khi xa máy quay
+    p.bub = G.ui.bubble(p.getBV, f, bubbleMs(f), 2.35 - HDROP + (p.nvCao || 0)); // hệ bong bóng của khách AI (00-core): textContent, ẩn khi xa máy quay
   }
   function chat(text) {
     if (!room || !sendCh) { G.ui.toast('Bạn hãy bật "Đi chùa cùng mọi người" trong Cài đặt trước nhé.', 3000); return false; }
@@ -404,7 +407,7 @@ function installDiChuaChung(G) {
     if (f === null) { G.ui.toast('Không gửi được: lời nhắn có địa chỉ web hoặc dãy số dài.', 3200); return false; }
     lastChatSent = t; chatStats.sent++;
     try { sendCh({ t: f }); } catch (e) { /* mất kết nối thì bỏ qua */ }
-    if (!isMuted()) G.ui.bubble(P.root, f, bubbleMs(f), 2.35 - HDROP); // chính mình cũng thấy câu đã lọc
+    if (!isMuted()) G.ui.bubble(P.root, f, bubbleMs(f), 2.35 - HDROP + (G.nhanVat ? G.nhanVat.caoThem : 0)); // chính mình cũng thấy câu đã lọc
     return true;
   }
   // Kiểm thử: gửi thẳng một gói không qua lọc / hạn mức phía gửi (phía nhận mới là hàng rào thật); gọi thẳng hàm nhận với dữ liệu giả
@@ -460,6 +463,7 @@ function installDiChuaChung(G) {
   const _rootM = new M4(), _hipM = new M4(), _neckM = new M4(), _bodyM = new M4(), _armM = new M4(), _loc = new M4(), _tmp = new M4();
   function writeAvatar(p, time) {
     const a = p.a, sl = p.slot, sit = a.sit, k = p.vis * p.vis * (3 - 2 * p.vis); // k: thu về chân khi mờ dần
+    const nv = !!(G.nhanVat && G.nhanVat.veXa(p, k)); // người này chọn nhân vật mô hình 3D và mô hình đã tải xong: 06-nhan-vat.js vẽ thân (xương, ngồi, màu áo); ở đây chỉ còn bóng, bảng tên, điểm gắn bong bóng
     const bob = p.walkAmt * Math.abs(Math.sin(p.phase)) * 0.045 + Math.sin(time * 1.6 + p.ph) * 0.006 * (1 - p.walkAmt);
     const vy = p.y + (bob - sit * 0.34) * HS;
     const hy = p.yaw * 0.5; _q.set(0, Math.sin(hy), 0, Math.cos(hy));
@@ -485,11 +489,12 @@ function installDiChuaChung(G) {
     }
     if (sit > 0.12) { _tmp.multiplyMatrices(_rootM, _loc.compose(_zeroV, _qI, _sv.setScalar(Math.max(0.01, sit)))); mLegs.setMatrixAt(sl, _tmp); }
     else mLegs.setMatrixAt(sl, ZERO);
+    if (nv) { mBody.setMatrixAt(sl, ZERO); mHead.setMatrixAt(sl, ZERO); mHair.setMatrixAt(sl, ZERO); mFace.setMatrixAt(sl, ZERO); mLegs.setMatrixAt(sl, ZERO); for (let j = 0; j < 2; j++) { mArms.setMatrixAt(sl * 2 + j, ZERO); mHands.setMatrixAt(sl * 2 + j, ZERO); mFeet.setMatrixAt(sl * 2 + j, ZERO); } } // giấu dáng hoạt hình của ô này
     mShadow.setMatrixAt(sl, _loc.compose(_pv.set(p.x, p.gy + 0.025, p.z), _qI, _sv.set(0.95 * k * HS * (1 + sit * 0.1), 1, 0.95 * k * HS)));
     // bảng tên: trên đầu, mờ theo khoảng cách máy quay và theo độ hiện (ẩn cùng người khi trong nêm máy quay gõ mõ)
     const t = tagFor(sl);
     if (t.name !== p.name) drawTag(t, p.name);
-    t.sprite.position.set(p.x, vy + 1.95 - HDROP, p.z);
+    t.sprite.position.set(p.x, vy + 1.95 - HDROP + p.nvCao, p.z);
     p.bv.set(p.x, vy, p.z); // điểm gắn bong bóng lời nói (G.ui.bubble đọc qua p.getBV)
     const op = tagK(p, vy);
     t.sprite.material.opacity = op; t.sprite.visible = op > 0.02;
@@ -503,7 +508,7 @@ function installDiChuaChung(G) {
   function anchor(p) {
     if (!p || !built || p.slot < 0) return null;
     const t = tags[p.slot], vy = p.bv.y;
-    return { x: p.x, y: vy + 1.95 - HDROP, z: p.z, k: tagK(p, vy), half: t && t.half ? t.half : 0.625 };
+    return { x: p.x, y: vy + 1.95 - HDROP + (p.nvCao || 0), z: p.z, k: tagK(p, vy), half: t && t.half ? t.half : 0.625 };
   }
 
   // =====================================================================
@@ -619,12 +624,12 @@ function installDiChuaChung(G) {
     let seat = -1;
     if (act === 'ngoi' && G.crowd && G.crowd.seats) seat = G.crowd.seats.held;
     const r2 = (v) => Math.round(v * 100) / 100;
-    return { v: 1, n: myName(), x: r2(P.pos.x), z: r2(P.pos.z), h: r2(P.pos.y), y: r2(P.yaw), p: P.pose, a: act, s: seat, vo: voFlags() };
+    return { v: 1, n: myName(), x: r2(P.pos.x), z: r2(P.pos.z), h: r2(P.pos.y), y: r2(P.yaw), p: P.pose, a: act, s: seat, vo: voFlags(), c: G.nhanVat ? G.nhanVat.id : '' }; // c: nhân vật đã chọn (06-nhan-vat.js); máy bản cũ bỏ qua trường lạ
   }
   function maybeSend(force, target) {
     if (!room || !sendSt || !G.started) return;
     const st = myState(), t = now();
-    const changed = force || !lastSent || st.x !== lastSent.x || st.z !== lastSent.z || st.h !== lastSent.h || st.y !== lastSent.y || st.p !== lastSent.p || st.a !== lastSent.a || st.s !== lastSent.s || st.n !== lastSent.n || st.vo !== lastSent.vo || t - lastSentAt > HEARTBEAT;
+    const changed = force || !lastSent || st.x !== lastSent.x || st.z !== lastSent.z || st.h !== lastSent.h || st.y !== lastSent.y || st.p !== lastSent.p || st.a !== lastSent.a || st.s !== lastSent.s || st.n !== lastSent.n || st.vo !== lastSent.vo || st.c !== lastSent.c || t - lastSentAt > HEARTBEAT;
     if (!changed) return;
     if (!target) { lastSent = st; lastSentAt = t; }
     try { sendSt(st, target); } catch (e) { /* mất kết nối thì bỏ qua, lần sau gửi lại */ }

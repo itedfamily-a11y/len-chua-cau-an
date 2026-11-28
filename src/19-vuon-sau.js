@@ -666,7 +666,19 @@ function buildVuonSau(G) {
       poi: { x: 0, z: -136.4, r: 3.0 }, stand: { x: 0, z: -136.9, yaw: PI }, release: { x: LAN_REL.x, z: LAN_REL.z },                // bờ bắc, cuối lối trục, nhìn về tượng Quan Âm qua mặt nước
       cam: { pos: [2.6, 3.4, -131.6], look: [-0.6, 0.6, -145] },
       hidden: () => V.decorHidden,
+      zones: [],                                                                                                                     // các vùng trôi THÊM của đèn khách (2026-11-28, xem dưới): [{ x, z, rx, rz, n }], n = số đèn của vùng
     };
+    { // 2026-11-28 (tối), chủ chùa: "hoa đăng chỉ tập trung đằng trước, rải thêm hoa đăng cho tôi". Vùng elip phía trước (x, z, rx, rz ở trên) giữ nguyên 18 đèn khách và đèn của người chơi;
+      // thêm bốn vùng elip cho đèn khách ở phần hồ còn lại: hai lạch hai bên đảo và hai nửa của khoảng nước sau tượng. Mỗi đèn chỉ trôi trong vùng của nó (40-activities-b.js, L.zone).
+      const nhe = !!G.isTouch || !!(G.quality && G.quality.low), Z = V.lanternPond.zones;
+      const lach = (PHX - ISLAND.r) / 2;                                                                                             // nửa bề rộng lạch nước giữa đảo và bờ
+      if (lach > 3) {
+        Z.push({ x: ISLAND.x - ISLAND.r - lach, z: ISLAND.z - 1, rx: lach - 0.9, rz: 7, n: nhe ? 2 : 5 });                           // lạch tây
+        Z.push({ x: ISLAND.x + ISLAND.r + lach, z: ISLAND.z - 2.5, rx: lach - 0.9, rz: 6, n: nhe ? 2 : 5 });                         // lạch đông (lùi về nam, tránh thủy tạ)
+      }
+      const zs = ISLAND.z - ISLAND.r - 1, ze = POND.z0 + 0.8, hz = (zs - ze) / 4;                                                    // khoảng nước sau tượng: từ sau đảo tới bờ nam, chia hai nửa
+      if (hz > 3) for (const zc of [zs - hz, ze + hz]) Z.push({ x: (POND.x0 + POND.x1) / 2, z: zc, rx: PHX - 3, rz: hz - 0.2, n: nhe ? 5 : 10 });
+    }
     const built = (names) => names.every((n) => !failed.has(n));
     if (V.ribbonTree && built(['vật cản', 'dẫn đường', 'bồn bồ đề', 'cây bồ đề'])) W.tree = V.ribbonTree;
     if (waterMesh && built(['vật cản', 'dẫn đường', 'bờ hồ', 'đảo đá'])) W.pond = V.lanternPond;

@@ -154,7 +154,8 @@ outgoingLight = mix(outgoingLight, mix(uHoHor, uHoTop, smoothstep(0.0, 0.55, hoR
   }
 
   // quầng sáng đèn hoa đăng loang trên mặt nước (cộng màu)
-  const NP = 30, poolGeo = new THREE.PlaneGeometry(2, 2); poolGeo.rotateX(-Math.PI / 2);
+  const NP = 30 + (LP && Array.isArray(LP.zones) ? LP.zones.reduce((s, q) => s + ((q && q.n) | 0), 0) : 0); // 24 đèn ở vùng trước tượng (dư 6 ô) + đèn rải ở các vùng thêm (2026-11-28)
+  const poolGeo = new THREE.PlaneGeometry(2, 2); poolGeo.rotateX(-Math.PI / 2);
   const poolMat = new THREE.ShaderMaterial({
     uniforms: { uK: { value: 0.1 }, uHoT: UNI.uHoT },
     vertexShader: `varying vec2 vU; varying vec2 vW;

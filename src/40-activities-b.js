@@ -16,7 +16,7 @@ function installActivitiesB(G) {
   const TREE = W.tree, POND = W.pond, FORT = W.fortune;
   if (!TREE || !POND) { console.warn('[hoạt động B] vườn sau chùa thiếu cây bồ đề hoặc hồ sen: bỏ qua phần này'); return; }
   // bớt dải lụa cho cây khỏi rối (2026-11-23): khách 45 → 14, người chơi 12 → 6, neo dành riêng cho người chơi 14 → 8, phục hồi từ lần trước 6 → 4; hai neo đang dùng không gần nhau hơn 0,42 m
-  const MAX_RIB = 6, MAX_LAN = 6, N_PIL_RIB = 14, N_PIL_LAN = 18, LMAX = MAX_LAN + N_PIL_LAN, N_RES = 8, N_REST = 4, MIN_AGAP = 0.42;
+  const MAX_RIB = 6, MAX_LAN = 6, N_PIL_RIB = 14, N_PIL_LAN = 18, LAN_ZONES = Array.isArray(POND.zones) ? POND.zones.filter((q) => q && q.n > 0 && q.rx > 1 && q.rz > 1) : [], N_XA_LAN = LAN_ZONES.reduce((s, q) => s + (q.n | 0), 0), LMAX = MAX_LAN + N_PIL_LAN + N_XA_LAN, N_RES = 8, N_REST = 4, MIN_AGAP = 0.42;
   const WY = POND.floatY != null ? POND.floatY : POND.waterY + 0.02; // độ cao đèn nổi trên mặt nước (hồ trong vườn: trên đỉnh lá sen)
   const LS = 0.95; // cỡ đèn hoa đăng (đường kính khoảng 0,67 m cho dễ nhìn)
   const ui = () => G.audio?.play?.('ui');
@@ -481,21 +481,21 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
     scene.remove(L.tag.mesh); L.tag.mat.dispose(); L.tag.tex.dispose(); L.tag = null;
   }
   // chọn một điểm trên mặt hồ (cách mép và cách các đèn khác)
-  function pondPoint(margin, minGap) {
+  function pondPoint(margin, minGap, Z = POND) { // Z: vùng trôi (elip x, z, rx, rz); mặc định là vùng trước tượng, các vùng thêm ở POND.zones (2026-11-28)
     for (let t = 0; t < 40; t++) {
       const a = Math.random() * TAU, r = Math.sqrt(0.05 + Math.random() * 0.95);
-      const x = POND.x + Math.cos(a) * (POND.rx - margin) * r, z = POND.z + Math.sin(a) * (POND.rz - margin) * r;
+      const x = Z.x + Math.cos(a) * (Z.rx - margin) * r, z = Z.z + Math.sin(a) * (Z.rz - margin) * r;
       if (!POND.inside(x, z, margin)) continue;
       if (Math.hypot(x - POND.release.x, z - POND.release.z) < 1.6) continue;
       let ok = true; for (const o of lanterns) if (Math.hypot(o.x - x, o.z - z) < minGap) { ok = false; break; }
       if (ok) return { x, z };
     }
-    return { x: POND.x + U.rand(-1.5, 1.5), z: POND.z + U.rand(-1, 1) };
+    return { x: Z.x + U.rand(-1.5, 1.5), z: Z.z + U.rand(-1, 1) };
   }
   function addLantern(o) {
     if (lanterns.length >= LMAX) return null;
     const L = {
-      own: !!o.own, mode: o.mode || 'drift', x: o.x, y: WY, z: o.z, yaw: Math.random() * TAU, vx: 0, vz: 0,
+      own: !!o.own, mode: o.mode || 'drift', zone: o.zone || POND, x: o.x, y: WY, z: o.z, yaw: Math.random() * TAU, vx: 0, vz: 0,
       heading: Math.random() * TAU, speed: U.rand(0.05, 0.11), ph: Math.random() * 100, tint: (Math.random() * 3) | 0,
       age: o.age ?? 10, tagK: 0, tag: null, seq: ++lanSeq, dead: false, committed: false,
     };
@@ -558,8 +558,8 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
     r.t = 0; r.mesh.position.set(x, POND.waterY + 0.03, z); r.mesh.visible = true; if (G.hoNuoc && G.hoNuoc.ring) G.hoNuoc.ring(x, z, 1); // 19-nuoc-ca.js: vòng sóng lan trên mặt nước, cá gần đó tản ra
   }
 
-  // ---------- 24 đèn trên hồ: 18 của khách + tối đa 6 của người chơi ----------
-  for (let i = 0; i < N_PIL_LAN; i++) { const pt = pondPoint(0.9, 1.1); addLantern({ x: pt.x, z: pt.z }); }
+  // ---------- Đèn trên hồ: 18 của khách + tối đa 6 của người chơi ở vùng trước tượng; từ 2026-11-28 thêm đèn khách rải ở các vùng POND.zones (hai bên đảo, sau tượng), mỗi đèn chỉ trôi trong vùng của nó ----------
+  for (let i = 0; i < N_PIL_LAN; i++) { const pt = pondPoint(0.9, 1.1); addLantern({ x: pt.x, z: pt.z }); } for (const Z of LAN_ZONES) for (let i = 0; i < (Z.n | 0); i++) { const pt = pondPoint(0.9, 1.6, Z); addLantern({ x: pt.x, z: pt.z, zone: Z }); }
 
   // ---------- Cập nhật mỗi khung ----------
   const SEP = 0.8, SEP2 = SEP * SEP;
@@ -581,13 +581,13 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
     }
   }
   function driftStep(L, dt, t) {
-    const ax = POND.rx - 0.7, az = POND.rz - 0.7;
+    const Z = L.zone || POND, ax = Z.rx - 0.7, az = Z.rz - 0.7; // Z: vùng trôi của đèn này
     const ang = L.heading + Math.sin(t * 0.11 + L.ph) * 1.1 + Math.sin(t * 0.037 + L.ph * 2.3) * 1.6;
     const kk = 1 - Math.exp(-0.6 * dt);
     L.vx += (Math.sin(ang) * L.speed - L.vx) * kk; L.vz += (Math.cos(ang) * L.speed - L.vz) * kk;
-    const ex = (L.x - POND.x) / ax, ez = (L.z - POND.z) / az; let k = ex * ex + ez * ez;
+    const ex = (L.x - Z.x) / ax, ez = (L.z - Z.z) / az; let k = ex * ex + ez * ez;
     if (k > 0.72) { // gần mép: nhẹ nhàng quay vào giữa hồ
-      const dx = POND.x - L.x, dz = POND.z - L.z, d = Math.hypot(dx, dz) || 1, f = (k - 0.72) * 0.35 * dt;
+      const dx = Z.x - L.x, dz = Z.z - L.z, d = Math.hypot(dx, dz) || 1, f = (k - 0.72) * 0.35 * dt;
       L.vx += (dx / d) * f; L.vz += (dz / d) * f;
       L.heading = U.angleDamp(L.heading, Math.atan2(dx, dz), 0.9, dt);
     }
@@ -598,11 +598,11 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
     }
     const px = L.x, pz = L.z;
     L.x += L.vx * dt; L.z += L.vz * dt;
-    if (k > 1.4) { const s = Math.sqrt(1.4 / k); L.x = POND.x + (L.x - POND.x) * s; L.z = POND.z + (L.z - POND.z) * s; }
+    if (k > 1.4) { const s = Math.sqrt(1.4 / k); L.x = Z.x + (L.x - Z.x) * s; L.z = Z.z + (L.z - Z.z) * s; }
     // bảo đảm cuối cùng: đèn không bao giờ rời mặt nước trống (không lên đảo, sàn thủy tạ, lan can hay bờ đá); bước nào đưa đèn ra khỏi mặt nước thì bỏ, đèn quay đầu về giữa hồ
     if (POND.inside && !POND.inside(L.x, L.z, 0.15)) {
       L.x = px; L.z = pz; L.vx *= -0.3; L.vz *= -0.3;
-      L.heading = Math.atan2(POND.x - L.x, POND.z - L.z) + U.rand(-0.5, 0.5);
+      L.heading = Math.atan2(Z.x - L.x, Z.z - L.z) + U.rand(-0.5, 0.5);
     }
     L.yaw += (0.06 + Math.sin(t * 0.17 + L.ph) * 0.05) * dt;
   }
@@ -1320,7 +1320,7 @@ textarea.field.cb-ta{min-height:108px;padding-bottom:28px}
   G.activitiesB = {
     openComposer, startFortune, openBook, openShare, drawShareImage, fortunes: FORTUNES, restoreSaved, clearPlayerItems, lanternTop: LAN_TOP,
     // chỉ để đọc (bài kiểm tra g04-cau-an.mjs): các mảng là mảng thật đang chạy, đừng sửa
-    state: () => ({ tree: TREE, pond: POND, anchors: A, anchorUse: aUse, reserved: aRes, visitors: pil, ribbons, lanterns, MAX_RIB, MAX_LAN, N_PIL_RIB, N_PIL_LAN, N_REST, MIN_AGAP, WY,
+    state: () => ({ tree: TREE, pond: POND, anchors: A, anchorUse: aUse, reserved: aRes, visitors: pil, ribbons, lanterns, MAX_RIB, MAX_LAN, N_PIL_RIB, N_PIL_LAN, N_XA_LAN, lanZones: LAN_ZONES, N_REST, MIN_AGAP, WY,
       meshes: { pil: pilMesh, body: bodyIM, flame: flameIM, glow: lanGlow.points, ripples: ripples.map((q) => q.mesh) } }),
   };
   try { restoreSaved(); } catch (e) { console.error(e); }

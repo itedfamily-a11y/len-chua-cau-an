@@ -2,7 +2,8 @@
 //  TÀNG KINH CÁC — LẦU HAI TẦNG Ở SÂN ĐÔNG (2026-11-27)
 //  Chủ chùa đưa một mô hình 3D và nhờ dựng vào chỗ thích hợp, không có chỗ thì mở rộng. Toà lầu chiếm 28,5 × 31 m (kể cả sáu bậc thềm),
 //  trong khuôn viên không còn khoảng trống cỡ ấy nên mở thêm một sân có tường bao ở phía đông, sát tường bao sân trước,
-//  vào bằng một cổng nách mới trên tường đông (z 9…13).
+//  vào bằng một cổng nách mới trên tường đông (z 9…13). 2026-11-28: cổng dời tới z −6,42…−0,38 (thẳng bậc tây và cửa tây của lầu) và thay bằng
+//  cổng ba gian theo mô hình tải về (19-cong-tkc.js, buildCongTKC), theo ý chủ chùa sau khi Quan Âm Các dời vào góc đông nam sân trước.
 //  Mô hình gốc: "Procedural asian architecture test 11" của ghostnoface trên Sketchfab, giấy phép CC BY 4.0
 //  (https://sketchfab.com/3d-models/procedural-asian-architecture-test-11-fea52a7cf45a4f5893c872c84da501e0).
 //  File trong game (assets/mo-hinh/tang-kinh-cac.glb, ~930 KB) đã giản lược: 410 nghìn → 63 nghìn tam giác; vách cửa, cửa sổ, lan can thành tấm phẳng dán ảnh;
@@ -24,7 +25,7 @@ const TKC_SITE = {
   ox: 62.5, oz: -6.5,                                   // gốc mô hình đặt ở đây (bậc chính ở x 62,5, chân bậc z 11,5)
   court: { x0: 36.6, x1: 82.0, z0: -31.0, z1: 23.0 },   // lòng sân (mép tây = mặt ngoài tường đông của sân chùa)
   wallX: 82.3, wallZN: -31.3, wallZS: 23.3,             // tim ba bức tường mới (đông, bắc, nam)
-  gate: { z0: 9.0, z1: 13.0 },                          // khoảng trống trên tường đông x 36,3 (giữa hai cột tường z 8 và z 14)
+  gate: { z0: -6.42, z1: -0.38 },                       // khoảng trống trên tường đông x 36,3 = bề ngang nền đá của cổng ba gian (19-cong-tkc.js), tâm z −3,4 thẳng bậc tây (z −4,39…−2,39) và cửa tây của lầu. Trước 2026-11-28: z 9…13 (giữa hai cột tường z 8 và z 14), cổng dựng bằng mã
   keep: { x0: 36.6, x1: 84.6, z0: -33.6, z1: 25.6 },    // vùng cảnh vật ngoài tường phải chừa (sân + tường + 2 m)
   flatX: 62,                                            // địa hình phẳng tới x = flatX + 25 ở phía đông (phía tây vẫn 32 + 25)
   url: 'assets/mo-hinh/tang-kinh-cac.glb',
@@ -203,17 +204,8 @@ function buildTangKinhCac(G) {
     wall(36.6, T.wallZN, T.wallX, T.wallZN); wall(T.wallX, T.wallZN, T.wallX, T.wallZS); wall(36.6, T.wallZS, T.wallX, T.wallZS);
     box(S, T.wallX, 1.0, T.wallZS, 0.62, 2.0, 0.62, C.ochreD); box(S, T.wallX, 2.08, T.wallZS, 0.78, 0.16, 0.78, C.ridge); // cột góc đông nam
   });
-  safe('cổng nách', () => { // hai trụ, xà gỗ, hai lớp mái ngói; ngưỡng đá
-    const x = 36.3, gz = (T.gate.z0 + T.gate.z1) / 2, half = (T.gate.z1 - T.gate.z0) / 2 - 0.2;
-    for (const s of [-1, 1]) {
-      const z = gz + s * half;
-      box(S, x, 1.35, z, 0.7, 2.7, 0.7, C.ochreD); box(S, x, 2.78, z, 0.86, 0.16, 0.86, C.ridge);
-      col.box(x - 0.35, z - 0.35, x + 0.35, z + 0.35, 'wall');
-    }
-    box(S, x, 2.98, gz, 0.4, 0.24, half * 2 + 1.1, C.woodD);
-    box(S, x, 3.19, gz, 1.7, 0.16, half * 2 + 2.0, C.roof); box(S, x, 3.34, gz, 1.0, 0.14, half * 2 + 1.6, C.roof); box(S, x, 3.48, gz, 0.3, 0.16, half * 2 + 1.8, C.ridge);
-    boxMM(F, 35.8, 0, gz - half + 0.35, 36.9, 0.035, gz + half - 0.35, C.stoneL);
-    G.cam.blockers.push(new THREE.Box3(new THREE.Vector3(x - 0.9, 2.8, gz - half - 1), new THREE.Vector3(x + 0.9, 3.6, gz + half + 1)));
+  safe('cổng nách', () => { // 2026-11-28: cổng ba gian theo mô hình tải về (19-cong-tkc.js): vật cản, nền đá, chắn máy quay, biển, bản tạm, tải mô hình. Cổng cũ dựng bằng mã (hai trụ, xà, hai lớp mái) đã bỏ
+    if (typeof buildCongTKC === 'function') buildCongTKC(G, T);
   });
   safe('sân lát', () => {
     const tex = U.canvasTex(256, 256, (g, w, h) => {

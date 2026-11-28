@@ -372,7 +372,7 @@ function buildWorld(G) {
   { // tường bên: cột mỗi 6 m từ z −112 tới 26, thêm cột góc z 31; cột góc (±36,3; −118) do đoạn tường z −118 của 19-vuon-sau.js dựng
     const sidePosts = []; for (let z = -112; z < 26.01; z += 6) sidePosts.push(z); sidePosts.push(31);
     wall(-WALL_X, -118, -WALL_X, 31, { posts: sidePosts });
-    const eg = typeof TKC_SITE !== 'undefined' ? TKC_SITE.gate : null; // 2026-11-27: cổng nách sang sân Tàng Kinh Các (19-tang-kinh-cac.js dựng trụ, mái cổng): tường đông chừa khoảng z 9…13, giữa hai cột z 8 và z 14
+    const eg = typeof TKC_SITE !== 'undefined' ? TKC_SITE.gate : null; // cổng sang sân Tàng Kinh Các: tường đông chừa khoảng TKC_SITE.gate. 2026-11-28: z −6,42…−0,38 cho cổng ba gian (19-cong-tkc.js; hai đoạn tường dừng ở hai cột con, cột tường z −4 rơi vào khoảng hở nên bỏ). 2026-11-27: z 9…13, giữa hai cột z 8 và z 14
     if (eg) { wall(WALL_X, -118, WALL_X, eg.z0, { posts: sidePosts.filter((z) => z < eg.z0) }); wall(WALL_X, eg.z1, WALL_X, 31, { posts: sidePosts.filter((z) => z > eg.z1) }); }
     else wall(WALL_X, -118, WALL_X, 31, { posts: sidePosts }); // tường sau lùi từ z −84 về −100 (v3), rồi về −118 (v4: sân chính điện sâu 12 m, chính điện sâu 27 m trên nền ba bậc)
     col.box(36.6, 30.7, 37.4, 31.3, 'wall'); col.box(-37.4, 30.7, -36.6, 31.3, 'wall'); // 2026-11-26: chặn khe 0,4 m giữa mặt ngoài tường bên và ranh giới đi lại ±37 ở hai góc trước (như hai hộp chặn của vườn ở z −118)
@@ -798,7 +798,7 @@ function buildWorld(G) {
     }
     if (collide) col.circle(x, z, 0.85, 'bamboo');
   }
-  roundTree(-33.3, 27.5, 1, 61); roundTree(33.5, 1.0, 1, 62); // 2026-11-26: cây tròn góc sân trước dời theo tường bên (±21 → ±33,3). 2026-11-28: góc đông nam nay là Quan Âm Các, cây phía đông dời lên (33,5; 1,0), sát tường đông, phía bắc cổng nách Tàng Kinh Các
+  roundTree(-33.3, 27.5, 1, 61); roundTree(33.1, -13.5, 1, 62); // 2026-11-26: cây tròn góc sân trước dời theo tường bên (±21 → ±33,3). 2026-11-28: góc đông nam nay là Quan Âm Các nên cây phía đông dời lên (33,5; 1,0); cùng đêm cổng Tàng Kinh Các dời tới z −3,4 (tán cây chạm mái cổng) và đầu hành lang đông lùi về z −22,6, nên cây đứng vào chỗ đầu hành lang cũ (33,1; −13,5), phía bắc cổng
   bamboo(-34.5, 6, 71); bamboo(-34.5, -8.0, 72); // 2026-11-26: hai khóm tre sát tường tây dời theo tường (−22,2 → −34,5)
   // cây cối bên ngoài tường
   {

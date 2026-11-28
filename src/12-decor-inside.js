@@ -74,6 +74,7 @@ function buildDecorInside(G) {
   const inR = (x, z, r, x0, x1, z0, z1) => x > x0 - r && x < x1 + r && z > z0 - r && z < z1 + r;
   const BN = G.L2 && G.L2.baoNghiem;
   const GI = (G.L2 && G.L2.corridors && G.L2.corridors.inner) || 33.1; // 2026-11-26: cột hành lang trong dời 20,8 → 33,1 (rộng ra cho bằng vườn sau)
+  const GZE = (G.L2 && G.L2.corridorZ1 ? G.L2.corridorZ1(1) : -13) + 2; // mép nam vùng cấm của dãy hành lang đông (08-world2.js: dãy đông ngắn hơn từ 2026-11-28); dãy tây vẫn −11
   // vùng cấm: lối giữa, nền chính điện, cổng, cầu, bậc, hành lang, vòng nhiễu tháp
   function banned(x, z, r) {
     if (inR(x, z, r, -2.6, 2.6, -13.4, 31)) return true;     // lối giữa sân trước, đến đầu cầu
@@ -85,7 +86,7 @@ function buildDecorInside(G) {
     if (inR(x, z, r, -4.4, 4.4, -25.4, -22.6)) return true;  // bậc trước tầng nền
     if (inR(x, z, r, -13.3, -10.7, -43.3, -36.7)) return true; // bậc tây
     if (inR(x, z, r, 15.0, 19.0, -62.4, -59.2) || inR(x, z, r, -19.0, -15.0, -62.4, -59.2)) return true; // hai bậc góc lên tầng nền chính điện
-    if (Math.abs(x) > GI - 0.5 - r && z < -11) return true;  // hành lang (2026-11-26: |x| > 32,6 thay cho 20,3)
+    if (Math.abs(x) > GI - 0.5 - r && z < (x > 0 ? GZE : -11)) return true;  // hành lang (2026-11-26: |x| > 32,6 thay cho 20,3; 2026-11-28: dãy đông bắt đầu ở z −22,6 nên dải sát tường đông từ z −20,6 trở ra được đặt chậu, đèn)
     if (BN && Math.hypot(x - BN.x, z - BN.z) < (BN.banR || 4.4) + r) return true; // 2026-11-26: tháp dời vào vườn sau chùa, vùng cấm tự đi theo G.L2.baoNghiem (chỗ cũ x −20,4…−11,5 / z −45…−35 nay là sân lát trống)
     for (const b of G.decorBans || []) if (inR(x, z, r, b[0], b[1], b[2], b[3])) return true; // vùng chừa do toà khác đăng ký [x0, x1, z0, z1] (17-dien-phu.js)
     // 2026-11-26: tường bên dời ±24 → ±36,3 (mặt trong ±36,0): biên ±23,0 → ±35,4 (chừa 0,6 m trước mặt trong; 35,4 − 0,5 = 34,9 để chậu x ±34,8 qua được, không dính sai số số thực)

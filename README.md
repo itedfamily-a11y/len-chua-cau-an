@@ -40,7 +40,12 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
   giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã giảm số mặt, thu nhỏ ảnh bề mặt và chỉnh vật liệu,
   lưu thành `assets/mo-hinh/dia-tang-4k.glb` (4,1 MB, máy tính) và `assets/mo-hinh/dia-tang.glb` (1,1 MB, điện thoại);
   cũng chỉ tải một bản khi người chơi tới gần, lỗi thì giữ tượng dựng bằng mã.
-  Tàng Kinh Các ở sân đông (qua cổng nách trên tường đông sân trước) dựng từ mô hình
+  Cổng ba gian sang sân Tàng Kinh Các (trên tường đông sân trước) dựng từ mô hình
+  [Vietnam Temple Gate](https://sketchfab.com/3d-models/vietnam-temple-gate-4fad9643769f4ff5b71ea66d7f42b8c5) của ptdtch,
+  giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã chỉnh sửa (giảm từ 490 nghìn xuống 69 nghìn / 29 nghìn tam giác, đổi màu ngói và gỗ theo mái chùa,
+  gỡ chữ trên bảng giữa để treo biển "Tàng Kinh Các"), lưu thành `assets/mo-hinh/cong-tkc.glb` (0,23 MB, máy tính) và `assets/mo-hinh/cong-tkc-nhe.glb` (0,11 MB, điện thoại);
+  tải sau khi game chạy vài giây, chưa có file hoặc tải lỗi thì game hiện cổng dựng tạm bằng khối.
+  Tàng Kinh Các ở sân đông (qua cổng ba gian nói trên) dựng từ mô hình
   [Procedural asian architecture test 11](https://sketchfab.com/3d-models/procedural-asian-architecture-test-11-fea52a7cf45a4f5893c872c84da501e0) của ghostnoface,
   giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã giản lược từ 410 nghìn xuống 63 nghìn tam giác (vách cửa và lan can thành tấm phẳng dán ảnh),
   lưu ở `assets/mo-hinh/tang-kinh-cac.glb`, tải sau khi game chạy vài giây; chưa có file hoặc tải lỗi thì game hiện bản dựng tạm bằng khối hộp.

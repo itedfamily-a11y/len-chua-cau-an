@@ -6,7 +6,8 @@
 //  2026-11-28, chủ chùa: "Quan Âm Các đẩy vào góc này" (ảnh chụp góc ĐÔNG NAM sân trước, nơi tường đông x 36,3 gặp tường trước z 31).
 //  Toà điện dời vào sát góc ấy và xoay cho mặt chính quay về TÂY (ra lối giữa sân, như điện phụ mặt 'W' của 17-dien-phu.js): mặt chính quay về nam
 //  thì ba gian cửa sẽ nhìn thẳng vào tường trước cách 1,7 m. Trục dài nay chạy bắc – nam dọc tường đông.
-//  Cổng nách sang sân Tàng Kinh Các (tường đông z 9…13) giữ nguyên chỗ: cổng mở vào dải đất 3,5 m giữa nền điện và tường đông, lối vào dải ở góc đông bắc của điện.
+//  Cổng sang sân Tàng Kinh Các lúc đầu vẫn ở tường đông z 9…13 (mở vào dải đất 3,5 m giữa nền điện và tường đông); cùng đêm chủ chùa cho dời cổng lên
+//  z −6,42…−0,38, giữa khoảng sân trống phía bắc điện (19-cong-tkc.js). Dải đất phía đông điện nay là ngõ cụt, nút dẫn đường ở đó vẫn giữ cho khách AI đi vòng.
 //
 //  HỆ TOẠ ĐỘ CỤC BỘ (mét, gốc ở tâm toà nhà trên mặt đất): x ngang mặt chính, z ra phía mặt chính, y lên. Mọi số đo dưới đây là số CỤC BỘ;
 //  ra thế giới qua fr = A.frame(OX, OZ, YAW) của 17-dien-phu.js, YAW = −π/2: thế giới x = OX − z, thế giới z = OZ + x (mặt chính +z → tây, +x → nam).
@@ -138,7 +139,7 @@ function buildQuanAmCac(G, A) {
     N(0, 6.72, 'qacThem'), N(0, -6.72), N(-8.72, 0), N(8.72, 0),                                         // đầu bốn bậc, trên nền
     N(-8.72, 6.72), N(8.72, 6.72), N(-8.72, -6.72), N(8.72, -6.72), N(-4.6, 6.72), N(4.6, 6.72), N(-4.6, -6.72), N(4.6, -6.72), // vòng hiên quanh điện
     N(0, 5.0, 'quan-am-cacDoor'), N(0, (C1 + C2) / 2 + 1.4, 'quan-am-cacIn'), N(-2.9, 2.6), N(2.9, 2.6), N(-4.2, 4.6), N(4.2, 4.6),
-    // dải đất giữa điện và hai bức tường: góc đông bắc (lối vào dải, sát cổng nách sang Tàng Kinh Các), dọc tường đông, góc đông nam, dọc tường trước, góc tây nam
+    // dải đất giữa điện và hai bức tường: góc đông bắc (lối vào dải), dọc tường đông, góc đông nam, dọc tường trước, góc tây nam
     N(-11.55, -8.55, 'qacGocDB'), N(-4.2, -BK), N(4.2, -BK), N(GN, -BK, 'qacGocDN'), N(GN, -4.2), N(GN, 4.2), N(11.75, 8.65, 'qacGocTN'),
   ];
   const spots = [[-1.7, C1], [1.7, C1], [0, C2], [-1.7, C2], [1.7, C2]].map(([x, z]) => ({ x: wx(x, z), z: wz(x, z), yaw: U.yawTo(wx(x, z), wz(x, z), alt.x, alt.z) }));

@@ -891,9 +891,12 @@ function buildWorld2Geo(G) {
   //  9. HÀNH LANG: hai dãy dài có mái cong, hàng cột trong, xà, đèn lồng treo. Từ 2026-11-26 dời ra ngoài +12,3 m cùng tường bao (cột trong x ±33,1, tường ngoài ±36,0); mọi toạ độ x tính theo Cq.inner
   // =====================================================================
   {
-    const Cq = L.corridors, cols = Cq.cols, zN = cols[cols.length - 1], zS = cols[0], zc = (zN + zS) / 2, zl = zS - zN + 0.5, zr = (Cq.z0 + Cq.z1) / 2 - 0.25; // mái phủ z −114…−12.5 (dài (z1 − z0) + 1,5 m = 101,5 m)
+    const Cq = L.corridors;
     for (const sx of [-1, 1]) {
-      flags(sx > 0 ? Cq.inner - 0.4 : -(Cq.inner + 2.98), Cq.z0 - 0.4, sx > 0 ? Cq.inner + 2.98 : -(Cq.inner - 0.4), -12.8, 0.022, 1.13, 3.2, 0xc7b392, 0x6f6455); // nền phiến đá (z0 −113,4)
+      // 2026-11-28: dãy đông ngắn hơn (L.corridorZ1 / L.corridorCols, 08-world2.js): mái tới z −22,1 thay cho −12,5
+      const z1 = L.corridorZ1 ? L.corridorZ1(sx) : Cq.z1, cols = L.corridorCols ? L.corridorCols(sx) : Cq.cols;
+      const zN = cols[cols.length - 1], zS = cols[0], zc = (zN + zS) / 2, zl = zS - zN + 0.5, zr = (Cq.z0 + z1) / 2 - 0.25; // mái phủ z −114…z1 + 0,5 (dài (z1 − z0) + 1,5 m: 101,5 m dãy tây, 91,9 m dãy đông)
+      flags(sx > 0 ? Cq.inner - 0.4 : -(Cq.inner + 2.98), Cq.z0 - 0.4, sx > 0 ? Cq.inner + 2.98 : -(Cq.inner - 0.4), z1 + 0.2, 0.022, 1.13, 3.2, 0xc7b392, 0x6f6455); // nền phiến đá (z0 −113,4)
       for (const z of cols) { // cột như cột hiên điện nhưng ít cạnh hơn: đế đá, thân son hở đầu, đai vàng
         cyl(F, sx * Cq.inner, 0.12, z, 0.28, 0.32, 0.24, C.stone, 6); S.add(CYLO, C.wood, { p: [sx * Cq.inner, 1.52, z], s: [0.2, 2.56, 0.2] });
         S.add(CYLO, C.gold, { p: [sx * Cq.inner, 2.7, z], s: [0.23, 0.14, 0.23] });
@@ -902,11 +905,11 @@ function buildWorld2Geo(G) {
       box(S, sx * Cq.inner, 2.94, zc, 0.12, 0.4, zl, C.woodD);                                        // diềm gỗ dưới mái
       box(S, sx * (Cq.inner + 1.6), 2.62, zc, 0.16, 0.14, zl, C.woodD);                                           // thanh dọc để treo đèn
       for (const z of cols) box(S, sx * (Cq.inner + 1.5), 2.62, z, 3.1, 0.2, 0.2, C.woodD);                       // xà ngang gác lên tường
-      boxMM(S, sx * (Cq.inner + 2.7), 2.0, Cq.z0 - 0.6, sx * (Cq.inner + 3.5), 2.86, -12.4, K.plaster);                       // dải tường trát nối tường bao lên mép mái
-      addRoof(S, sx * (Cq.inner + 1.45), 2.98, zr, Cq.z1 - Cq.z0 + 1.5, 3.9, 1.2, { ry: PI / 2, curl: 0.25, sag: 0.05, seg: 18, metal: M }); // seg 18 (v4, mái dài 101,5 m): dải ngói rộng ≈ 5,6 m như khi mái dài 67,5 m (12 dải) / 83,5 m (15 dải)
+      boxMM(S, sx * (Cq.inner + 2.7), 2.0, Cq.z0 - 0.6, sx * (Cq.inner + 3.5), 2.86, z1 + 0.6, K.plaster);                       // dải tường trát nối tường bao lên mép mái
+      addRoof(S, sx * (Cq.inner + 1.45), 2.98, zr, z1 - Cq.z0 + 1.5, 3.9, 1.2, { ry: PI / 2, curl: 0.25, sag: 0.05, seg: 18, metal: M }); // seg 18 (v4, mái dài 101,5 m): dải ngói rộng ≈ 5,6 m như khi mái dài 67,5 m (12 dải) / 83,5 m (15 dải)
       cols.forEach((z, k) => { if (k % 2 === 0 && k + 1 < cols.length) hangLanternInto(S, LB, sx * (Cq.inner + 1.6), 2.55, (z + cols[k + 1]) / 2, 0.3, 0.9); }); // đèn lồng mỗi hai gian
     }
-    G.roofZones.push([Cq.inner - 0.4, Cq.inner + 3.2, Cq.z0 - 1, -12.5], [-(Cq.inner + 3.2), -(Cq.inner - 0.4), Cq.z0 - 1, -12.5]); // trong hành lang máy quay đứng gần như trong điện (có mái)
+    G.roofZones.push([Cq.inner - 0.4, Cq.inner + 3.2, Cq.z0 - 1, (L.corridorZ1 ? L.corridorZ1(1) : Cq.z1) + 0.5], [-(Cq.inner + 3.2), -(Cq.inner - 0.4), Cq.z0 - 1, -12.5]); // trong hành lang máy quay đứng gần như trong điện (có mái)
   }
 
   // =====================================================================

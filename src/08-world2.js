@@ -38,9 +38,13 @@ function buildWorld2(G) {
         { x: 26.8, z: -163.5, r: 1.0, h: 4.4 }, { x: 30.4, z: -163.1, r: 0.85, h: 3.6 },
       ],
       bench: { x: 25.5, z: -151.5, yaw: PI / 2, y: 0.42 } },             // ghế đá nhìn về tháp Tổ (dùng cho hoạt động thở)
-    corridors: { inner: 33.1, outer: 36.0, z0: -113, z1: -13, cols: Array.from({ length: 32 }, (_, k) => -13.6 - k * 3.2) }, // 32 cột: z −13,6 … −112,8; 2026-11-26: hai dãy dời ra ngoài +12,3 m cùng tường bao (cột trong 20,8 → 33,1, tường ngoài 23,7 → 36,0)
+    corridors: { inner: 33.1, outer: 36.0, z0: -113, z1: -13, cols: Array.from({ length: 32 }, (_, k) => -13.6 - k * 3.2), // 32 cột: z −13,6 … −112,8; 2026-11-26: hai dãy dời ra ngoài +12,3 m cùng tường bao (cột trong 20,8 → 33,1, tường ngoài 23,7 → 36,0)
+      z1E: -22.6 }, // 2026-11-28 chủ chùa: "thu gọn mái hiên đỏ lại sang bên trái" — dãy ĐÔNG bỏ ba gian đầu nam (cột z −13,6 / −16,8 / −20,0): cột đầu z −23,2, mái tới z −22,1, chừa khoảng sân trước cổng Tàng Kinh Các mới (z −3,4). Dãy tây giữ z1 −13. Cột của từng dãy: corridorCols(sx)
     pondBenches: [{ x: -6.5, z: -22.6, yaw: 0, y: 0.42 }, { x: 6.5, z: -22.6, yaw: 0, y: 0.42 }],
   });
+  // mép nam và hàng cột của từng dãy hành lang (sx −1 tây, +1 đông; 2026-11-28 dãy đông ngắn hơn, xem corridors.z1E)
+  L.corridorZ1 = (sx) => (sx > 0 && L.corridors.z1E != null ? L.corridors.z1E : L.corridors.z1);
+  L.corridorCols = (sx) => L.corridors.cols.filter((z) => z <= L.corridorZ1(sx) - 0.55);
 
   // ---------- Độ cao mặt đất: cầu vồng, bậc đá, tầng nền ----------
   const baseHeight = G.heightAt;
@@ -101,7 +105,7 @@ function buildWorld2(G) {
   const benchCols = (b) => { for (const s of [-0.75, 0.75]) col.circle(b.x + Math.cos(b.yaw) * s, b.z - Math.sin(b.yaw) * s, 0.22, 'bench'); };
   benchCols(L.vuonThap.bench); L.pondBenches.forEach(benchCols);
   // hành lang: hàng cột phía trong (tường ngoài chính là tường bao)
-  for (const sx of [-1, 1]) for (const z of L.corridors.cols) col.circle(sx * L.corridors.inner, z, 0.26, 'col');
+  for (const sx of [-1, 1]) for (const z of L.corridorCols(sx)) col.circle(sx * L.corridors.inner, z, 0.26, 'col');
 
   // ---------- Điểm mốc dẫn đường ----------
   const N = (x, z, id) => G.nav.add(x, z, id);
@@ -158,7 +162,7 @@ function buildWorld2(G) {
       { id: 'quan-am', name: 'Quan Âm Các', rects: [[17.25, 32.45, 7.92, 27.18]] }, // nền toà điện (17-quan-am-cac.js ghi đè bằng SITE.platform). 2026-11-28: dời vào góc đông nam sân trước, tâm (24,85; 17,55), mặt chính quay tây, nền 15,2 × 19,26 m. Trước đó [13.62, 32.88, -8.55, 6.65] (27/11) và [11.4, 21.5, -1, 7.2]
       { id: 'bao-nghiem', name: 'Bảo tháp', rects: [[BN.x - 6, BN.x + 6, BN.z - 6, BN.z + 6]] }, // trong vườn sau chùa từ 2026-11-26 (rect cũ [−20,4…−11,5; −45…−35] theo BN)
       { id: 'vuon-thap', name: 'Vườn tháp', rects: [[23.3, 32.3, -169.5, -135.5]] }, // trong vườn sau chùa từ 2026-11-26
-      { id: 'hanh-lang', name: 'Hành lang', rects: [[-35.9, -32.9, -113, -13], [32.9, 35.9, -113, -13]] }, // 2026-11-26: hành lang dời ra x ±(32,9…35,9)
+      { id: 'hanh-lang', name: 'Hành lang', rects: [[-35.9, -32.9, -113, -13], [32.9, 35.9, -113, L.corridorZ1(1)]] }, // 2026-11-26: hành lang dời ra x ±(32,9…35,9); 2026-11-28: dãy đông tới z −22,6
     ],
   };
   W.places.push({ label: 'Cầu đá – ao Long Trì', desc: 'Cầu đá vồng qua ao sen sau sân chùa', icon: 'lotus', x: 0, z: -12.2 },

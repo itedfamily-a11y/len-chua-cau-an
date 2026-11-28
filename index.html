@@ -1798,7 +1798,7 @@ function buildWorld(G) {
   { // tường bên: cột mỗi 6 m từ z −112 tới 26, thêm cột góc z 31; cột góc (±36,3; −118) do đoạn tường z −118 của 19-vuon-sau.js dựng
     const sidePosts = []; for (let z = -112; z < 26.01; z += 6) sidePosts.push(z); sidePosts.push(31);
     wall(-WALL_X, -118, -WALL_X, 31, { posts: sidePosts });
-    const eg = typeof TKC_SITE !== 'undefined' ? TKC_SITE.gate : null; // 2026-11-27: cổng nách sang sân Tàng Kinh Các (19-tang-kinh-cac.js dựng trụ, mái cổng): tường đông chừa khoảng z 9…13, giữa hai cột z 8 và z 14
+    const eg = typeof TKC_SITE !== 'undefined' ? TKC_SITE.gate : null; // cổng sang sân Tàng Kinh Các: tường đông chừa khoảng TKC_SITE.gate. 2026-11-28: z −6,42…−0,38 cho cổng ba gian (19-cong-tkc.js; hai đoạn tường dừng ở hai cột con, cột tường z −4 rơi vào khoảng hở nên bỏ). 2026-11-27: z 9…13, giữa hai cột z 8 và z 14
     if (eg) { wall(WALL_X, -118, WALL_X, eg.z0, { posts: sidePosts.filter((z) => z < eg.z0) }); wall(WALL_X, eg.z1, WALL_X, 31, { posts: sidePosts.filter((z) => z > eg.z1) }); }
     else wall(WALL_X, -118, WALL_X, 31, { posts: sidePosts }); // tường sau lùi từ z −84 về −100 (v3), rồi về −118 (v4: sân chính điện sâu 12 m, chính điện sâu 27 m trên nền ba bậc)
     col.box(36.6, 30.7, 37.4, 31.3, 'wall'); col.box(-37.4, 30.7, -36.6, 31.3, 'wall'); // 2026-11-26: chặn khe 0,4 m giữa mặt ngoài tường bên và ranh giới đi lại ±37 ở hai góc trước (như hai hộp chặn của vườn ở z −118)
@@ -2224,7 +2224,7 @@ function buildWorld(G) {
     }
     if (collide) col.circle(x, z, 0.85, 'bamboo');
   }
-  roundTree(-33.3, 27.5, 1, 61); roundTree(33.5, 1.0, 1, 62); // 2026-11-26: cây tròn góc sân trước dời theo tường bên (±21 → ±33,3). 2026-11-28: góc đông nam nay là Quan Âm Các, cây phía đông dời lên (33,5; 1,0), sát tường đông, phía bắc cổng nách Tàng Kinh Các
+  roundTree(-33.3, 27.5, 1, 61); roundTree(33.1, -13.5, 1, 62); // 2026-11-26: cây tròn góc sân trước dời theo tường bên (±21 → ±33,3). 2026-11-28: góc đông nam nay là Quan Âm Các nên cây phía đông dời lên (33,5; 1,0); cùng đêm cổng Tàng Kinh Các dời tới z −3,4 (tán cây chạm mái cổng) và đầu hành lang đông lùi về z −22,6, nên cây đứng vào chỗ đầu hành lang cũ (33,1; −13,5), phía bắc cổng
   bamboo(-34.5, 6, 71); bamboo(-34.5, -8.0, 72); // 2026-11-26: hai khóm tre sát tường tây dời theo tường (−22,2 → −34,5)
   // cây cối bên ngoài tường
   {
@@ -3687,9 +3687,13 @@ function buildWorld2(G) {
         { x: 26.8, z: -163.5, r: 1.0, h: 4.4 }, { x: 30.4, z: -163.1, r: 0.85, h: 3.6 },
       ],
       bench: { x: 25.5, z: -151.5, yaw: PI / 2, y: 0.42 } },             // ghế đá nhìn về tháp Tổ (dùng cho hoạt động thở)
-    corridors: { inner: 33.1, outer: 36.0, z0: -113, z1: -13, cols: Array.from({ length: 32 }, (_, k) => -13.6 - k * 3.2) }, // 32 cột: z −13,6 … −112,8; 2026-11-26: hai dãy dời ra ngoài +12,3 m cùng tường bao (cột trong 20,8 → 33,1, tường ngoài 23,7 → 36,0)
+    corridors: { inner: 33.1, outer: 36.0, z0: -113, z1: -13, cols: Array.from({ length: 32 }, (_, k) => -13.6 - k * 3.2), // 32 cột: z −13,6 … −112,8; 2026-11-26: hai dãy dời ra ngoài +12,3 m cùng tường bao (cột trong 20,8 → 33,1, tường ngoài 23,7 → 36,0)
+      z1E: -22.6 }, // 2026-11-28 chủ chùa: "thu gọn mái hiên đỏ lại sang bên trái" — dãy ĐÔNG bỏ ba gian đầu nam (cột z −13,6 / −16,8 / −20,0): cột đầu z −23,2, mái tới z −22,1, chừa khoảng sân trước cổng Tàng Kinh Các mới (z −3,4). Dãy tây giữ z1 −13. Cột của từng dãy: corridorCols(sx)
     pondBenches: [{ x: -6.5, z: -22.6, yaw: 0, y: 0.42 }, { x: 6.5, z: -22.6, yaw: 0, y: 0.42 }],
   });
+  // mép nam và hàng cột của từng dãy hành lang (sx −1 tây, +1 đông; 2026-11-28 dãy đông ngắn hơn, xem corridors.z1E)
+  L.corridorZ1 = (sx) => (sx > 0 && L.corridors.z1E != null ? L.corridors.z1E : L.corridors.z1);
+  L.corridorCols = (sx) => L.corridors.cols.filter((z) => z <= L.corridorZ1(sx) - 0.55);
 
   // ---------- Độ cao mặt đất: cầu vồng, bậc đá, tầng nền ----------
   const baseHeight = G.heightAt;
@@ -3750,7 +3754,7 @@ function buildWorld2(G) {
   const benchCols = (b) => { for (const s of [-0.75, 0.75]) col.circle(b.x + Math.cos(b.yaw) * s, b.z - Math.sin(b.yaw) * s, 0.22, 'bench'); };
   benchCols(L.vuonThap.bench); L.pondBenches.forEach(benchCols);
   // hành lang: hàng cột phía trong (tường ngoài chính là tường bao)
-  for (const sx of [-1, 1]) for (const z of L.corridors.cols) col.circle(sx * L.corridors.inner, z, 0.26, 'col');
+  for (const sx of [-1, 1]) for (const z of L.corridorCols(sx)) col.circle(sx * L.corridors.inner, z, 0.26, 'col');
 
   // ---------- Điểm mốc dẫn đường ----------
   const N = (x, z, id) => G.nav.add(x, z, id);
@@ -3807,7 +3811,7 @@ function buildWorld2(G) {
       { id: 'quan-am', name: 'Quan Âm Các', rects: [[17.25, 32.45, 7.92, 27.18]] }, // nền toà điện (17-quan-am-cac.js ghi đè bằng SITE.platform). 2026-11-28: dời vào góc đông nam sân trước, tâm (24,85; 17,55), mặt chính quay tây, nền 15,2 × 19,26 m. Trước đó [13.62, 32.88, -8.55, 6.65] (27/11) và [11.4, 21.5, -1, 7.2]
       { id: 'bao-nghiem', name: 'Bảo tháp', rects: [[BN.x - 6, BN.x + 6, BN.z - 6, BN.z + 6]] }, // trong vườn sau chùa từ 2026-11-26 (rect cũ [−20,4…−11,5; −45…−35] theo BN)
       { id: 'vuon-thap', name: 'Vườn tháp', rects: [[23.3, 32.3, -169.5, -135.5]] }, // trong vườn sau chùa từ 2026-11-26
-      { id: 'hanh-lang', name: 'Hành lang', rects: [[-35.9, -32.9, -113, -13], [32.9, 35.9, -113, -13]] }, // 2026-11-26: hành lang dời ra x ±(32,9…35,9)
+      { id: 'hanh-lang', name: 'Hành lang', rects: [[-35.9, -32.9, -113, -13], [32.9, 35.9, -113, L.corridorZ1(1)]] }, // 2026-11-26: hành lang dời ra x ±(32,9…35,9); 2026-11-28: dãy đông tới z −22,6
     ],
   };
   W.places.push({ label: 'Cầu đá – ao Long Trì', desc: 'Cầu đá vồng qua ao sen sau sân chùa', icon: 'lotus', x: 0, z: -12.2 },
@@ -4709,9 +4713,12 @@ function buildWorld2Geo(G) {
   //  9. HÀNH LANG: hai dãy dài có mái cong, hàng cột trong, xà, đèn lồng treo. Từ 2026-11-26 dời ra ngoài +12,3 m cùng tường bao (cột trong x ±33,1, tường ngoài ±36,0); mọi toạ độ x tính theo Cq.inner
   // =====================================================================
   {
-    const Cq = L.corridors, cols = Cq.cols, zN = cols[cols.length - 1], zS = cols[0], zc = (zN + zS) / 2, zl = zS - zN + 0.5, zr = (Cq.z0 + Cq.z1) / 2 - 0.25; // mái phủ z −114…−12.5 (dài (z1 − z0) + 1,5 m = 101,5 m)
+    const Cq = L.corridors;
     for (const sx of [-1, 1]) {
-      flags(sx > 0 ? Cq.inner - 0.4 : -(Cq.inner + 2.98), Cq.z0 - 0.4, sx > 0 ? Cq.inner + 2.98 : -(Cq.inner - 0.4), -12.8, 0.022, 1.13, 3.2, 0xc7b392, 0x6f6455); // nền phiến đá (z0 −113,4)
+      // 2026-11-28: dãy đông ngắn hơn (L.corridorZ1 / L.corridorCols, 08-world2.js): mái tới z −22,1 thay cho −12,5
+      const z1 = L.corridorZ1 ? L.corridorZ1(sx) : Cq.z1, cols = L.corridorCols ? L.corridorCols(sx) : Cq.cols;
+      const zN = cols[cols.length - 1], zS = cols[0], zc = (zN + zS) / 2, zl = zS - zN + 0.5, zr = (Cq.z0 + z1) / 2 - 0.25; // mái phủ z −114…z1 + 0,5 (dài (z1 − z0) + 1,5 m: 101,5 m dãy tây, 91,9 m dãy đông)
+      flags(sx > 0 ? Cq.inner - 0.4 : -(Cq.inner + 2.98), Cq.z0 - 0.4, sx > 0 ? Cq.inner + 2.98 : -(Cq.inner - 0.4), z1 + 0.2, 0.022, 1.13, 3.2, 0xc7b392, 0x6f6455); // nền phiến đá (z0 −113,4)
       for (const z of cols) { // cột như cột hiên điện nhưng ít cạnh hơn: đế đá, thân son hở đầu, đai vàng
         cyl(F, sx * Cq.inner, 0.12, z, 0.28, 0.32, 0.24, C.stone, 6); S.add(CYLO, C.wood, { p: [sx * Cq.inner, 1.52, z], s: [0.2, 2.56, 0.2] });
         S.add(CYLO, C.gold, { p: [sx * Cq.inner, 2.7, z], s: [0.23, 0.14, 0.23] });
@@ -4720,11 +4727,11 @@ function buildWorld2Geo(G) {
       box(S, sx * Cq.inner, 2.94, zc, 0.12, 0.4, zl, C.woodD);                                        // diềm gỗ dưới mái
       box(S, sx * (Cq.inner + 1.6), 2.62, zc, 0.16, 0.14, zl, C.woodD);                                           // thanh dọc để treo đèn
       for (const z of cols) box(S, sx * (Cq.inner + 1.5), 2.62, z, 3.1, 0.2, 0.2, C.woodD);                       // xà ngang gác lên tường
-      boxMM(S, sx * (Cq.inner + 2.7), 2.0, Cq.z0 - 0.6, sx * (Cq.inner + 3.5), 2.86, -12.4, K.plaster);                       // dải tường trát nối tường bao lên mép mái
-      addRoof(S, sx * (Cq.inner + 1.45), 2.98, zr, Cq.z1 - Cq.z0 + 1.5, 3.9, 1.2, { ry: PI / 2, curl: 0.25, sag: 0.05, seg: 18, metal: M }); // seg 18 (v4, mái dài 101,5 m): dải ngói rộng ≈ 5,6 m như khi mái dài 67,5 m (12 dải) / 83,5 m (15 dải)
+      boxMM(S, sx * (Cq.inner + 2.7), 2.0, Cq.z0 - 0.6, sx * (Cq.inner + 3.5), 2.86, z1 + 0.6, K.plaster);                       // dải tường trát nối tường bao lên mép mái
+      addRoof(S, sx * (Cq.inner + 1.45), 2.98, zr, z1 - Cq.z0 + 1.5, 3.9, 1.2, { ry: PI / 2, curl: 0.25, sag: 0.05, seg: 18, metal: M }); // seg 18 (v4, mái dài 101,5 m): dải ngói rộng ≈ 5,6 m như khi mái dài 67,5 m (12 dải) / 83,5 m (15 dải)
       cols.forEach((z, k) => { if (k % 2 === 0 && k + 1 < cols.length) hangLanternInto(S, LB, sx * (Cq.inner + 1.6), 2.55, (z + cols[k + 1]) / 2, 0.3, 0.9); }); // đèn lồng mỗi hai gian
     }
-    G.roofZones.push([Cq.inner - 0.4, Cq.inner + 3.2, Cq.z0 - 1, -12.5], [-(Cq.inner + 3.2), -(Cq.inner - 0.4), Cq.z0 - 1, -12.5]); // trong hành lang máy quay đứng gần như trong điện (có mái)
+    G.roofZones.push([Cq.inner - 0.4, Cq.inner + 3.2, Cq.z0 - 1, (L.corridorZ1 ? L.corridorZ1(1) : Cq.z1) + 0.5], [-(Cq.inner + 3.2), -(Cq.inner - 0.4), Cq.z0 - 1, -12.5]); // trong hành lang máy quay đứng gần như trong điện (có mái)
   }
 
   // =====================================================================
@@ -5854,6 +5861,7 @@ function buildDecorInside(G) {
   const inR = (x, z, r, x0, x1, z0, z1) => x > x0 - r && x < x1 + r && z > z0 - r && z < z1 + r;
   const BN = G.L2 && G.L2.baoNghiem;
   const GI = (G.L2 && G.L2.corridors && G.L2.corridors.inner) || 33.1; // 2026-11-26: cột hành lang trong dời 20,8 → 33,1 (rộng ra cho bằng vườn sau)
+  const GZE = (G.L2 && G.L2.corridorZ1 ? G.L2.corridorZ1(1) : -13) + 2; // mép nam vùng cấm của dãy hành lang đông (08-world2.js: dãy đông ngắn hơn từ 2026-11-28); dãy tây vẫn −11
   // vùng cấm: lối giữa, nền chính điện, cổng, cầu, bậc, hành lang, vòng nhiễu tháp
   function banned(x, z, r) {
     if (inR(x, z, r, -2.6, 2.6, -13.4, 31)) return true;     // lối giữa sân trước, đến đầu cầu
@@ -5865,7 +5873,7 @@ function buildDecorInside(G) {
     if (inR(x, z, r, -4.4, 4.4, -25.4, -22.6)) return true;  // bậc trước tầng nền
     if (inR(x, z, r, -13.3, -10.7, -43.3, -36.7)) return true; // bậc tây
     if (inR(x, z, r, 15.0, 19.0, -62.4, -59.2) || inR(x, z, r, -19.0, -15.0, -62.4, -59.2)) return true; // hai bậc góc lên tầng nền chính điện
-    if (Math.abs(x) > GI - 0.5 - r && z < -11) return true;  // hành lang (2026-11-26: |x| > 32,6 thay cho 20,3)
+    if (Math.abs(x) > GI - 0.5 - r && z < (x > 0 ? GZE : -11)) return true;  // hành lang (2026-11-26: |x| > 32,6 thay cho 20,3; 2026-11-28: dãy đông bắt đầu ở z −22,6 nên dải sát tường đông từ z −20,6 trở ra được đặt chậu, đèn)
     if (BN && Math.hypot(x - BN.x, z - BN.z) < (BN.banR || 4.4) + r) return true; // 2026-11-26: tháp dời vào vườn sau chùa, vùng cấm tự đi theo G.L2.baoNghiem (chỗ cũ x −20,4…−11,5 / z −45…−35 nay là sân lát trống)
     for (const b of G.decorBans || []) if (inR(x, z, r, b[0], b[1], b[2], b[3])) return true; // vùng chừa do toà khác đăng ký [x0, x1, z0, z1] (17-dien-phu.js)
     // 2026-11-26: tường bên dời ±24 → ±36,3 (mặt trong ±36,0): biên ±23,0 → ±35,4 (chừa 0,6 m trước mặt trong; 35,4 − 0,5 = 34,9 để chậu x ±34,8 qua được, không dính sai số số thực)
@@ -9507,7 +9515,8 @@ function buildDienPhu(G) {
 //  2026-11-28, chủ chùa: "Quan Âm Các đẩy vào góc này" (ảnh chụp góc ĐÔNG NAM sân trước, nơi tường đông x 36,3 gặp tường trước z 31).
 //  Toà điện dời vào sát góc ấy và xoay cho mặt chính quay về TÂY (ra lối giữa sân, như điện phụ mặt 'W' của 17-dien-phu.js): mặt chính quay về nam
 //  thì ba gian cửa sẽ nhìn thẳng vào tường trước cách 1,7 m. Trục dài nay chạy bắc – nam dọc tường đông.
-//  Cổng nách sang sân Tàng Kinh Các (tường đông z 9…13) giữ nguyên chỗ: cổng mở vào dải đất 3,5 m giữa nền điện và tường đông, lối vào dải ở góc đông bắc của điện.
+//  Cổng sang sân Tàng Kinh Các lúc đầu vẫn ở tường đông z 9…13 (mở vào dải đất 3,5 m giữa nền điện và tường đông); cùng đêm chủ chùa cho dời cổng lên
+//  z −6,42…−0,38, giữa khoảng sân trống phía bắc điện (19-cong-tkc.js). Dải đất phía đông điện nay là ngõ cụt, nút dẫn đường ở đó vẫn giữ cho khách AI đi vòng.
 //
 //  HỆ TOẠ ĐỘ CỤC BỘ (mét, gốc ở tâm toà nhà trên mặt đất): x ngang mặt chính, z ra phía mặt chính, y lên. Mọi số đo dưới đây là số CỤC BỘ;
 //  ra thế giới qua fr = A.frame(OX, OZ, YAW) của 17-dien-phu.js, YAW = −π/2: thế giới x = OX − z, thế giới z = OZ + x (mặt chính +z → tây, +x → nam).
@@ -9639,7 +9648,7 @@ function buildQuanAmCac(G, A) {
     N(0, 6.72, 'qacThem'), N(0, -6.72), N(-8.72, 0), N(8.72, 0),                                         // đầu bốn bậc, trên nền
     N(-8.72, 6.72), N(8.72, 6.72), N(-8.72, -6.72), N(8.72, -6.72), N(-4.6, 6.72), N(4.6, 6.72), N(-4.6, -6.72), N(4.6, -6.72), // vòng hiên quanh điện
     N(0, 5.0, 'quan-am-cacDoor'), N(0, (C1 + C2) / 2 + 1.4, 'quan-am-cacIn'), N(-2.9, 2.6), N(2.9, 2.6), N(-4.2, 4.6), N(4.2, 4.6),
-    // dải đất giữa điện và hai bức tường: góc đông bắc (lối vào dải, sát cổng nách sang Tàng Kinh Các), dọc tường đông, góc đông nam, dọc tường trước, góc tây nam
+    // dải đất giữa điện và hai bức tường: góc đông bắc (lối vào dải), dọc tường đông, góc đông nam, dọc tường trước, góc tây nam
     N(-11.55, -8.55, 'qacGocDB'), N(-4.2, -BK), N(4.2, -BK), N(GN, -BK, 'qacGocDN'), N(GN, -4.2), N(GN, 4.2), N(11.75, 8.65, 'qacGocTN'),
   ];
   const spots = [[-1.7, C1], [1.7, C1], [0, C2], [-1.7, C2], [1.7, C2]].map(([x, z]) => ({ x: wx(x, z), z: wz(x, z), yaw: U.yawTo(wx(x, z), wz(x, z), alt.x, alt.z) }));
@@ -11499,6 +11508,179 @@ function buildChinhDien(G) {
   });
 }
 
+// ----- 19-cong-tkc.js -----
+// =====================================================================
+//  CỔNG SÂN TÀNG KINH CÁC (2026-11-28) — cổng ba gian, mái giữa cao, dựng theo mô hình "Vietnam Temple Gate" của ptdtch (Sketchfab, CC BY 4.0)
+//  Chủ chùa (gửi ảnh khoảng sân trống trước tường đông, sau khi Quan Âm Các dời vào góc đông nam):
+//  "Di chuyển cổng của tàng thư các ra khu này, thu gọn mái hiên đỏ lại sang bên trái. <link Sketchfab>. Lấy cổng theo mẫu link, file GLB làm nét".
+//  - Chỗ đặt: trên tim tường đông sân trước (x 36,3), thẳng trục bậc tây và cửa tây của Tàng Kinh Các (z −3,4): đứng giữa khoảng sân nhìn sang là thấy
+//    cổng, qua cổng đi thẳng tới bậc. Trước đó là cổng nách nhỏ dựng bằng mã ở z 9…13, khuất sau góc đông bắc của Quan Âm Các.
+//  - Mẫu trong đường dẫn ("璧鸡牌坊", bản quét cổng Bích Kê ở Côn Minh, của zhujiming79) không có giấy phép và không cho tải: chỉ dùng làm mẫu dáng
+//    và màu. Hình khối lấy từ file GLB chủ chùa tải (cùng kiểu cổng ba gian, mái giữa cao); màu đổi theo mẫu và theo mái chùa: ngói đỏ đất, gỗ son,
+//    bờ nóc nâu sẫm, nền đá, chữ vàng (bảng MAU; đặt MAU = null thì giữ màu gốc của file: ngói men xanh, gỗ đỏ hồng).
+//  - File: assets/mo-hinh/cong-tkc.glb (68 739 tam giác, 0,23 MB, máy tính) và cong-tkc-nhe.glb (29 091 tam giác, 0,11 MB: máy cảm ứng, máy yếu,
+//    tiết kiệm dữ liệu, lần thử lại). Đổi bằng tests-local/cong-tkc-tools/convert-gate.mjs từ file gốc 489 582 tam giác: giản lược (sai số 4 mm / 16 mm,
+//    phần mạ vàng 1,5 / 2,5 mm cho chữ câu đối còn sắc), bỏ pháp tuyến và UV (file không có ảnh bề mặt; game tô phẳng), tách nền đá thành vật liệu riêng,
+//    gỡ chữ "阮大王祀" (đền thờ Nguyễn Đại Vương, không hợp cổng lầu kinh) trên bảng giữa: game treo biển "TÀNG KINH CÁC" vào đúng chỗ ấy.
+//    Đôi câu đối 一心報國 / 鐵石剛忠 giữ nguyên.
+//  - Hệ cục bộ của file: y lên, chân ở y 0, giữa ở x = z = 0, MẶT TRƯỚC (bảng, câu đối) = +z; rộng 7,32 (x) × cao 5,23 × sâu 3,13 m (cả mái vươn).
+//    Ra thế giới: xoay YAW = −π/2 quanh tâm (GX, GZ): thế giới x = GX − z, thế giới z = GZ + x, mặt trước nhìn về TÂY (ra sân trước).
+//  - Số đo cục bộ (đo từ file): nền đá |x| ≤ 3,02, |z| ≤ 0,9, cao 0,18; bốn cột cái x ±1,53, z ±0,77 (vuông 0,18, cao 3,83); bốn cột con x ±2,88,
+//    z ±0,77 (cao 2,48); lối giữa rộng 2,88 m, dưới bảng cao 3,34 m; hai gian bên chắn bằng tấm câu đối (x ±1,91…2,54, z 0…0,06, cao tới 2,02);
+//    bảng giữa x ±1,35, y 3,34…3,78, mặt trước z 0,88 (viền vàng 0,89); xà gian giữa y 3,57…3,83; mái giữa y ≈ 4,0…5,23; mái bên y ≈ 2,2…3,9.
+//  - Gọi từ 19-tang-kinh-cac.js (khối 'cổng nách'), sau độ cao, ranh giới và nút dẫn đường của sân Tàng Kinh Các; khoảng hở trên tường đông là
+//    TKC_SITE.gate (05-world.js dựng hai đoạn tường hai bên, dừng ở hai cột con).
+//  - Trạng thái: W.congTKC = { state: 'idle' | 'loading' | 'ready' | 'failed', url, error, tris, credit, show(bool) }.
+// =====================================================================
+function buildCongTKC(G, T) {
+  const { THREE, util: U, scene } = G;
+  const W = G.world, col = G.collide, KB = G.build;
+  if (!W || !KB || !col || !T || !T.gate) return null;
+  const { C, boxMM, addRoof, addSign } = KB;
+  const PI = Math.PI;
+  const GX = 36.3, GZ = (T.gate.z0 + T.gate.z1) / 2, YAW = -PI / 2, BH = 0.18;           // tâm cổng trên tim tường đông; nền đá cao 0,18
+  const wx = (x, z) => GX - z, wz = (x, z) => GZ + x;                                     // cục bộ → thế giới (YAW = −π/2)
+  const wbox = (x0, z0, x1, z1) => { const a = [wx(x0, z0), wx(x1, z1)], b = [wz(x0, z0), wz(x1, z1)]; return [Math.min(...a), Math.max(...a), Math.min(...b), Math.max(...b)]; };
+  const POSTS = [[-1.53, -0.77], [-1.53, 0.77], [1.53, -0.77], [1.53, 0.77], [-2.88, -0.77], [-2.88, 0.77], [2.88, -0.77], [2.88, 0.77]];
+
+  // ---------- vật cản: tám cột, tấm câu đối chắn hai gian bên (tường hai bên do 05-world.js dựng, dừng ở cột con) ----------
+  for (const [x, z] of POSTS) col.circle(wx(x, z), wz(x, z), 0.15, 'cong');
+  for (const s of [-1, 1]) { const b = wbox(s * 1.62, -0.14, s * 2.79, 0.14); col.box(b[0], b[2], b[1], b[3], 'cong'); }
+
+  // ---------- độ cao: nền đá 0,18 m, vuốt 0,25 m ở hai mép trước / sau cho chân khỏi giật ----------
+  const baseH = G.heightAt;
+  G.heightAt = (x, z) => {
+    const lx = z - GZ, lz = GX - x;
+    if (Math.abs(lx) <= 3.02 && Math.abs(lz) <= 0.9) return Math.max(BH * U.clamp((0.9 - Math.abs(lz)) / 0.25, 0, 1), baseH(x, z));
+    return baseH(x, z);
+  };
+
+  // ---------- máy quay: bảng + xà + mái giữa, hai mái bên, hai tấm câu đối chắn tia ngắm (lối giữa để trống) ----------
+  const blk = (x0, y0, z0, x1, y1, z1) => { const b = wbox(x0, z0, x1, z1); G.cam.blockers.push(new THREE.Box3(new THREE.Vector3(b[0], y0, b[2]), new THREE.Vector3(b[1], y1, b[3]))); };
+  blk(-2.3, 3.34, -1.0, 2.3, 4.9, 1.0);
+  for (const s of [-1, 1]) { blk(s * 1.6, 2.2, -1.0, s * 3.4, 3.6, 1.0); blk(s * 1.62, BH, -0.1, s * 2.79, 2.25, 0.1); }
+  (G.decorBans = G.decorBans || []).push([GX - 3.3, GX + 0.7, GZ - 4.4, GZ + 4.4]);       // 12-decor-inside.js không đặt chậu, đèn, bồn hoa sát cổng (mái vươn tới |x| 3,66)
+
+  // ---------- biển "TÀNG KINH CÁC" ở mặt trước bảng giữa (chữ gốc của file đã gỡ lúc chuyển đổi) ----------
+  addSign(['TÀNG KINH CÁC'], 2.5, 0.36, wx(0, 0.9), 3.56, wz(0, 0.9), YAW, { ppu: 320, bg1: '#6e1c1e', bg2: '#561416', fg: '#ecc46e' });
+
+  // =====================================================================
+  //  BẢN DỰNG TẠM bằng khối, cùng số đo (hiện ngay; ẩn khi mô hình tải xong; ở lại nếu tải lỗi)
+  // =====================================================================
+  const standIn = new THREE.Group(); standIn.name = 'cong-tkc:tam';
+  {
+    const SB = U.batch(), MB = U.batch();
+    const bm = (x0, y0, z0, x1, y1, z1, c) => boxMM(SB, Math.min(x0, x1), Math.min(y0, y1), Math.min(z0, z1), Math.max(x0, x1), Math.max(y0, y1), Math.max(z0, z1), c);
+    bm(-3.02, 0, -0.9, 3.02, BH, 0.9, C.stoneD);                                                    // nền đá
+    for (const [x, z] of POSTS) bm(x - 0.09, BH, z - 0.09, x + 0.09, Math.abs(x) < 2 ? 3.83 : 2.48, z + 0.09, C.wood);
+    for (const s of [-1, 1]) {
+      bm(s * 1.44, 2.22, -0.86, s * 3.11, 2.48, 0.86, C.wood);                                       // xà gian bên
+      bm(s * 1.91, BH, 0, s * 2.54, 2.02, 0.04, C.wood); bm(s * 1.95, 0.3, 0.04, s * 2.5, 1.9, 0.06, C.gold); // tấm câu đối
+      addRoof(SB, s * 2.55, 2.72, 0, 2.3, 3.1, 0.8, { curl: 0.5, sag: 0.06, seg: 4, color: C.roof, metal: MB });
+    }
+    bm(-1.76, 3.57, -0.86, 1.76, 3.83, 0.86, C.wood); bm(-1.53, 3.83, -0.8, 1.53, 4.1, 0.8, C.wood); // xà và vách gian giữa
+    bm(-1.35, 3.34, 0.79, 1.35, 3.78, 0.88, C.wood);                                                // bảng giữa (biển treo phía trước)
+    addRoof(SB, 0, 4.05, 0, 4.6, 3.1, 1.15, { curl: 0.5, sag: 0.06, seg: 6, color: C.roof, metal: MB });
+    for (const B of [SB, MB]) {
+      if (!B.list.length) continue;
+      const m = B.mesh(G.mats.vc, { cast: true, receive: true }); m.name = 'cong-tkc:tam';
+      m.position.set(GX, 0, GZ); m.rotation.y = YAW; m.matrixAutoUpdate = false; m.updateMatrix(); standIn.add(m);
+    }
+  }
+  scene.add(standIn);
+
+  // =====================================================================
+  //  MÔ HÌNH: tải sau khi game chạy; lỗi thì giữ bản tạm
+  // =====================================================================
+  const CREDIT = {
+    text: 'Cổng sân Tàng Kinh Các là mô hình "Vietnam Temple Gate" của ptdtch trên Sketchfab, giấy phép CC BY 4.0, đã chỉnh sửa cho vừa trò chơi (giảm số mặt, đổi màu theo mái chùa, thay chữ trên bảng giữa bằng biển "Tàng Kinh Các").',
+    href: 'https://sketchfab.com/3d-models/vietnam-temple-gate-4fad9643769f4ff5b71ea66d7f42b8c5',
+    licence: 'https://creativecommons.org/licenses/by/4.0/',
+  };
+  const URL_HI = 'assets/mo-hinh/cong-tkc.glb', URL_LO = 'assets/mo-hinh/cong-tkc-nhe.glb';
+  // màu theo tên vật liệu trong file (tên do Fusion / Sketchfab đặt theo màu gốc); null = giữ màu của file
+  const MAU = { Opaque376869: C.roof, Opaque1253239: C.wood, Opaque636363: C.ridge, Opaque22617783: C.gold, 'da-nen': C.stoneD };
+  const V = (W.congTKC = { state: 'idle', url: null, error: null, tris: 0, tries: 0, next: 3, credit: null, mesh: null, standIn, show: null });
+  let Loader = null, Decoder = null, now = 0;
+  const pickUrl = () => {
+    const lowSaved = (() => { const a = Date.now() - ((G.save && G.save.data && +G.save.data.lowQ) || 0); return a >= 0 && a < 7 * 864e5; })();
+    return (G.isTouch || lowSaved || (G.quality && G.quality.low) || !!(navigator.connection && navigator.connection.saveData)) ? URL_LO : URL_HI;
+  };
+  function place(gltf) {
+    const root = gltf && (gltf.scene || (gltf.scenes && gltf.scenes[0]));
+    if (!root) throw new Error('mô hình không có cảnh');
+    root.updateMatrixWorld(true);
+    const size = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3());
+    // file đã đúng cỡ thật (7,32 × 5,23 × 3,13 m): lệch quá 0,3 m nghĩa là file sai, thà giữ bản tạm còn hơn lệch với vật cản
+    if (!(Math.abs(size.x - 7.32) < 0.3 && Math.abs(size.y - 5.23) < 0.3 && Math.abs(size.z - 3.13) < 0.3)) throw new Error('mô hình sai cỡ: ' + [size.x, size.y, size.z].map((v) => v.toFixed(2)).join(' × '));
+    let tris = 0; const swap = new Map();
+    const lam = (m) => { // vật liệu PBR của file → Lambert tô phẳng (file không có pháp tuyến), hai mặt (tấm mỏng nhìn được cả hai phía)
+      if (!swap.has(m)) {
+        const name = (m && m.name) || '', c = MAU && MAU[name] != null ? MAU[name] : (m && m.color ? m.color.getHex() : 0x8a8070);
+        swap.set(m, new THREE.MeshLambertMaterial({ color: c, flatShading: true, side: THREE.DoubleSide }));
+      }
+      return swap.get(m);
+    };
+    root.traverse((o) => {
+      if (!o.isMesh || !o.geometry || !o.geometry.attributes.position) return;
+      tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3;
+      const old = o.material; o.material = Array.isArray(old) ? old.map(lam) : lam(old);
+      o.castShadow = true; o.receiveShadow = true;
+    });
+    if (tris < 1000) throw new Error('mô hình quá ít mặt: ' + tris);
+    for (const m of swap.keys()) if (m && m.dispose) m.dispose();
+    const hold = new THREE.Group(); hold.name = 'cong-tkc:mo-hinh';
+    hold.position.set(GX, 0, GZ); hold.rotation.y = YAW; hold.add(root);
+    scene.add(hold); hold.updateMatrixWorld(true);
+    hold.traverse((o) => { o.matrixAutoUpdate = false; });
+    V.mesh = hold; V.tris = Math.round(tris);
+    V.show = (model) => { hold.visible = !!model; standIn.visible = !model; V.credit = model ? CREDIT : null; try { G.renderer.shadowMap.needsUpdate = true; } catch (e) { /* bỏ qua */ } };
+    V.show(true);
+  }
+  async function load() {
+    V.state = 'loading'; V.tries++;
+    try {
+      if (!Loader || !Decoder) {
+        try {
+          const [L, M] = await Promise.all([import('three/addons/loaders/GLTFLoader.js'), import('three/addons/libs/meshopt_decoder.module.js')]);
+          Loader = L.GLTFLoader; Decoder = M.MeshoptDecoder || M.default;
+        } catch (e) { V.tries = 99; throw e; }
+        if (!Loader || !Decoder || Decoder.supported === false) { V.tries = 99; throw new Error(Loader && Decoder ? 'trình duyệt không chạy được WebAssembly (MeshoptDecoder không dùng được)' : 'addon không có GLTFLoader / MeshoptDecoder'); }
+      }
+      V.url = (V.tries > 1 && V.url === URL_HI) ? URL_LO : pickUrl(); // lần thử lại: bản nét hỏng thì lùi về bản nhẹ
+      const loader = new Loader(); loader.setMeshoptDecoder(Decoder);
+      const gltf = await loader.loadAsync(V.url);
+      try { place(gltf); } catch (e) { V.tries = 99; throw e; }
+      V.state = 'ready'; V.error = null;
+    } catch (e) {
+      V.error = (e && e.message) || String(e);
+      if (V.tries < 2) { V.state = 'idle'; V.next = now + 45; }
+      else { V.state = 'failed'; console.warn('[cổng Tàng Kinh Các] không tải được mô hình — giữ bản dựng tạm: ' + V.error); }
+    }
+  }
+  if (G.onUpdate) G.onUpdate((dt, t) => {
+    now = t || 0;
+    if (V.state !== 'idle' || now < V.next) return;
+    const conn = navigator.connection;
+    if (conn && conn.saveData) { const P = G.player; if (!P || !P.pos || Math.hypot(P.pos.x - GX, P.pos.z - GZ) > 50) return; } // tiết kiệm dữ liệu: chỉ tải khi đã vào sân trước (chỗ vào game cách cổng 54 m)
+    load();
+  }, 58);
+
+  // ghi công tác giả (CC BY 4.0) ở cuối bảng Cài đặt, khi mô hình đang hiện
+  if (G.events && G.events.on) G.events.on('ui:settings', (box) => {
+    if (!box || !box.appendChild || !V.credit) return;
+    const p = U.el('p', 'muted small', V.credit.text + ' ');
+    [['Xem mô hình gốc', V.credit.href], ['Giấy phép CC BY 4.0', V.credit.licence]].forEach(([label, href], i) => {
+      const a = U.el('a', null, label); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.style.cssText = 'color:inherit;display:inline-block;padding:13px 4px;margin:-13px -4px';
+      if (i) p.append(' · ');
+      p.append(a);
+    });
+    box.appendChild(p);
+  });
+  return V;
+}
+
 // ----- 19-cung-dinh.js -----
 // =====================================================================
 //  TRANG TRÍ CUNG ĐÌNH cho chính điện v4 (phong cách các cung điện cổ Bắc Kinh: đá trắng, đồng, vàng son)
@@ -12878,7 +13060,8 @@ function installSenHo(G) {
 //  TÀNG KINH CÁC — LẦU HAI TẦNG Ở SÂN ĐÔNG (2026-11-27)
 //  Chủ chùa đưa một mô hình 3D và nhờ dựng vào chỗ thích hợp, không có chỗ thì mở rộng. Toà lầu chiếm 28,5 × 31 m (kể cả sáu bậc thềm),
 //  trong khuôn viên không còn khoảng trống cỡ ấy nên mở thêm một sân có tường bao ở phía đông, sát tường bao sân trước,
-//  vào bằng một cổng nách mới trên tường đông (z 9…13).
+//  vào bằng một cổng nách mới trên tường đông (z 9…13). 2026-11-28: cổng dời tới z −6,42…−0,38 (thẳng bậc tây và cửa tây của lầu) và thay bằng
+//  cổng ba gian theo mô hình tải về (19-cong-tkc.js, buildCongTKC), theo ý chủ chùa sau khi Quan Âm Các dời vào góc đông nam sân trước.
 //  Mô hình gốc: "Procedural asian architecture test 11" của ghostnoface trên Sketchfab, giấy phép CC BY 4.0
 //  (https://sketchfab.com/3d-models/procedural-asian-architecture-test-11-fea52a7cf45a4f5893c872c84da501e0).
 //  File trong game (assets/mo-hinh/tang-kinh-cac.glb, ~930 KB) đã giản lược: 410 nghìn → 63 nghìn tam giác; vách cửa, cửa sổ, lan can thành tấm phẳng dán ảnh;
@@ -12900,7 +13083,7 @@ const TKC_SITE = {
   ox: 62.5, oz: -6.5,                                   // gốc mô hình đặt ở đây (bậc chính ở x 62,5, chân bậc z 11,5)
   court: { x0: 36.6, x1: 82.0, z0: -31.0, z1: 23.0 },   // lòng sân (mép tây = mặt ngoài tường đông của sân chùa)
   wallX: 82.3, wallZN: -31.3, wallZS: 23.3,             // tim ba bức tường mới (đông, bắc, nam)
-  gate: { z0: 9.0, z1: 13.0 },                          // khoảng trống trên tường đông x 36,3 (giữa hai cột tường z 8 và z 14)
+  gate: { z0: -6.42, z1: -0.38 },                       // khoảng trống trên tường đông x 36,3 = bề ngang nền đá của cổng ba gian (19-cong-tkc.js), tâm z −3,4 thẳng bậc tây (z −4,39…−2,39) và cửa tây của lầu. Trước 2026-11-28: z 9…13 (giữa hai cột tường z 8 và z 14), cổng dựng bằng mã
   keep: { x0: 36.6, x1: 84.6, z0: -33.6, z1: 25.6 },    // vùng cảnh vật ngoài tường phải chừa (sân + tường + 2 m)
   flatX: 62,                                            // địa hình phẳng tới x = flatX + 25 ở phía đông (phía tây vẫn 32 + 25)
   url: 'assets/mo-hinh/tang-kinh-cac.glb',
@@ -13079,17 +13262,8 @@ function buildTangKinhCac(G) {
     wall(36.6, T.wallZN, T.wallX, T.wallZN); wall(T.wallX, T.wallZN, T.wallX, T.wallZS); wall(36.6, T.wallZS, T.wallX, T.wallZS);
     box(S, T.wallX, 1.0, T.wallZS, 0.62, 2.0, 0.62, C.ochreD); box(S, T.wallX, 2.08, T.wallZS, 0.78, 0.16, 0.78, C.ridge); // cột góc đông nam
   });
-  safe('cổng nách', () => { // hai trụ, xà gỗ, hai lớp mái ngói; ngưỡng đá
-    const x = 36.3, gz = (T.gate.z0 + T.gate.z1) / 2, half = (T.gate.z1 - T.gate.z0) / 2 - 0.2;
-    for (const s of [-1, 1]) {
-      const z = gz + s * half;
-      box(S, x, 1.35, z, 0.7, 2.7, 0.7, C.ochreD); box(S, x, 2.78, z, 0.86, 0.16, 0.86, C.ridge);
-      col.box(x - 0.35, z - 0.35, x + 0.35, z + 0.35, 'wall');
-    }
-    box(S, x, 2.98, gz, 0.4, 0.24, half * 2 + 1.1, C.woodD);
-    box(S, x, 3.19, gz, 1.7, 0.16, half * 2 + 2.0, C.roof); box(S, x, 3.34, gz, 1.0, 0.14, half * 2 + 1.6, C.roof); box(S, x, 3.48, gz, 0.3, 0.16, half * 2 + 1.8, C.ridge);
-    boxMM(F, 35.8, 0, gz - half + 0.35, 36.9, 0.035, gz + half - 0.35, C.stoneL);
-    G.cam.blockers.push(new THREE.Box3(new THREE.Vector3(x - 0.9, 2.8, gz - half - 1), new THREE.Vector3(x + 0.9, 3.6, gz + half + 1)));
+  safe('cổng nách', () => { // 2026-11-28: cổng ba gian theo mô hình tải về (19-cong-tkc.js): vật cản, nền đá, chắn máy quay, biển, bản tạm, tải mô hình. Cổng cũ dựng bằng mã (hai trụ, xà, hai lớp mái) đã bỏ
+    if (typeof buildCongTKC === 'function') buildCongTKC(G, T);
   });
   safe('sân lát', () => {
     const tex = U.canvasTex(256, 256, (g, w, h) => {

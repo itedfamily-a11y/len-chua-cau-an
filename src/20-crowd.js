@@ -162,7 +162,7 @@ function installCrowd(G) {
     p.bun = !p.hat && Math.random() < (kind === 2 ? 0.5 : kind === 1 ? 0.18 : 0.38);
     p.beads = kind !== 1 && Math.random() < (kind === 2 ? 0.6 : 0.28);
     const j = rand(0.93, 1.07), robe = pickRobe(kind, tourist);
-    p.nvM = (Math.random() * 2) | 0; p.nvC = robe; p.nvJ = j; p.nvMoi = true; // khách "người thật" (06-nhan-vat.js): mẫu mô hình + màu áo nhuộm theo đúng màu áo vừa chọn
+    p.nvM = NVK ? NVK.chon(kind, tourist) : 0; p.nvC = robe; p.nvJ = j; p.nvMoi = true; // khách "người thật" (06-nhan-vat.js): mẫu mô hình + màu áo nhuộm theo đúng màu áo vừa chọn
     setC(mBody, sl, robe, j); setC(mLegs, sl, robe, j); setC(mArms, sl * 2, robe, j); setC(mArms, sl * 2 + 1, robe, j);
     const skin = pick(SKIN), sk = kind === 2 ? 0.95 : 1;
     setC(mHead, sl, skin, sk); setC(mHands, sl * 2, skin, sk); setC(mHands, sl * 2 + 1, skin, sk);
@@ -955,11 +955,12 @@ function installCrowd(G) {
     if (p.nvLapMoi) { p.nvLapMoi = false; _col.setRGB(p.nvLap[0], p.nvLap[1], p.nvLap[2]); mLegs.setColorAt(sl, _col); colDirty = true; }
     if (sit > 0.12) mLegs.setMatrixAt(sl, _loc.compose(_pv.set(px, p.gy + sit * (p.seatTop - 0.05 * s - p.gy), pz), _q, _sv.set(1.0 * s * sit, 1.4 * s * Math.max(0.01, sit), 1.05 * s * sit)));
     else mLegs.setMatrixAt(sl, ZERO);
-    const tay = a.phone > 0.03 || p.flagSlot >= 0, non = p.hat && !!t.M.non;
+    if (t.M.tayCung && p.flagSlot >= 0) { p.nvM = NVK.ten.indexOf('thieu-nu'); p.nvMoi = true; } // hướng dẫn viên phải cầm được cờ: mẫu tay dính thân thì đổi sang mẫu có tay (khung kế tiếp đổi thân)
+    const dt = a.phone > 0.03 && !t.M.tayCung, tay = dt || p.flagSlot >= 0, non = p.hat && !!t.M.non; // mẫu tay dính thân không giơ điện thoại
     if (tay || non) t.hold.updateMatrixWorld(true);
     if (tay) { t.tay(1, _tipL); t.tay(-1, _tipR); }
     // điện thoại giữa hai bàn tay (đứng thẳng theo hướng người), đèn chụp lóe phía trước
-    if (a.phone > 0.03) {
+    if (dt) {
       _pv.copy(_tipL).add(_tipR).multiplyScalar(0.5);
       _tmp.compose(_pv, _q, _sv.setScalar(a.phone)); _tmp.multiply(_loc.makeTranslation(0, 0.05, 0.06));
       mPhone.setMatrixAt(sl, _tmp);
@@ -1215,6 +1216,8 @@ function installCrowd(G) {
     const robe = arr[(Math.random() * arr.length) | 0], j = rand(0.93, 1.07), sl = p.slot;
     setC(mBody, sl, robe, j); setC(mLegs, sl, robe, j); setC(mArms, sl * 2, robe, j); setC(mArms, sl * 2 + 1, robe, j);
     colDirty = true;
+    p.nvC = robe; p.nvJ = j; p.nvMoi = true; // khách "người thật": đổi theo màu áo tràng vừa chọn
+    if (NVK && NVK.su >= 0 && p.kind !== 1 && Math.random() < 0.14) p.nvM = NVK.su; // thỉnh thoảng người ngồi tụng kinh / thiền là một vị sư (mẫu này chỉ dùng ở đây)
   }
   // chọn bồ đoàn trống cho người ngồi: lấy ngẫu nhiên 8 chỗ, ưu tiên chỗ có 1–2 người ngồi cạnh (thành từng nhóm nhỏ), tránh chỗ kín mít
   function pickSitterSeat() {

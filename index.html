@@ -2385,9 +2385,10 @@ const NV_TOAN = (() => {
     const c0 = -Math.cos(az), hx = s * 0.2 + 0.36 * Math.sin(az), hy = 0.8 + 0.36 * c0 * Math.cos(ax), hz = 0.36 * c0 * Math.sin(ax);
     const t = (hy - HY0) / (0.8 - HY0), tr = t < 0 ? 0 : t > 1 ? 1 : t; // 0: tay buông, 1: bàn tay ngang vai
     const e0 = sub(E, S), l1 = len(e0), l2 = len(sub(W, E)), L = l1 + l2;
-    const T = [R.coTay[0] * hx / 0.32, t <= 1 ? W[1] + (S[1] - W[1]) * t : S[1] + ((hy - 0.8) / 0.36) * L, W[2] + (S[2] - W[2]) * tr + (hz / 0.36) * R.voi * (hz >= 0 ? 1 : 0.6)];
+    const N = R.treo ? [s * R.treo[0], R.treo[1], R.treo[2]] : W; // cổ tay lúc buông tay tự nhiên: mẫu đứng dang tay (chữ A) thì khác dáng gốc
+    const T = [N[0] * s * hx / 0.32, t <= 1 ? N[1] + (S[1] - N[1]) * t : S[1] + ((hy - 0.8) / 0.36) * L, N[2] + (S[2] - N[2]) * tr + (hz / 0.36) * R.voi * (hz >= 0 ? 1 : 0.6)];
     // tay còn thấp (đi, đứng, đặt tay lên đùi): vung cả cánh tay thẳng quanh vai như con lắc, không gập khuỷu
-    const kl = 1 - ss(0.16, 0.42, t), an = ax * 0.55, ca = Math.cos(an), sa = Math.sin(an), w0 = sub(W, S);
+    const kl = 1 - ss(0.16, 0.42, t), an = ax * 0.55, ca = Math.cos(an), sa = Math.sin(an), w0 = sub(N, S);
     if (kl > 0) { const Pn = [S[0] + w0[0], S[1] + w0[1] * ca - w0[2] * sa, S[2] + w0[1] * sa + w0[2] * ca]; T[0] += (Pn[0] - T[0]) * kl; T[1] += (Pn[1] - T[1]) * kl; T[2] += (Pn[2] - T[2]) * kl; }
     if (R.gio != null && T[1] > S[1] + R.gio) { T[1] = S[1] + R.gio; if (Math.abs(T[0]) < R.vai[0] + 0.03 && tr >= 1 && hy > 0.9) T[0] = s * (R.vai[0] + 0.03); } // tay áo thụng: không giơ tay quá đầu (vải bị kéo thành tấm); vẫy tay thì bàn tay ở ngoài vai
     const zmin = R.truoc * (1 - ss(0.05, 0.13, Math.abs(T[0]))) * ss(0.1, 0.3, tr); // tay đưa vào giữa ngực: không chui vào thân
@@ -2422,15 +2423,32 @@ const NV_TOAN = (() => {
       nhun: Math.abs(sp) * R.nhun * di,
     };
   }
+  // Số đo R của một mẫu từ bảng NV_MAU + vị trí gốc của vai, khuỷu, cổ tay, đầu ngón tay (bên trái, hệ cao 1). Game và nv-thu.mjs cùng gọi.
+  // dang: 'A' = mô hình đứng dang tay → tính chỗ cổ tay khi buông tay tự nhiên (thẳng xuống, hơi ra ngoài và ra trước).
+  function soDo(M, vai, khuyu, coTay, dauTay) {
+    const R = { vai, khuyu, coTay, dauTay, voi: M.voi, truoc: M.truoc, buoc: M.buoc, goi: M.goi, nhun: M.nhun, gio: M.gio };
+    if (M.dang === 'A') { const L = len(sub(khuyu, vai)) + len(sub(coTay, khuyu)); R.treo = [vai[0] + (M.treoX != null ? M.treoX : 0.04), vai[1] - 0.965 * L, vai[2] + 0.045]; }
+    return R;
+  }
   // Nhuộm một màu (tuyến tính 0…1) như chương trình tô: giữ độ sáng của ảnh, đổi sang màu áo mới.
   function nhuom(c, n) { if (!n) return c; const L = (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) * n[4]; return [c[0] + (n[0] * L - c[0]) * n[3], c[1] + (n[1] * L - c[1]) * n[3], c[2] + (n[2] * L - c[2]) * n[3]]; }
-  return { qMul, qInv, qAxis, qRot, qArc, tay, tuThe, nhuom, ss };
+  return { qMul, qInv, qAxis, qRot, qArc, tay, tuThe, nhuom, ss, soDo };
 })();
 // Mẫu (mô hình). cao: chiều cao trong game (m). voi: tầm đưa tay ra trước; truoc: mặt trước ngực (tay không chui vào);
 // nhe: bản nhẹ (khoảng 7 nghìn mặt, ảnh 1024 px) cho khách hành hương AI; sang: hệ số sáng khi nhuộm áo khách; non: [y, z, tỉ lệ] đặt nón lá của dáng chibi lên đầu (so với xương đầu; không ghi = không đội nón);
 // buoc / goi: biên độ bước chân, gập gối (rad); nhun: nhún khi đi; gio: cổ tay được giơ cao hơn vai tối đa bao nhiêu (không ghi = không giới hạn); ngoi: độ cao đáy hông (mặt ngồi) trong hệ cao 1; dui: màu khối đùi khi ngồi (sRGB).
 const NV_MAU = {
   'thu-sinh': { url: 'assets/nhan-vat/thu-sinh.glb', nhe: 'assets/nhan-vat/thu-sinh-nhe.glb', sang: 1.2, cao: 1.5, voi: 0.2, truoc: 0.15, buoc: 0.2, goi: 0.24, nhun: 0.005, gio: 0.07, ngoi: 0.45, dui: [222, 216, 196], thuDa: 1 },
+  // Thêm 2026-11-28. dang: 'A' = mô hình đứng dang tay (game tự tính chỗ buông tay); tayCung: tay dính thân trong mô hình, đứng yên (chỉ dùng cho khách AI);
+  // gu: dáng đã còng sẵn (không cộng thêm độ còng của khách lớn tuổi); khongNhuom: khách AI giữ nguyên màu áo của mô hình; chiNgoi: chỉ dùng cho người ngồi trong chính điện.
+  'cu-ba': { url: 'assets/nhan-vat/cu-ba.glb', nhe: 'assets/nhan-vat/cu-ba-nhe.glb', sang: 1.9, dang: 'A', gu: 1, cao: 1.36, voi: 0.17, truoc: 0.11, buoc: 0.2, goi: 0.32, nhun: 0.004, ngoi: 0.46, dui: [52, 92, 200], thuDa: 0 },
+  'cu-ong': { url: 'assets/nhan-vat/cu-ong.glb', nhe: 'assets/nhan-vat/cu-ong-nhe.glb', sang: 1.5, dang: 'A', gu: 1, cao: 1.46, voi: 0.17, truoc: 0.12, buoc: 0.2, goi: 0.32, nhun: 0.004, ngoi: 0.46, dui: [226, 222, 168], thuDa: 0 },
+  'chang-trai': { url: 'assets/nhan-vat/chang-trai.glb', nhe: 'assets/nhan-vat/chang-trai-nhe.glb', khongNhuom: 1, dang: 'A', treoX: 0.055, cao: 1.56, voi: 0.19, truoc: 0.135, buoc: 0.3, goi: 0.5, nhun: 0.007, ngoi: 0.47, dui: [168, 142, 100], thuDa: 0 },
+  'dam-sao': { url: 'assets/nhan-vat/dam-sao.glb', nhe: 'assets/nhan-vat/dam-sao-nhe.glb', khongNhuom: 1, cao: 1.46, voi: 0.17, truoc: 0.105, buoc: 0.22, goi: 0.38, nhun: 0.006, ngoi: 0.47, dui: [22, 62, 104], thuDa: 0 },
+  'ao-dai': { nhe: 'assets/nhan-vat/ao-dai-nhe.glb', sang: 2.6, tayCung: 1, cao: 1.5, voi: 0.17, truoc: 0.1, buoc: 0.2, goi: 0.26, nhun: 0.005, ngoi: 0.47, dui: [196, 22, 26], thuDa: 2 },
+  'ke-soc': { nhe: 'assets/nhan-vat/ke-soc-nhe.glb', khongNhuom: 1, tayCung: 1, cao: 1.46, voi: 0.17, truoc: 0.1, buoc: 0.26, goi: 0.42, nhun: 0.006, ngoi: 0.47, dui: [120, 24, 30], thuDa: 0 },
+  'ao-mua': { nhe: 'assets/nhan-vat/ao-mua-nhe.glb', khongNhuom: 1, tayCung: 1, cao: 1.5, voi: 0.17, truoc: 0.1, buoc: 0.26, goi: 0.42, nhun: 0.006, ngoi: 0.47, dui: [158, 140, 122], thuDa: 0 },
+  'su': { nhe: 'assets/nhan-vat/su-nhe.glb', khongNhuom: 1, tayCung: 1, chiNgoi: 1, cao: 1.56, voi: 0.17, truoc: 0.12, buoc: 0.16, goi: 0.2, nhun: 0.004, ngoi: 0.46, dui: [110, 18, 30], thuDa: 0 },
   'thieu-nu': { url: 'assets/nhan-vat/thieu-nu.glb', nhe: 'assets/nhan-vat/thieu-nu-nhe.glb', sang: 1.7, non: [-0.011, 0.012, 0.258], cao: 1.42, voi: 0.17, truoc: 0.105, buoc: 0.24, goi: 0.42, nhun: 0.006, ngoi: 0.47, dui: [150, 172, 205], thuDa: 0 },
 };
 // Danh sách nhân vật. nhuom: [đỏ, lục, lam (tuyến tính, màu áo mới), mức nhuộm 0…1, hệ số sáng] hoặc null (màu gốc). mau = null: dáng hoạt hình cũ.
@@ -2444,6 +2462,11 @@ const NV_DS = [
   { id: 'thieu-nu-vang', mau: 'thieu-nu', ten: 'Thiếu nữ áo vàng mơ', nhuom: [1.0, 0.72, 0.3, 0.88, 1.75] },
   { id: 'thieu-nu-tim', mau: 'thieu-nu', ten: 'Thiếu nữ áo tím', nhuom: [0.62, 0.42, 0.85, 0.88, 1.6] },
   { id: 'thieu-nu-nau', mau: 'thieu-nu', ten: 'Thiếu nữ áo nâu', nhuom: [0.58, 0.36, 0.22, 0.9, 1.5] },
+  { id: 'dam-sao', mau: 'dam-sao', ten: 'Thiếu nữ đầm sao', nhuom: null },
+  { id: 'chang-trai', mau: 'chang-trai', ten: 'Chàng trai áo nỉ', nhuom: null },
+  { id: 'cu-ba', mau: 'cu-ba', ten: 'Cụ bà áo lam', nhuom: null },
+  { id: 'cu-ba-nau', mau: 'cu-ba', ten: 'Cụ bà áo nâu', nhuom: [0.5, 0.3, 0.17, 0.9, 2.3] },
+  { id: 'cu-ong', mau: 'cu-ong', ten: 'Cụ ông áo đỏ', nhuom: null },
   { id: 'phat-tu', mau: null, ten: 'Phật tử áo lam (hoạt hình)', nhuom: null },
 ];
 //@@NV-LOI-KET-THUC
@@ -2453,7 +2476,8 @@ function installNhanVat(G) {
   if (!P || !P.than || !G.chibi || !G.save) return;
   const K = G.chibi.k || 1, CHIBI_CAO = 1.57 * K, SEAT = 0.29 * K; // SEAT: mặt ngồi của dáng chibi nằm dưới gốc nhân vật bấy nhiêu mét khi ngồi (đáy thân 0,05 − 0,34)
   const XUONG = ['hong', 'nguc', 'dau', 'tayTrenT', 'tayDuoiT', 'tayTrenP', 'tayDuoiP', 'duiT', 'ongT', 'duiP', 'ongP'];
-  const GHI_CONG = 'Nhân vật: mô hình 3D "AI Generated - Ancient Chinese Scholar" của OGL và "Chinese dress with irregular hemline" của Style3D Meta trên Sketchfab, giấy phép CC BY 4.0, đã chỉnh sửa cho vừa trò chơi (giảm số mặt, vẽ lại ảnh bề mặt, gắn xương, thêm màu áo).';
+  const GHI_CONG = 'Nhân vật và khách hành hương dùng các mô hình 3D trên Sketchfab, giấy phép CC BY 4.0, đã chỉnh sửa cho vừa trò chơi (giảm số mặt, bỏ phần khuất, vẽ lại ảnh bề mặt, gắn xương, thêm màu áo): "AI Generated - Ancient Chinese Scholar" của OGL; "Chinese dress with irregular hemline", "Dreamy Starry Night sleeveless dress" và "Red and black plaid Christmas suit" của Style3D Meta; "Female Older People" và "Male Older People" của Ob1to; "A-Pose - Male Full Body 3D Scan" của OverseerThuror; "Ao Dai Hoa Van" của Dung.Anh.Trieu; "Women\'s oversize raincoat" của Ahmad Riazi; "Buddhist monk in orange robes" của restore50.';
+  const GHI_CONG_NGAN = 'Nhân vật và khách hành hương dùng 10 mô hình 3D giấy phép CC BY 4.0 trên Sketchfab (đã chỉnh sửa); tên từng mô hình và tác giả ghi trong Cài đặt, mục Nhân vật.';
   const byId = new Map(NV_DS.map((d) => [d.id, d]));
   const S = { state: 'chibi', error: null, tris: 0, xa: 0 }; // state: chibi | loading | ready | failed
 
@@ -2480,7 +2504,7 @@ function installNhanVat(G) {
       const map = mesh.material && mesh.material.map;
       if (!map || !map.image) throw new Error('mô hình không có ảnh bề mặt');
       map.anisotropy = Math.min(4, G.renderer.capabilities.getMaxAnisotropy());
-      const R = { vai: wp('tayTrenT'), khuyu: wp('tayDuoiT'), coTay: wp('coTayT'), dauTay: wp('dauTayT'), voi: M.voi, truoc: M.truoc, buoc: M.buoc, goi: M.goi, nhun: M.nhun, gio: M.gio };
+      const R = NV_TOAN.soDo(M, wp('tayTrenT'), wp('tayDuoiT'), wp('coTayT'), wp('dauTayT'));
       const idx = mesh.geometry.index;
       return { scene: sc, clone: SU.clone, R, map, M, tris: idx ? idx.count / 3 : 0 };
     })();
@@ -2494,7 +2518,7 @@ function installNhanVat(G) {
     const n = d.nhuom, m = new THREE.MeshLambertMaterial({ map: T.map, side: THREE.DoubleSide });
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 1e4); // luôn có một mặt cắt (để chương trình tô không đổi khi ngồi / đứng); đứng thì đặt rất thấp
     m.clippingPlanes = [plane];
-    const un = { uNhuom: { value: new THREE.Vector4(n ? n[0] : 1, n ? n[1] : 1, n ? n[2] : 1, n ? n[3] : 0) }, uNhuomK: { value: new THREE.Vector2(n ? n[4] : 1, T.M.thuDa ? 1 : 0) } };
+    const un = { uNhuom: { value: new THREE.Vector4(n ? n[0] : 1, n ? n[1] : 1, n ? n[2] : 1, n ? n[3] : 0) }, uNhuomK: { value: new THREE.Vector2(n ? n[4] : 1, T.M.thuDa || 0) } };
     m.onBeforeCompile = (sh) => {
       sh.uniforms.uNhuom = un.uNhuom; sh.uniforms.uNhuomK = un.uNhuomK;
       sh.vertexShader = sh.vertexShader.replace('void main() {', 'attribute float _giu;\nvarying float vGiu;\nvoid main() {\n\tvGiu = _giu;');
@@ -2505,7 +2529,9 @@ function installNhanVat(G) {
           '\t{',
           '\t\tvec3 c = sampledDiffuseColor.rgb;',
           '\t\tfloat giu = clamp( vGiu, 0.0, 1.0 );',
-          '\t\tif ( uNhuomK.y > 0.5 ) giu *= smoothstep( 0.10, 0.22, ( c.r - c.g ) / max( c.r, 0.04 ) );', // vùng da của mô hình một lớp vỏ: chỉ giữ điểm ảnh ngả đỏ (da, môi), vải lẫn trong vùng vẫn được nhuộm
+          '\t\tfloat ngaDo = ( c.r - c.g ) / max( c.r, 0.04 );',
+          '\t\tif ( uNhuomK.y > 1.5 ) giu = giu > 0.75 ? 1.0 : min( 1.0, giu * 2.0 ) * smoothstep( 0.10, 0.22, ngaDo ) * ( 1.0 - smoothstep( 0.55, 0.75, ngaDo ) );', // thuDa = 2 (áo đỏ): _giu = 1 giữ hẳn (đầu, giày); _giu = 0,5 là vùng bàn tay, chỉ giữ điểm ảnh ngả đỏ VỪA PHẢI (da), vải đỏ thẫm vẫn nhuộm
+          '\t\telse if ( uNhuomK.y > 0.5 ) giu *= smoothstep( 0.10, 0.22, ngaDo );', // vùng da của mô hình một lớp vỏ: chỉ giữ điểm ảnh ngả đỏ (da, môi), vải lẫn trong vùng vẫn được nhuộm
           '\t\tfloat sang = dot( c, vec3( 0.2126, 0.7152, 0.0722 ) ) * uNhuomK.x;',
           '\t\tsampledDiffuseColor.rgb = mix( c, uNhuom.rgb * sang, uNhuom.a * ( 1.0 - giu ) );',
           '\t}',
@@ -2660,10 +2686,20 @@ function installNhanVat(G) {
   function bo(p) { const r = xa.get(p); if (!r) return; if (r.than) r.than.huy(); xa.delete(p); S.xa = xa.size; }
 
   // ---------- khách hành hương AI (20-crowd.js): mỗi khách một thân bản nhẹ, màu áo nhuộm theo màu áo khách đã chọn ----------
-  // Tải hai bản nhẹ ngay lúc khởi động (khoảng 0,4 MB). Máy bật tiết kiệm dữ liệu, máy cảm ứng đã được ghi nhớ là yếu trong 7 ngày, hoặc tải hỏng: khách giữ dáng hoạt hình.
+  // Tải hai bản nhẹ gốc ngay lúc khởi động (khoảng 0,4 MB), rồi tải dần các mẫu còn lại (khoảng 0,2 MB mỗi mẫu). Máy bật tiết kiệm dữ liệu, máy cảm ứng đã được ghi nhớ là yếu trong 7 ngày, hoặc tải hỏng: khách giữ dáng hoạt hình.
   // Đang chơi mà máy tụt khung hình (sự kiện quality:low): trả hết về dáng hoạt hình.
-  const KH = { state: 'idle', error: null, san: false, n: 0 }; // state: idle | loading | ready | failed | skipped
-  const khTen = Object.keys(NV_MAU), khT = [], khThan = new Map(); // khThan: khách → { m, than }
+  const KH = { state: 'idle', error: null, san: false, n: 0, mau: 0 }; // state: idle | loading | ready | failed | skipped; mau: số mẫu đã tải
+  const khTen = Object.keys(NV_MAU).filter((m) => NV_MAU[m].nhe), khT = khTen.map(() => null), khThan = new Map(); // khT: mẫu nhẹ đã tải (null = chưa); khThan: khách → { m, than }
+  const KH_GOC = ['thu-sinh', 'thieu-nu']; // hai mẫu phải có trước khi đổi đám đông sang người thật; các mẫu khác tải dần sau, cũng là mẫu thế chỗ khi mẫu được chia chưa tải xong
+  // Tỉ lệ chia mẫu theo loại khách: [phật tử, khách du lịch, trẻ em, người lớn tuổi]. Sư (su) không đi dạo: chỉ ngồi tụng kinh / thiền trong chính điện (20-crowd.js, makeSitter).
+  const KH_TL = { 'thu-sinh': [20, 9, 14, 8], 'thieu-nu': [20, 11, 28, 8], 'cu-ba': [3, 2, 0, 42], 'cu-ong': [2, 2, 0, 42], 'chang-trai': [8, 24, 40, 0], 'dam-sao': [12, 14, 18, 0], 'ao-dai': [20, 14, 0, 0], 'ke-soc': [6, 13, 0, 0], 'ao-mua': [9, 11, 0, 0] };
+  function khChon(kind, tourist) { // kind: 0 người lớn, 1 trẻ em, 2 người lớn tuổi → chỉ số mẫu (trong khTen)
+    const c = kind === 1 ? 2 : kind === 2 ? 3 : tourist ? 1 : 0;
+    let tong = 0; for (const m of khTen) tong += KH_TL[m] ? KH_TL[m][c] : 0;
+    let r = Math.random() * tong;
+    for (let i = 0; i < khTen.length; i++) { r -= KH_TL[khTen[i]] ? KH_TL[khTen[i]][c] : 0; if (r < 0) return i; }
+    return 0;
+  }
   const _kq = new THREE.Quaternion(), _kc = new THREE.Color(), _ky = new THREE.Vector3(0, 1, 0), _kz = new THREE.Vector3(0, 0, 1);
   const _ka = { lx: 0, lz: 0, rx: 0, rz: 0, hip: 0, head: 0, sit: 0 };
   function khXoa() { for (const r of khThan.values()) r.than.huy(); khThan.clear(); KH.n = 0; }
@@ -2672,10 +2708,14 @@ function installNhanVat(G) {
     const conn = navigator.connection, tuoi = Date.now() - ((G.save.data && +G.save.data.lowQ) || 0);
     if ((conn && conn.saveData) || (G.isTouch && tuoi >= 0 && tuoi < 7 * 864e5) || (G.quality && G.quality.low)) { KH.state = 'skipped'; return; } // máy tính từng bị ghi nhớ là yếu vẫn thử lại mỗi lần mở (tụt khung hình thì quality:low trả về dáng hoạt hình); máy cảm ứng yếu thì khỏi tải
     KH.state = 'loading';
-    Promise.all(khTen.map((m) => taiMau(m, true))).then((ts) => {
+    const tai = (i) => taiMau(khTen[i], true).then((T) => { khT[i] = T; KH.mau++; });
+    Promise.all(KH_GOC.map((m) => khTen.indexOf(m)).filter((i) => i >= 0).map(tai)).then(async () => {
       if (KH.state !== 'loading') return;
-      for (const t of ts) khT.push(t);
       KH.state = 'ready'; KH.san = true;
+      for (let i = 0; i < khTen.length; i++) { // các mẫu còn lại: tải lần lượt; mẫu nào xong thì khách được chia mẫu ấy đổi thân ở khung kế tiếp
+        if (khT[i] || !KH.san) continue;
+        try { await tai(i); } catch (e) { console.warn('[nhân vật] không tải được mẫu khách "' + khTen[i] + '" — khách được chia mẫu này dùng mẫu khác: ' + ((e && e.message) || e)); }
+      }
     }).catch((e) => { if (KH.state !== 'loading') return; KH.state = 'failed'; KH.error = (e && e.message) || String(e); console.warn('[nhân vật] không tải được mô hình cho khách hành hương — giữ dáng hoạt hình: ' + KH.error); });
   }
   G.events.on('quality:low', () => { KH.san = false; if (KH.state !== 'failed') KH.state = 'skipped'; khXoa(); });
@@ -2684,7 +2724,8 @@ function installNhanVat(G) {
   // Ghi vào p: nvLap (màu khối đùi, tuyến tính) + nvLapMoi, nvY (độ cao bàn chân), nvH (chiều cao người).
   function khVe(p, px, pz) {
     if (!KH.san) return null;
-    const mi = (p.nvM | 0) % khT.length;
+    let mi = p.nvM | 0;
+    if (!(mi >= 0 && mi < khTen.length) || !khT[mi]) { mi = khTen.indexOf(KH_GOC[p.slot & 1]); if (mi < 0 || !khT[mi]) return null; } // mẫu được chia chưa tải xong (hoặc hỏng): tạm dùng một mẫu gốc
     let r = khThan.get(p);
     if (!r || r.m !== mi) {
       if (r) r.than.huy();
@@ -2695,12 +2736,12 @@ function installNhanVat(G) {
     if (p.nvMoi) {
       p.nvMoi = false;
       _kc.setHex(p.nvC != null ? p.nvC : 0x86a3c8); const j = p.nvJ || 1;
-      const n = [_kc.r * j, _kc.g * j, _kc.b * j, 0.9, M.sang || 1.2];
+      const n = M.khongNhuom || p.nvC == null ? null : [_kc.r * j, _kc.g * j, _kc.b * j, 0.9, M.sang || 1.2]; // mẫu ghi khongNhuom giữ nguyên màu áo của mô hình
       t.doiMau(n);
       p.nvLap = NV_TOAN.nhuom([lin(M.dui[0]), lin(M.dui[1]), lin(M.dui[2])], n); p.nvLapMoi = true;
     }
     const H = M.cao * p.scale, sit = a.sit, v = p.vis, k = v >= 1 ? 1 : v * v * (3 - 2 * v);
-    _ka.lx = a.la; _ka.lz = a.lz; _ka.rx = a.ra; _ka.rz = a.rz; _ka.hip = a.hip + p.hunch; _ka.head = a.head; _ka.sit = sit;
+    _ka.lx = a.la; _ka.lz = a.lz; _ka.rx = a.ra; _ka.rz = a.rz; _ka.hip = a.hip + p.hunch * (M.gu ? 0.25 : 1); _ka.head = a.head; // mẫu cụ bà / cụ ông đã còng lưng sẵn _ka.sit = sit;
     t.tuThe(_ka, p.phase, p.walkAmt);
     if (a.roll) t.bone.nguc.quaternion.multiply(_kq.setFromAxisAngle(_kz, a.roll));   // lắc lư khi tụng
     if (a.hyaw) t.bone.dau.quaternion.premultiply(_kq.setFromAxisAngle(_ky, a.hyaw)); // quay đầu nhìn quanh
@@ -2743,7 +2784,7 @@ function installNhanVat(G) {
   G.events.on('nhanvat:chon', () => { for (let i = luoiDs.length - 1; i >= 0; i--) { if (!luoiDs[i].host.isConnected) luoiDs.splice(i, 1); else luoiDs[i].ve(); } });
   const splashHost = document.getElementById('nvLuoi');
   if (splashHost) veLuoi(splashHost);
-  const gc = document.getElementById('nvGhiCong'); if (gc) gc.textContent = GHI_CONG;
+  const gc = document.getElementById('nvGhiCong'); if (gc) gc.textContent = GHI_CONG_NGAN;
   G.events.on('ui:settings', (box) => {
     const row = U.el('div', 'snd-row nv-cd');
     const host = U.el('div', 'nv-luoi');
@@ -2757,7 +2798,7 @@ function installNhanVat(G) {
     get caoThem() { return than ? than.M.cao - CHIBI_CAO : 0; }, // nhân vật của mình cao hơn dáng chibi bao nhiêu mét (bong bóng lời)
     hopLe: (id) => typeof id === 'string' && byId.has(id),
     // khách hành hương AI vẽ bằng mô hình: 20-crowd.js gọi khach.ve(p, px, pz) mỗi khung, khach.an(p) khi khách rời chùa
-    khach: { trangThai: KH, ve: khVe, an: khAn, xoa: khXoa, get san() { return KH.san; } },
+    khach: { trangThai: KH, ve: khVe, an: khAn, xoa: khXoa, chon: khChon, ten: khTen, su: khTen.indexOf('su'), get san() { return KH.san; } },
   };
   khBatDau();
   chon(cur.id, false); // tải sẵn nhân vật đã chọn lần trước (hoặc nhân vật đầu danh sách) ngay khi còn ở màn chào
@@ -14117,7 +14158,7 @@ function installCrowd(G) {
     p.bun = !p.hat && Math.random() < (kind === 2 ? 0.5 : kind === 1 ? 0.18 : 0.38);
     p.beads = kind !== 1 && Math.random() < (kind === 2 ? 0.6 : 0.28);
     const j = rand(0.93, 1.07), robe = pickRobe(kind, tourist);
-    p.nvM = (Math.random() * 2) | 0; p.nvC = robe; p.nvJ = j; p.nvMoi = true; // khách "người thật" (06-nhan-vat.js): mẫu mô hình + màu áo nhuộm theo đúng màu áo vừa chọn
+    p.nvM = NVK ? NVK.chon(kind, tourist) : 0; p.nvC = robe; p.nvJ = j; p.nvMoi = true; // khách "người thật" (06-nhan-vat.js): mẫu mô hình + màu áo nhuộm theo đúng màu áo vừa chọn
     setC(mBody, sl, robe, j); setC(mLegs, sl, robe, j); setC(mArms, sl * 2, robe, j); setC(mArms, sl * 2 + 1, robe, j);
     const skin = pick(SKIN), sk = kind === 2 ? 0.95 : 1;
     setC(mHead, sl, skin, sk); setC(mHands, sl * 2, skin, sk); setC(mHands, sl * 2 + 1, skin, sk);
@@ -14910,11 +14951,12 @@ function installCrowd(G) {
     if (p.nvLapMoi) { p.nvLapMoi = false; _col.setRGB(p.nvLap[0], p.nvLap[1], p.nvLap[2]); mLegs.setColorAt(sl, _col); colDirty = true; }
     if (sit > 0.12) mLegs.setMatrixAt(sl, _loc.compose(_pv.set(px, p.gy + sit * (p.seatTop - 0.05 * s - p.gy), pz), _q, _sv.set(1.0 * s * sit, 1.4 * s * Math.max(0.01, sit), 1.05 * s * sit)));
     else mLegs.setMatrixAt(sl, ZERO);
-    const tay = a.phone > 0.03 || p.flagSlot >= 0, non = p.hat && !!t.M.non;
+    if (t.M.tayCung && p.flagSlot >= 0) { p.nvM = NVK.ten.indexOf('thieu-nu'); p.nvMoi = true; } // hướng dẫn viên phải cầm được cờ: mẫu tay dính thân thì đổi sang mẫu có tay (khung kế tiếp đổi thân)
+    const dt = a.phone > 0.03 && !t.M.tayCung, tay = dt || p.flagSlot >= 0, non = p.hat && !!t.M.non; // mẫu tay dính thân không giơ điện thoại
     if (tay || non) t.hold.updateMatrixWorld(true);
     if (tay) { t.tay(1, _tipL); t.tay(-1, _tipR); }
     // điện thoại giữa hai bàn tay (đứng thẳng theo hướng người), đèn chụp lóe phía trước
-    if (a.phone > 0.03) {
+    if (dt) {
       _pv.copy(_tipL).add(_tipR).multiplyScalar(0.5);
       _tmp.compose(_pv, _q, _sv.setScalar(a.phone)); _tmp.multiply(_loc.makeTranslation(0, 0.05, 0.06));
       mPhone.setMatrixAt(sl, _tmp);
@@ -15170,6 +15212,8 @@ function installCrowd(G) {
     const robe = arr[(Math.random() * arr.length) | 0], j = rand(0.93, 1.07), sl = p.slot;
     setC(mBody, sl, robe, j); setC(mLegs, sl, robe, j); setC(mArms, sl * 2, robe, j); setC(mArms, sl * 2 + 1, robe, j);
     colDirty = true;
+    p.nvC = robe; p.nvJ = j; p.nvMoi = true; // khách "người thật": đổi theo màu áo tràng vừa chọn
+    if (NVK && NVK.su >= 0 && p.kind !== 1 && Math.random() < 0.14) p.nvM = NVK.su; // thỉnh thoảng người ngồi tụng kinh / thiền là một vị sư (mẫu này chỉ dùng ở đây)
   }
   // chọn bồ đoàn trống cho người ngồi: lấy ngẫu nhiên 8 chỗ, ưu tiên chỗ có 1–2 người ngồi cạnh (thành từng nhóm nhỏ), tránh chỗ kín mít
   function pickSitterSeat() {

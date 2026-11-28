@@ -97,6 +97,18 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
   file gốc không có xương và hoạt ảnh nên mọi cử động do game tính; chưa tải được mô hình thì game dùng nhân vật hoạt hình áo lam dựng bằng mã (vẫn là một lựa chọn trong danh sách).
   Khách hành hương AI cũng vẽ bằng hai mô hình này: bản nhẹ `thu-sinh-nhe.glb` và `thieu-nu-nhe.glb` (khoảng 7 nghìn mặt, 0,2 MB mỗi file), mỗi khách một thân,
   màu áo nhuộm theo màu áo của từng khách; máy bật tiết kiệm dữ liệu, máy yếu (tụt khung hình) hoặc tải lỗi thì khách giữ dáng hoạt hình cũ.
+  Thêm tám mô hình người nữa, đều giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã chỉnh sửa cùng cách (giảm số mặt, bỏ phần khuất, vẽ lại ảnh bề mặt, gắn xương):
+  [Female Older People](https://sketchfab.com/3d-models/female-older-people-e11baf74d2fb4ec7938c415c02c53c08) và
+  [Male Older People](https://sketchfab.com/3d-models/male-older-people-e9affff312624b7fbb53ba89cf16e1f5) của Ob1to (cụ bà, cụ ông; mẫu cụ ông đã bỏ cây gậy),
+  [A-Pose - Male Full Body 3D Scan](https://sketchfab.com/3d-models/a-pose-male-full-body-3d-scan-78c2d136f91c46a8a696d5bacfde2daf) của OverseerThuror (chàng trai áo nỉ),
+  [Dreamy Starry Night sleeveless dress](https://sketchfab.com/3d-models/dreamy-starry-night-sleeveless-dress-f456aec7c1644681be3f71047b96676e) và
+  [Red and black plaid Christmas suit](https://sketchfab.com/3d-models/red-and-black-plaid-christmas-suit-13ab49e2d1d2416ba84497cdaf08c44d) của Style3D Meta,
+  [Ao Dai Hoa Van](https://sketchfab.com/3d-models/ao-dai-hoa-van-f292f0c690544f77af145ca74f9ca2b4) của Dung.Anh.Trieu,
+  [Women's oversize raincoat](https://sketchfab.com/3d-models/womens-oversize-raincoat-a94ea598baeb46ec88626cf08725f2a5) của Ahmad Riazi,
+  [Buddhist monk in orange robes](https://sketchfab.com/3d-models/buddhist-monk-in-orange-robes-579b84eaed8e42f4ba08d1be6100d8f3) của restore50.
+  Bốn mẫu đầu (cụ bà, cụ ông, chàng trai, thiếu nữ đầm sao) cử động tay được nên người chơi cũng chọn được (`cu-ba.glb`, `cu-ong.glb`, `chang-trai.glb`, `dam-sao.glb`);
+  bốn mẫu sau có tay dính vào thân trong mô hình nên chỉ dùng cho khách AI (đi lại, cúi lạy, ngồi; tay đứng yên), mẫu sư chỉ ngồi tụng kinh / thiền trong chính điện.
+  Mỗi mẫu có một bản nhẹ `*-nhe.glb` (0,13 đến 0,35 MB) cho khách AI, tải dần sau hai mẫu gốc.
 - Hậu kỳ trong chính điện: khử răng cưa MSAA, GTAO, bloom, đường cong màu mềm; tự hạ mức trên máy yếu
   hoặc khi trình duyệt không hỗ trợ, và vẫn chạy ở chế độ vẽ thường nếu phần phụ trợ không tải được.
 - Yêu cầu trình duyệt: Chrome / Edge 89+, Safari 16.4+, Firefox 108+ (cần import map và WebGL2).

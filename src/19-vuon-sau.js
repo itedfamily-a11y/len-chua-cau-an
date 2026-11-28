@@ -236,6 +236,7 @@ function buildVuonSau(G) {
   // DEC: trang trí rắn (cây, tượng, ghế, đèn đá; đổ bóng) · DECF: trang trí phẳng/nhỏ (sen; không đổ bóng). GD, DEC, DECF nằm trong nhóm "near", ẩn khi máy quay còn ở phía trước chính điện (xem 'ẩn khi xa')
   const S = U.batch(), Fl = U.batch(), PATH = U.batch(), LB = U.batch(), GD = U.batch(), DEC = U.batch(), DECF = U.batch();
   const CAY = U.batch(); // 2026-11-27: thân + tán của tùng, cây trong chậu cảnh và cây bồ đề (trừ 6 cành thấp buộc dải lụa, vẫn ở DEC) đi riêng một lưới 'vuonSau:cay' trong nhóm "near" để 13-cay-mo-hinh.js ẩn đi khi mô hình cây tải xong; chỗ đứng ghi vào G.cayDat (nhom: 'vuon' = mô hình cũng vào nhóm "near", ẩn hiện theo vườn)
+  const SEN = U.batch(); // 2026-11-28: lá, hoa, nụ sen dựng bằng mã đi riêng một lưới 'vuonSau:sen' trong nhóm "near" để 19-sen-ho.js ẩn đi khi mô hình sen tải xong; chỗ đặt ghi vào V.pads (lá nổi, hoa trên 22 lá đầu, nụ ở 10 lá kế) và V.senCao (12 lá vươn cao)
   const cayGhi = (o) => { (G.cayDat || (G.cayDat = [])).push(o); };
   const own = [];                                  // hình gốc tạm, giải phóng ở cuối
   const mk = (g) => (own.push(g), g);
@@ -253,7 +254,7 @@ function buildVuonSau(G) {
     return g;
   };
   const trisOf = (B) => { let n = 0; for (const g of B.list) n += g.attributes.position.count / 3; return n; };
-  const tally = V.tally, totalNow = () => trisOf(S) + trisOf(Fl) + trisOf(PATH) + trisOf(LB) + trisOf(GD) + trisOf(DEC) + trisOf(DECF) + trisOf(CAY);
+  const tally = V.tally, totalNow = () => trisOf(S) + trisOf(Fl) + trisOf(PATH) + trisOf(LB) + trisOf(GD) + trisOf(DEC) + trisOf(DECF) + trisOf(CAY) + trisOf(SEN);
   const count = (name, fn) => { const t0 = totalNow(); safe(name, fn); tally[name] = Math.round(totalNow() - t0); };
 
   // ---------- tường bao vườn: cùng kiểu và cùng chiều cao với tường sân chùa (wall() ở 05-world.js:349) ----------
@@ -535,16 +536,17 @@ function buildVuonSau(G) {
       for (let t = 0; t < 60 && !good; t++) { x = POND.x0 + 1 + r() * (POND.x1 - POND.x0 - 2); z = POND.z0 + 1 + r() * (POND.z1 - POND.z0 - 2); good = ok(x, z); }
       if (!good) continue;
       const rr = 0.28 + r() * 0.3; pads.push([x, z, rr]);
-      DECF.add(PAD, i % 2 ? 0x4f8a3c : 0x3f7a33, { p: [x, y + 0.03, z], s: [rr, 1, rr], r: [0, r() * 6, 0] });
+      SEN.add(PAD, i % 2 ? 0x4f8a3c : 0x3f7a33, { p: [x, y + 0.03, z], s: [rr, 1, rr], r: [0, r() * 6, 0] });
     }
     V.pads = pads.map(([x, z, rr]) => ({ x, z, r: rr }));                                                          // vị trí lá sen (bài kiểm tra: cách chỗ đặt đèn ≥ 1,8 m)
     pads.slice(0, 22).forEach(([x, z], i) => {
       const pk = i % 3 ? 0xf29bb5 : 0xfff0f4, ph = r() * 6;
-      petalRing(DEC, x, y + 0.05, z, 0.03, 6, 0.2, 0.1, 0.7, pk, ph, 0.5); petalRing(DEC, x, y + 0.05, z, 0.0, 4, 0.14, 0.09, 0.25, i % 3 ? 0xf8b9cc : 0xffffff, ph + 0.4, 0.5);
-      put(DEC, SPHS, 0xf5d03a, x, y + 0.1, z, 0.045, 0.04, 0.045);
+      petalRing(SEN, x, y + 0.05, z, 0.03, 6, 0.2, 0.1, 0.7, pk, ph, 0.5); petalRing(SEN, x, y + 0.05, z, 0.0, 4, 0.14, 0.09, 0.25, i % 3 ? 0xf8b9cc : 0xffffff, ph + 0.4, 0.5);
+      put(SEN, SPHS, 0xf5d03a, x, y + 0.1, z, 0.045, 0.04, 0.045);
     });
-    pads.slice(22, 32).forEach(([x, z]) => { rod(DEC, [x + 0.15, y, z], [x + 0.15, y + 0.5, z], 0.012, 0.012, 0x4f8a3c, 4); put(DEC, CONE6, 0xf28aaa, x + 0.15, y + 0.62, z, 0.14, 0.26, 0.14); });
-    pads.slice(32, 44).forEach(([x, z]) => { const h = 0.35 + r() * 0.5; rod(DEC, [x, y, z], [x, y + h, z], 0.014, 0.018, 0x4f7a34, 4); DECF.add(mk(new THREE.ConeGeometry(0.36, 0.12, 9, 1, true)), 0x5a9440, { p: [x, y + h + 0.06, z], r: [(r() - 0.5) * 0.4, r() * 6, (r() - 0.5) * 0.4] }); }); // nón hở đỉnh hướng lên (như chiếc ô): nhìn từ trên và từ bờ đều thấy mặt ngoài; bộ gom DECF một mặt (G.mats.vc)
+    pads.slice(22, 32).forEach(([x, z]) => { rod(SEN, [x + 0.15, y, z], [x + 0.15, y + 0.5, z], 0.012, 0.012, 0x4f8a3c, 4); put(SEN, CONE6, 0xf28aaa, x + 0.15, y + 0.62, z, 0.14, 0.26, 0.14); });
+    V.senCao = [];                                                                                                 // 12 lá vươn cao: chỗ đặt + chiều cao cuống (19-sen-ho.js đặt lá mô hình vào đúng chỗ)
+    pads.slice(32, 44).forEach(([x, z]) => { const h = 0.35 + r() * 0.5; V.senCao.push({ x, z, h }); rod(SEN, [x, y, z], [x, y + h, z], 0.014, 0.018, 0x4f7a34, 4); SEN.add(mk(new THREE.ConeGeometry(0.36, 0.12, 9, 1, true)), 0x5a9440, { p: [x, y + h + 0.06, z], r: [(r() - 0.5) * 0.4, r() * 6, (r() - 0.5) * 0.4] }); }); // nón hở đỉnh hướng lên (như chiếc ô): nhìn từ trên và từ bờ đều thấy mặt ngoài; bộ gom một mặt (G.mats.vc)
   });
 
   // ---------- 11. Bồn mai – quất ×2 gần hai cổng: bồn đá thấp 4,0 × 1,6, mỗi bồn hai chậu mai vàng + hai chậu quất (như mai / quat 12-decor-inside.js:197, 222) ----------
@@ -665,6 +667,7 @@ function buildVuonSau(G) {
     if (DEC.list.length) addMesh(DEC.mesh(G.mats.vc, { cast: true, receive: true }), 'trangtri', true);
     if (CAY.list.length) { const m = CAY.mesh(G.mats.vc, { cast: true, receive: true }); addMesh(m, 'cay', true); (G.cayCu || (G.cayCu = [])).push(m); } // cây dựng bằng mã (bản dự phòng của mô hình cây)
     if (DECF.list.length) addMesh(DECF.mesh(G.mats.vc, { cast: false, receive: true }), 'trangtri-phang', true);
+    if (SEN.list.length) addMesh(SEN.mesh(G.mats.vc, { cast: false, receive: true }), 'sen', true);                  // sen dựng bằng mã (bản dự phòng của mô hình sen, 19-sen-ho.js)
     if (waterMesh) addMesh(waterMesh, 'nuoc');
     scene.add(gFar, gNear);
     V.tris = Math.round(tris); V.meshes = meshes; V.groups = { near: gNear, far: gFar };

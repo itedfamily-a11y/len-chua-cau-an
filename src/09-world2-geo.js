@@ -78,12 +78,14 @@ function buildWorld2Geo(G) {
     blue: 0x8e98a3, blueD: 0x6d7884, blueL: 0xaab3bc, cream: C.cream, flame: 0xffd27a,
     sand: [0x9d917e, 0x948a77, 0xa59a86, 0x8f8470, 0x9a8f7b],
   };
-  const stoneLantern = (x, z, y0 = 0, withCol = true) => { // đèn đá có quầng sáng
-    box(S, x, y0 + 0.15, z, 0.62, 0.3, 0.62, C.stoneD); box(S, x, y0 + 0.75, z, 0.28, 0.9, 0.28, C.stone);
-    box(S, x, y0 + 1.32, z, 0.56, 0.12, 0.56, C.stone); LB.add(BOX, 0xffd98a, { p: [x, y0 + 1.6, z], s: [0.36, 0.4, 0.36] });
-    cone(S, 4, x, y0 + 1.82, z, 1.0, 0.36, C.stoneD, { r: [0, PI / 4, 0] });
+  const DEN = U.batch(), DENS = U.batch(); // 2026-11-28: thân đá và hộp sáng của đèn đá đi riêng hai lưới (W.meshes2.D / DS) để 19-den-da.js ẩn đi khi mô hình đèn tải xong; chỗ đứng từng đèn ghi vào G.denDat
+  const stoneLantern = (x, z, y0 = 0, withCol = true, mo = null) => { // đèn đá có quầng sáng; mo: ghi thêm cho mô hình đèn ({ k, h }: kiểu và chiều cao)
+    box(DEN, x, y0 + 0.15, z, 0.62, 0.3, 0.62, C.stoneD); box(DEN, x, y0 + 0.75, z, 0.28, 0.9, 0.28, C.stone);
+    box(DEN, x, y0 + 1.32, z, 0.56, 0.12, 0.56, C.stone); DENS.add(BOX, 0xffd98a, { p: [x, y0 + 1.6, z], s: [0.36, 0.4, 0.36] });
+    cone(DEN, 4, x, y0 + 1.82, z, 1.0, 0.36, C.stoneD, { r: [0, PI / 4, 0] });
     glow(x, y0 + 1.6, z, 1.4, [1.0, 0.75, 0.38], true);
     if (withCol) col.circle(x, z, 0.42, 'stonelamp');
+    (G.denDat || (G.denDat = [])).push(Object.assign({ x, y: y0, z }, mo));
   };
   const bench = (b) => { // ghế đá như ghế bên hồ sen phía trước
     box(S, b.x, 0.42, b.z, 1.8, 0.14, 0.55, C.stoneL, { r: [0, b.yaw, 0] });
@@ -238,7 +240,7 @@ function buildWorld2Geo(G) {
         }
       }
     }
-    for (const sx of [-1, 1]) for (const z of [P.z1 + 0.2, P.z0 - 0.2]) stoneLantern(sx * 2.0, z, 0.28, false); // 4 trụ đèn ở hai đầu cầu (đứng trên bờ đá)
+    for (const sx of [-1, 1]) for (const z of [P.z1 + 0.2, P.z0 - 0.2]) stoneLantern(sx * 2.0, z, 0.28, false, { k: 'den5', h: 1.9 }); // 4 trụ đèn ở hai đầu cầu (đứng trên bờ đá); mô hình: kiểu trụ tròn, thấp hơn một chút cho mái đèn khỏi lấn lối lên cầu
   }
 
   // =====================================================================
@@ -929,6 +931,8 @@ function buildWorld2Geo(G) {
   add('S', S, G.mats.vc, { cast: true, receive: true }); add('F', F, G.mats.vc, { cast: false, receive: true });
   add('M', M, G.mats.metal, { cast: true, receive: true }); add('L', LB, G.mats.lantern, { cast: false, receive: false });
   add('T', TR, G.mats.vc, { cast: true, receive: true }); if (meshes.T) { meshes.T.name = 'cay-cu:khu-mo-rong'; (G.cayCu || (G.cayCu = [])).push(meshes.T); } // cây dựng bằng mã (bản dự phòng của mô hình cây)
+  add('D', DEN, G.mats.vc, { cast: true, receive: true }); add('DS', DENS, G.mats.lantern, { cast: false, receive: false });
+  for (const k of ['D', 'DS']) if (meshes[k]) { meshes[k].name = k === 'D' ? 'den-cu:khu-mo-rong' : 'den-cu:khu-mo-rong-sang'; (G.denCu || (G.denCu = [])).push(meshes[k]); } // đèn đá dựng bằng mã (bản dự phòng của mô hình đèn, 19-den-da.js)
   W.meshes2 = meshes;
   for (const g of own) g.dispose();
 }

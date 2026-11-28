@@ -1447,7 +1447,7 @@ function buildWorld(G) {
     wood: 0x8e2a22, woodD: 0x5a2418, gold: 0xd9a84a, goldD: 0xa87c2c, roof: 0xa8432d, ridge: 0x6e2a1c,
     bronze: 0x8f6a36, leaf: [0x4c7a35, 0x5d8c3d, 0x3f6b30, 0x6f9a45], bark: 0x6b5240, red: 0xc8302a, cream: 0xf3e3c3,
   };
-  const S = U.batch(), F = U.batch(), M = U.batch(), LB = U.batch(), FAR = U.batch();
+  const S = U.batch(), F = U.batch(), M = U.batch(), LB = U.batch(), FAR = U.batch(), DEN = U.batch(), DENS = U.batch(); // DEN / DENS (2026-11-28): thân đá và hộp sáng của đèn đá đi riêng hai lưới (W.meshes.D / DS) để 19-den-da.js ẩn đi khi mô hình đèn tải xong; chỗ đứng từng đèn ghi vào G.denDat
   const TR = U.batch(); // 2026-11-27: thân + tán của cây tròn và cây trong chậu cảnh đi riêng một lưới (W.meshes.T) để 13-cay-mo-hinh.js ẩn đi khi mô hình cây tải xong; chỗ đứng từng cây ghi vào G.cayDat
   const cayGhi = (o) => { (G.cayDat || (G.cayDat = [])).push(o); };
   const BOX = new THREE.BoxGeometry(1, 1, 1);
@@ -2113,10 +2113,10 @@ function buildWorld(G) {
     W.water = { material: new THREE.MeshPhongMaterial({ color: 0x1f5566, emissive: 0x0b2c38, shininess: 90, specular: 0x8a7a60 }) };
     // đèn đá
     for (const [x, z] of [[7.6, 9.0], [9.4, 26.4], [35.2, 7.4]]) { // 2026-11-26: đèn đá sát tường đông dời theo tường bên (22,9 → 35,2); hai đèn kia đứng giữa sân nên giữ nguyên
-      box(S, x, 0.15, z, 0.6, 0.3, 0.6, C.stoneD); box(S, x, 0.75, z, 0.28, 0.9, 0.28, C.stone);
-      box(S, x, 1.32, z, 0.56, 0.12, 0.56, C.stone); LB.add(BOX, 0xffd98a, { p: [x, 1.6, z], s: [0.36, 0.4, 0.36] });
-      S.add(new THREE.ConeGeometry(0.5, 0.36, 4), C.stoneD, { p: [x, 2.0, z], r: [0, PI / 4, 0] });
-      glow(x, 1.6, z, 1.4, [1.0, 0.75, 0.38], true); col.circle(x, z, 0.42, 'stonelamp');
+      box(DEN, x, 0.15, z, 0.6, 0.3, 0.6, C.stoneD); box(DEN, x, 0.75, z, 0.28, 0.9, 0.28, C.stone);
+      box(DEN, x, 1.32, z, 0.56, 0.12, 0.56, C.stone); DENS.add(BOX, 0xffd98a, { p: [x, 1.6, z], s: [0.36, 0.4, 0.36] });
+      DEN.add(new THREE.ConeGeometry(0.5, 0.36, 4), C.stoneD, { p: [x, 2.0, z], r: [0, PI / 4, 0] });
+      glow(x, 1.6, z, 1.4, [1.0, 0.75, 0.38], true); col.circle(x, z, 0.42, 'stonelamp'); (G.denDat || (G.denDat = [])).push({ x, y: 0, z });
     }
     // ghế đá (quay mặt về giữa khoảng sân bên đông)
     W.benchSeats = [];
@@ -2288,7 +2288,8 @@ function buildWorld(G) {
   const meshL = LB.mesh(G.mats.lantern, { cast: false, receive: false }); scene.add(meshL);
   const meshFar = FAR.mesh(G.mats.vc, { cast: false, receive: false }); scene.add(meshFar);
   const meshT = TR.mesh(G.mats.vc, { cast: true, receive: true }); meshT.name = 'cay-cu:san'; scene.add(meshT); (G.cayCu || (G.cayCu = [])).push(meshT); // cây dựng bằng mã (bản dự phòng của mô hình cây)
-  W.meshes = { S: meshS, F: meshF, M: meshM, L: meshL, FAR: meshFar, T: meshT };
+  const meshD = DEN.mesh(G.mats.vc, { cast: true, receive: true }); meshD.name = 'den-cu:san'; scene.add(meshD); const meshDS = DENS.mesh(G.mats.lantern, { cast: false, receive: false }); meshDS.name = 'den-cu:san-sang'; scene.add(meshDS); (G.denCu || (G.denCu = [])).push(meshD, meshDS); // đèn đá dựng bằng mã (bản dự phòng của mô hình đèn, 19-den-da.js)
+  W.meshes = { S: meshS, F: meshF, M: meshM, L: meshL, FAR: meshFar, T: meshT, D: meshD, DS: meshDS };
 
   // =====================================================================
   //  ĐIỂM MỐC DẪN ĐƯỜNG + VỊ TRÍ HOẠT ĐỘNG CHO KHÁCH AI
@@ -3900,12 +3901,14 @@ function buildWorld2Geo(G) {
     blue: 0x8e98a3, blueD: 0x6d7884, blueL: 0xaab3bc, cream: C.cream, flame: 0xffd27a,
     sand: [0x9d917e, 0x948a77, 0xa59a86, 0x8f8470, 0x9a8f7b],
   };
-  const stoneLantern = (x, z, y0 = 0, withCol = true) => { // đèn đá có quầng sáng
-    box(S, x, y0 + 0.15, z, 0.62, 0.3, 0.62, C.stoneD); box(S, x, y0 + 0.75, z, 0.28, 0.9, 0.28, C.stone);
-    box(S, x, y0 + 1.32, z, 0.56, 0.12, 0.56, C.stone); LB.add(BOX, 0xffd98a, { p: [x, y0 + 1.6, z], s: [0.36, 0.4, 0.36] });
-    cone(S, 4, x, y0 + 1.82, z, 1.0, 0.36, C.stoneD, { r: [0, PI / 4, 0] });
+  const DEN = U.batch(), DENS = U.batch(); // 2026-11-28: thân đá và hộp sáng của đèn đá đi riêng hai lưới (W.meshes2.D / DS) để 19-den-da.js ẩn đi khi mô hình đèn tải xong; chỗ đứng từng đèn ghi vào G.denDat
+  const stoneLantern = (x, z, y0 = 0, withCol = true, mo = null) => { // đèn đá có quầng sáng; mo: ghi thêm cho mô hình đèn ({ k, h }: kiểu và chiều cao)
+    box(DEN, x, y0 + 0.15, z, 0.62, 0.3, 0.62, C.stoneD); box(DEN, x, y0 + 0.75, z, 0.28, 0.9, 0.28, C.stone);
+    box(DEN, x, y0 + 1.32, z, 0.56, 0.12, 0.56, C.stone); DENS.add(BOX, 0xffd98a, { p: [x, y0 + 1.6, z], s: [0.36, 0.4, 0.36] });
+    cone(DEN, 4, x, y0 + 1.82, z, 1.0, 0.36, C.stoneD, { r: [0, PI / 4, 0] });
     glow(x, y0 + 1.6, z, 1.4, [1.0, 0.75, 0.38], true);
     if (withCol) col.circle(x, z, 0.42, 'stonelamp');
+    (G.denDat || (G.denDat = [])).push(Object.assign({ x, y: y0, z }, mo));
   };
   const bench = (b) => { // ghế đá như ghế bên hồ sen phía trước
     box(S, b.x, 0.42, b.z, 1.8, 0.14, 0.55, C.stoneL, { r: [0, b.yaw, 0] });
@@ -4060,7 +4063,7 @@ function buildWorld2Geo(G) {
         }
       }
     }
-    for (const sx of [-1, 1]) for (const z of [P.z1 + 0.2, P.z0 - 0.2]) stoneLantern(sx * 2.0, z, 0.28, false); // 4 trụ đèn ở hai đầu cầu (đứng trên bờ đá)
+    for (const sx of [-1, 1]) for (const z of [P.z1 + 0.2, P.z0 - 0.2]) stoneLantern(sx * 2.0, z, 0.28, false, { k: 'den5', h: 1.9 }); // 4 trụ đèn ở hai đầu cầu (đứng trên bờ đá); mô hình: kiểu trụ tròn, thấp hơn một chút cho mái đèn khỏi lấn lối lên cầu
   }
 
   // =====================================================================
@@ -4751,6 +4754,8 @@ function buildWorld2Geo(G) {
   add('S', S, G.mats.vc, { cast: true, receive: true }); add('F', F, G.mats.vc, { cast: false, receive: true });
   add('M', M, G.mats.metal, { cast: true, receive: true }); add('L', LB, G.mats.lantern, { cast: false, receive: false });
   add('T', TR, G.mats.vc, { cast: true, receive: true }); if (meshes.T) { meshes.T.name = 'cay-cu:khu-mo-rong'; (G.cayCu || (G.cayCu = [])).push(meshes.T); } // cây dựng bằng mã (bản dự phòng của mô hình cây)
+  add('D', DEN, G.mats.vc, { cast: true, receive: true }); add('DS', DENS, G.mats.lantern, { cast: false, receive: false });
+  for (const k of ['D', 'DS']) if (meshes[k]) { meshes[k].name = k === 'D' ? 'den-cu:khu-mo-rong' : 'den-cu:khu-mo-rong-sang'; (G.denCu || (G.denCu = [])).push(meshes[k]); } // đèn đá dựng bằng mã (bản dự phòng của mô hình đèn, 19-den-da.js)
   W.meshes2 = meshes;
   for (const g of own) g.dispose();
 }
@@ -6092,13 +6097,15 @@ function buildDecorInside(G) {
   }
   const footBench = (yaw) => { const a = rot(yaw, -0.75, 0), b = rot(yaw, 0.75, 0), c = rot(yaw, 0, 0.85); return [[a[0], a[1], 0.4], [b[0], b[1], 0.4], [0, 0, 0.45], [c[0], c[1], 0.35, 1]]; };
   function placeBench(x, z, yaw, rad) { const p = find(x, z, footBench(yaw), rad || 2.5, 0.4); if (!p) return null; bench(p.x, p.z, yaw); mark(p.x, p.z, 1.0); return p; }
+  const DEN = U.batch(), DENS = U.batch(); // 2026-11-28: thân đá và hộp sáng của đèn đá đi riêng hai lưới để 19-den-da.js ẩn đi khi mô hình đèn tải xong; chỗ đứng từng đèn ghi vào G.denDat
   function stoneLamp(x, z) {
     const y0 = hy(x, z);
-    box(S, x, y0 + 0.15, z, 0.62, 0.3, 0.62, C.stoneD); box(S, x, y0 + 0.75, z, 0.28, 0.9, 0.28, C.stone);
-    box(S, x, y0 + 1.32, z, 0.56, 0.12, 0.56, C.stone); LB.add(BOX, 0xffd98a, { p: [x, y0 + 1.6, z], s: [0.36, 0.4, 0.36] });
-    put(S, CONE4, C.stoneD, x, y0 + 2.0, z, 1.0, 0.36, 1.0, { r: [0, PI / 4, 0] });
+    box(DEN, x, y0 + 0.15, z, 0.62, 0.3, 0.62, C.stoneD); box(DEN, x, y0 + 0.75, z, 0.28, 0.9, 0.28, C.stone);
+    box(DEN, x, y0 + 1.32, z, 0.56, 0.12, 0.56, C.stone); DENS.add(BOX, 0xffd98a, { p: [x, y0 + 1.6, z], s: [0.36, 0.4, 0.36] });
+    put(DEN, CONE4, C.stoneD, x, y0 + 2.0, z, 1.0, 0.36, 1.0, { r: [0, PI / 4, 0] });
     glow(x, y0 + 1.6, z, 1.4, [1.0, 0.75, 0.38], true);
     circ(x, z, 0.42, 'stonelamp');
+    (G.denDat || (G.denDat = [])).push({ x, y: y0, z });
   }
   function placeLamp(x, z, rad) { const p = find(x, z, [[0, 0, 0.42]], rad || 1.5, 0.3); if (!p) return null; stoneLamp(p.x, p.z); mark(p.x, p.z, 0.6); return p; }
   function frangipani(x, z, seed, ring) {
@@ -6436,6 +6443,8 @@ function buildDecorInside(G) {
   addMesh(F.mesh(G.mats.vc, { cast: false, receive: true }));
   addMesh(GD.mesh(G.mats.gold, { cast: false, receive: false }));
   addMesh(LB.mesh(G.mats.lantern, { cast: false, receive: false }));
+  if (DEN.list.length) { const m = addMesh(DEN.mesh(G.mats.vc, { cast: true, receive: true })); m.name = 'den-cu:trang-tri'; (G.denCu || (G.denCu = [])).push(m); }               // đèn đá dựng bằng mã (bản dự phòng của mô hình đèn, 19-den-da.js)
+  if (DENS.list.length) { const m = addMesh(DENS.mesh(G.mats.lantern, { cast: false, receive: false })); m.name = 'den-cu:trang-tri-sang'; (G.denCu || (G.denCu = [])).push(m); }
   let flagMesh = null;
   safe('flagMesh', () => {
     const nF = fNx.length, nC = cP.length / 12, nQ = nF + nC;
@@ -12079,45 +12088,53 @@ function buildCungDinh(G) {
 
 // ----- 19-den-da.js -----
 // =====================================================================
-//  ĐÈN ĐÁ VƯỜN SAU — MÔ HÌNH 3D (2026-11-28)
-//  Chủ chùa gửi file "Japanese stone lanterns" của patrakeevasveta trên Sketchfab, giấy phép CC BY 4.0, và bảo: "sửa đèn".
+//  ĐÈN ĐÁ TRONG CHÙA — MÔ HÌNH 3D (2026-11-28)
+//  Chủ chùa gửi file "Japanese stone lanterns" của patrakeevasveta trên Sketchfab, giấy phép CC BY 4.0, và bảo: "sửa đèn"; lúc đầu chỉ đèn vườn sau được thay,
+//  rồi chủ chùa bảo: "tôi muốn file đèn sửa cho toàn bộ đèn của dự án chùa cầu an, chứ không phải chỉ mỗi khu vực hồ" → từ đêm 2026-11-28 thay MỌI đèn đá.
 //  File gốc có 5 kiểu đèn đá dùng chung một bộ ảnh 4096 px. File trong game (lệnh dựng: tests-local/quan-am-tools/LENH-DEN-DA.md) giữ 3 kiểu,
 //  mỗi kiểu một lưới có tên, tâm đáy ở gốc, kích thước thật (mét), ảnh màu + ảnh tự sáng (ô cửa đèn):
 //    den4  đèn trụ mái vuông, cao 2,05 m        den5  đèn trụ tròn, cao 2,07 m        den3  đèn ba chân mái rộng (đèn ngắm tuyết), cao 1,64 m
 //    assets/mo-hinh/den-da.glb      mỗi kiểu 1 400 mặt, ảnh 2048 px, 754 KB — máy tính;
 //    assets/mo-hinh/den-da-nhe.glb  mỗi kiểu   700 mặt, ảnh 1024 px, 232 KB — máy cảm ứng, đồ hoạ thấp, và lần thử lại.
-//  - Thay các đèn đá dựng bằng mã của vườn sau (G.vuonSau.layout.lanterns: 18 chiếc dọc lối vòng quanh hồ, lối trục, lối từ cổng) ở ĐÚNG chỗ cũ:
-//    den4 và den5 xen kẽ, phóng cho cao 2,25 m như đèn cũ; vật cản (bán kính 0,42) và quầng sáng đêm (y 1,6) giữ nguyên.
-//  - Thêm hai đèn ba chân (den3) trên đảo, hai bên phía trước bệ sen của tượng Quan Âm (chỉ để ngắm, đảo không đi tới được).
+//  CÁCH LÀM (như cây mô hình, 13-cay-mo-hinh.js): nơi nào dựng đèn đá thì vẫn dựng đèn bằng mã như cũ nhưng vào lưới riêng, đưa lưới ấy vào G.denCu,
+//  và ghi chỗ đứng từng đèn vào G.denDat = [{ x, y, z, h?, k? }]  (y: mặt nền dưới chân đèn; h: chiều cao muốn có, mặc định 2,25 m; k: 'den4' | 'den5' nếu muốn chỉ định kiểu).
+//  Các nơi ghi: 05-world.js (3 đèn bên đông sân trước), 09-world2-geo.js (4 đèn hai đầu cầu, 2 đèn sân linh thú, 2 đèn tháp Báo Nghiêm, 3 đèn vườn tháp),
+//  12-decor-inside.js (đèn quanh các hạng mục trong sân, tối đa 15), 19-tang-kinh-cac.js (đôi đèn hai bên bậc chính, h 2,0).
+//  Đèn vườn sau (G.vuonSau.layout.lanterns: 18 chiếc dọc lối vòng quanh hồ, lối trục, lối từ cổng) module này tự đọc; lưới dựng bằng mã của chúng là
+//  'vuonSau:denda' + hộp sáng 'vuonSau:denda-sang' (19-vuon-sau.js).
+//  - Mô hình đặt ở ĐÚNG chỗ đèn cũ, phóng cho cao bằng đèn cũ (2,25 m; sân Tàng Kinh Các 2,0 m). Vật cản (bán kính 0,42) và quầng sáng đêm (cao 1,6 m) giữ nguyên.
+//    Kiểu đèn: vườn sau den4 / den5 xen kẽ theo thứ tự; các nơi khác chọn theo chỗ đứng (|x|, |z|), nên hai đèn đối xứng qua trục chùa cùng một kiểu.
+//  - Thêm hai đèn ba chân (den3) trên đảo giữa hồ, hai bên phía trước bệ sen của tượng Quan Âm (chỉ để ngắm, đảo không đi tới được).
 //  - Ô cửa đèn tự sáng theo ảnh tự sáng của mô hình, mạnh dần về đêm.
-//  - Đèn dựng bằng mã (lưới 'vuonSau:denda' + hộp sáng 'vuonSau:denda-sang' của 19-vuon-sau.js) là bản dự phòng: ẩn khi mô hình hiện.
-//    Đèn đá ở các khu khác (sân trước, khu mở rộng) không đổi.
-//  Tải khi người chơi vào trong 95 m quanh hồ; máy bật "tiết kiệm dữ liệu" thì không tải. Lỗi: giữ đèn dựng bằng mã, một dòng console.warn;
+//  - Đèn nằm trong lòng vườn sau (kể cả đèn tháp Báo Nghiêm, vườn tháp) vào nhóm "near" của vườn, ẩn cùng vườn khi máy quay còn ở phía trước chính điện; đèn khác nằm thẳng trong cảnh.
+//  - KHÔNG đổi: đèn lồng treo dưới mái hiên, đèn trên bàn thờ, đèn hoa đăng (không phải đèn đá).
+//  Tải sau khi game chạy 2,5 giây; máy bật "tiết kiệm dữ liệu" thì không tải. Lỗi: giữ đèn dựng bằng mã, một dòng console.warn;
 //  lỗi tải file thử lại một lần sau 45 giây (bằng bản nhẹ).
 //  Trạng thái: G.denDa = { state: 'idle' | 'loading' | 'ready' | 'failed' | 'skipped', url, error, tris, counts, credit, show(bool) }.
 //  Ghi công tác giả ở cuối bảng Cài đặt khi mô hình đang hiện.
 // =====================================================================
 function installDenDa(G) {
-  const { THREE, util: U } = G;
-  const V = G.vuonSau;
-  if (!V || !V.layout || !V.layout.lanterns || !V.groups || !V.groups.near || !G.onUpdate) return;
-  const near = V.groups.near, codeA = near.getObjectByName('vuonSau:denda'), codeB = V.groups.far && V.groups.far.getObjectByName('vuonSau:denda-sang');
-  const POND = V.pond, CX = (POND.x0 + POND.x1) / 2, CZ = (POND.z0 + POND.z1) / 2, ISL = V.island;
+  const { THREE, util: U, scene } = G;
+  if (!scene || !G.onUpdate) return;
+  const V = G.vuonSau || null;
+  const near = (V && V.groups && V.groups.near) || null, far = (V && V.groups && V.groups.far) || null;
+  const RECT = V && V.rect, ISL = V && V.island;
   const low = !!G.isTouch || !!(G.quality && G.quality.low);
   const CFG = {
     url: 'assets/mo-hinh/den-da-nhe.glb', urlHi: 'assets/mo-hinh/den-da.glb',
-    near: 95,            // m quanh hồ
-    height: 2.25,        // m: chiều cao đèn dọc lối đi (đèn dựng bằng mã cao khoảng 2,2 m)
+    start: 2.5,          // giây sau khi game chạy thì bắt đầu tải
+    height: 2.25,        // m: chiều cao đèn (đèn dựng bằng mã cao khoảng 2,2 m)
     glowDay: 0.5, glowNight: 2.1, // độ sáng ô cửa đèn (nhân với ảnh tự sáng) ban ngày / về đêm
     retryAfter: 45,      // giây
   };
   const CREDIT = {
-    text: 'Đèn đá trong vườn sau là mô hình 3D "Japanese stone lanterns" của patrakeevasveta trên Sketchfab, giấy phép CC BY 4.0, đã chỉnh sửa cho vừa trò chơi (lấy ba kiểu đèn, giảm số mặt, thu nhỏ ảnh bề mặt).',
+    text: 'Đèn đá trong chùa là mô hình 3D "Japanese stone lanterns" của patrakeevasveta trên Sketchfab, giấy phép CC BY 4.0, đã chỉnh sửa cho vừa trò chơi (lấy ba kiểu đèn, giảm số mặt, thu nhỏ ảnh bề mặt).',
     href: 'https://sketchfab.com/3d-models/japanese-stone-lanterns-bc153f0de79442289c449141834703c0',
     licence: 'https://creativecommons.org/licenses/by/4.0/', // CC BY 4.0: nêu tên tác giả, nguồn, giấy phép (kèm đường dẫn) và việc đã chỉnh sửa
   };
-  const S = (G.denDa = { state: 'idle', url: CFG.url, error: null, tris: 0, tries: 0, next: 0, counts: null, credit: null, show: null });
+  const S = (G.denDa = { state: 'idle', url: CFG.url, error: null, tris: 0, tries: 0, next: CFG.start, counts: null, credit: null, show: null });
   let Loader = null, now = 0, mat = null;
+  const inGarden = (x, z) => !!(near && RECT && x > RECT.x0 && x < RECT.x1 && z > RECT.z0 && z < RECT.z1);
 
   function place(gltf) {
     const root = gltf && (gltf.scene || (gltf.scenes && gltf.scenes[0]));
@@ -12133,40 +12150,55 @@ function installDenDa(G) {
       g.computeBoundingBox(); g.computeBoundingSphere();
       return g;
     };
-    const g4 = part('den4'), g5 = part('den5'), g3 = part('den3');
+    const GEO = { den4: part('den4'), den5: part('den5'), den3: part('den3') };
+    const cao = (k) => GEO[k].boundingBox.max.y - GEO[k].boundingBox.min.y;
     if (!map || !map.image) throw new Error('mô hình không có ảnh bề mặt');                 // GLTFLoader nuốt lỗi giải mã ảnh: thà giữ đèn dựng bằng mã
     map.anisotropy = Math.min(4, G.renderer.capabilities.getMaxAnisotropy()); map.needsUpdate = true;
     mat = new THREE.MeshLambertMaterial({ map, side: THREE.DoubleSide });
     if (emap && emap.image) { mat.emissiveMap = emap; mat.emissive.setRGB(1, 0.86, 0.6); mat.emissiveIntensity = CFG.glowDay; } // ô cửa đèn sáng màu lửa ấm
-    // ---------- chỗ đặt ----------
-    const r = U.rng ? U.rng(5511) : Math.random, L4 = [], L5 = [], L3 = [];
-    V.layout.lanterns.forEach((l, i) => { // đèn dọc lối đi: hai kiểu xen kẽ, quay mặt theo bội số 90° (đèn vuông bốn mặt như nhau)
-      const g = i % 2 ? g5 : g4, k = CFG.height / (g.boundingBox.max.y - g.boundingBox.min.y);
-      (i % 2 ? L5 : L4).push({ x: l.x, y: 0, z: l.z, s: k, ry: ((r() * 4) | 0) * (Math.PI / 2) });
+    // ---------- chỗ đặt: mỗi (nhóm, kiểu) một danh sách ----------
+    const B = {};                                                                           // 'v:den4' (trong vườn sau) / 's:den5' (ngoài vườn) … → [{ x, y, z, s, ry }]
+    const them = (vuon, k, q) => { const key = (vuon ? 'v:' : 's:') + k; (B[key] || (B[key] = [])).push(q); };
+    const r = U.rng ? U.rng(5511) : Math.random;
+    if (V && V.layout && V.layout.lanterns) V.layout.lanterns.forEach((l, i) => { // đèn vườn sau: hai kiểu xen kẽ, quay mặt theo bội số 90° (đèn vuông bốn mặt như nhau)
+      const k = i % 2 ? 'den5' : 'den4';
+      them(!!near, k, { x: l.x, y: 0, z: l.z, s: CFG.height / cao(k), ry: ((r() * 4) | 0) * (Math.PI / 2) });
     });
-    if (ISL) for (const sx of [-1, 1]) { // hai đèn ba chân trên đảo, chếch phía trước bệ sen (mặt tượng quay về +z)
-      const a = (50 * Math.PI) / 180, d = Math.max(2.4, ISL.r - 1.2), frac = Math.min(0.98, d / (ISL.r - 0.3));
-      L3.push({ x: ISL.x + sx * d * Math.sin(a), y: 0.9 + 0.3 * Math.sqrt(1 - frac * frac) - 0.06, z: ISL.z + d * Math.cos(a), s: 0.85, ry: sx * a });
+    for (const d of G.denDat || []) { // đèn các khu khác: kiểu theo chỗ đứng (hai đèn đối xứng qua trục chùa cùng kiểu), hướng theo chỗ đứng
+      if (!d || !isFinite(d.x) || !isFinite(d.z)) continue;
+      const k = d.k === 'den4' || d.k === 'den5' ? d.k : ((Math.round(Math.abs(d.x) * 2) + Math.round(Math.abs(d.z) * 2)) & 1) ? 'den5' : 'den4';
+      const q4 = ((Math.round(d.x * 7.3 + d.z * 3.1) % 4) + 4) % 4;
+      them(inGarden(d.x, d.z), k, { x: d.x, y: d.y || 0, z: d.z, s: (d.h || CFG.height) / cao(k), ry: q4 * (Math.PI / 2) });
     }
-    const grp = new THREE.Group(); grp.name = 'denDa';
+    if (ISL && near) for (const sx of [-1, 1]) { // hai đèn ba chân trên đảo, chếch phía trước bệ sen (mặt tượng quay về +z)
+      const a = (50 * Math.PI) / 180, d = Math.max(2.4, ISL.r - 1.2), frac = Math.min(0.98, d / (ISL.r - 0.3));
+      them(true, 'den3', { x: ISL.x + sx * d * Math.sin(a), y: 0.9 + 0.3 * Math.sqrt(1 - frac * frac) - 0.06, z: ISL.z + d * Math.cos(a), s: 0.85, ry: sx * a });
+    }
+    const grpV = new THREE.Group(), grpS = new THREE.Group(); grpV.name = 'denDa:vuon'; grpS.name = 'denDa:ngoai';
     const dummy = new THREE.Object3D();
-    const batch = (name, geo, list) => {
-      if (!list.length) return 0;
+    S.tris = 0; S.counts = { den4: 0, den5: 0, den3: 0 };
+    for (const key of Object.keys(B)) {
+      const list = B[key], vuon = key[0] === 'v', k = key.slice(2), geo = GEO[k];
       const im = new THREE.InstancedMesh(geo, mat, list.length);
       list.forEach((q, i) => { dummy.position.set(q.x, q.y, q.z); dummy.rotation.set(0, q.ry, 0); dummy.scale.setScalar(q.s); dummy.updateMatrix(); im.setMatrixAt(i, dummy.matrix); });
-      im.instanceMatrix.needsUpdate = true; im.castShadow = true; im.receiveShadow = true; im.matrixAutoUpdate = false; im.name = 'denDa:' + name;
-      grp.add(im);
-      return list.length * ((geo.index ? geo.index.count : geo.attributes.position.count) / 3);
-    };
-    S.tris = Math.round(batch('den4', g4, L4) + batch('den5', g5, L5) + batch('den3', g3, L3));
-    S.counts = { den4: L4.length, den5: L5.length, den3: L3.length };
-    near.add(grp);
+      im.instanceMatrix.needsUpdate = true; im.castShadow = true; im.receiveShadow = true; im.matrixAutoUpdate = false; im.name = 'denDa:' + key;
+      (vuon ? grpV : grpS).add(im);
+      S.counts[k] += list.length;
+      S.tris += list.length * ((geo.index ? geo.index.count : geo.attributes.position.count) / 3);
+    }
+    S.tris = Math.round(S.tris);
+    if (near) near.add(grpV);
+    scene.add(grpS);
+    // đèn dựng bằng mã: lưới của các nơi dựng (G.denCu) + hai lưới của vườn sau
+    const CU = (G.denCu || []).slice();
+    for (const m of [near && near.getObjectByName('vuonSau:denda'), far && far.getObjectByName('vuonSau:denda-sang')]) if (m && CU.indexOf(m) < 0) CU.push(m);
     S.show = (on) => { // true: đèn mô hình; false: đèn dựng bằng mã (để so sánh / gỡ lỗi)
-      grp.visible = !!on; if (codeA) codeA.visible = !on; if (codeB) codeB.visible = !on;
+      grpV.visible = grpS.visible = !!on;
+      for (const m of CU) m.visible = !on;
       S.credit = on ? CREDIT : null;
+      if (G.renderer && G.renderer.shadowMap) G.renderer.shadowMap.needsUpdate = true;
     };
     S.show(true);
-    if (G.renderer && G.renderer.shadowMap) G.renderer.shadowMap.needsUpdate = true;
   }
 
   async function load() {
@@ -12183,18 +12215,14 @@ function installDenDa(G) {
     } catch (e) {
       S.error = (e && e.message) || String(e);
       if (S.tries < 2) { S.state = 'idle'; S.next = now + CFG.retryAfter; }
-      else { S.state = 'failed'; console.warn('[vườn sau] không tải được mô hình đèn đá — giữ đèn dựng bằng mã: ' + S.error); }
+      else { S.state = 'failed'; console.warn('[đèn đá] không tải được mô hình đèn đá — giữ đèn dựng bằng mã: ' + S.error); }
     }
   }
 
-  const near2 = CFG.near * CFG.near;
   G.onUpdate((dt, t) => {
     now = t || 0;
     if (mat && mat.emissiveMap) mat.emissiveIntensity = CFG.glowDay + ((G.tod && G.tod.night) || 0) * (CFG.glowNight - CFG.glowDay);
     if (S.state !== 'idle' || now < S.next) return;
-    const P = G.player; if (!P || !P.pos) return;
-    const dx = P.pos.x - CX, dz = P.pos.z - CZ;
-    if (dx * dx + dz * dz > near2) return;
     const conn = navigator.connection;
     if (conn && conn.saveData) { S.state = 'skipped'; return; }                           // máy bật "tiết kiệm dữ liệu": giữ đèn dựng bằng mã
     load();
@@ -13254,6 +13282,7 @@ function buildTangKinhCac(G) {
 
   // ---------- Sân, tường, cổng, cây, bia ----------
   const S = U.batch(), F = U.batch(), IN = U.batch(), LB = U.batch(), own = [];
+  const DEN = U.batch(); // 2026-11-28: đôi đèn đá đi riêng một lưới 'tkc:den-da' để 19-den-da.js ẩn đi khi mô hình đèn tải xong; chỗ đứng ghi vào G.denDat
   const TR = U.batch(); // 2026-11-27: chín cây tán tròn của sân đi riêng một lưới 'tkc:cay' để 13-cay-mo-hinh.js ẩn đi khi mô hình cây tải xong; chỗ đứng ghi vào G.cayDat
   function wall(x0, z0, x1, z1) { // như tường bao của 05-world.js: chân đá, thân vàng đất, mái ngói, cột mỗi 6 m
     const lx = Math.abs(x1 - x0), lz = Math.abs(z1 - z0), cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, alongX = lx > lz, L = Math.max(lx, lz);
@@ -13305,9 +13334,10 @@ function buildTangKinhCac(G) {
     for (const z of [-20, -8, 4, 16]) tree(80.2, z, 1.05 + (k % 3) * 0.07, k++);
     for (const s of [-1, 1]) { // đôi đèn đá hai bên bậc chính
       const x = OX + s * 2.4, z = OZ + 19.3;
-      box(S, x, 0.12, z, 0.56, 0.24, 0.56, C.stoneD); box(S, x, 0.72, z, 0.26, 0.96, 0.26, C.stone); box(S, x, 1.27, z, 0.5, 0.14, 0.5, C.stoneD);
-      box(S, x, 1.52, z, 0.36, 0.36, 0.36, 0xe9d7a4); box(S, x, 1.76, z, 0.6, 0.12, 0.6, C.stoneD); box(S, x, 1.88, z, 0.3, 0.12, 0.3, C.stone);
+      box(DEN, x, 0.12, z, 0.56, 0.24, 0.56, C.stoneD); box(DEN, x, 0.72, z, 0.26, 0.96, 0.26, C.stone); box(DEN, x, 1.27, z, 0.5, 0.14, 0.5, C.stoneD);
+      box(DEN, x, 1.52, z, 0.36, 0.36, 0.36, 0xe9d7a4); box(DEN, x, 1.76, z, 0.6, 0.12, 0.6, C.stoneD); box(DEN, x, 1.88, z, 0.3, 0.12, 0.3, C.stone);
       col.circle(x, z, 0.36, 'stonelamp');
+      (G.denDat || (G.denDat = [])).push({ x, y: 0, z, h: 2.0 });                   // đèn ở đây thấp hơn đèn sân chùa một chút (đèn dựng bằng mã cao 1,94 m)
     }
     { // bia tên bên trái bậc chính, mặt quay về +z
       const x = OX - 5.4, z = OZ + 19.6;
@@ -13400,6 +13430,7 @@ function buildTangKinhCac(G) {
   safe('gom mesh', () => {
     if (S.list.length) { const m = S.mesh(G.mats.vc, { cast: true, receive: true }); m.name = 'tkc:than'; scene.add(m); }
     if (TR.list.length) { const m = TR.mesh(G.mats.vc, { cast: true, receive: true }); m.name = 'tkc:cay'; scene.add(m); (G.cayCu || (G.cayCu = [])).push(m); } // cây dựng bằng mã (bản dự phòng của mô hình cây)
+    if (DEN.list.length) { const m = DEN.mesh(G.mats.vc, { cast: true, receive: true }); m.name = 'tkc:den-da'; scene.add(m); (G.denCu || (G.denCu = [])).push(m); } // đèn đá dựng bằng mã (bản dự phòng của mô hình đèn)
     if (F.list.length) { const m = F.mesh(G.mats.vc, { cast: false, receive: true }); m.name = 'tkc:phang'; scene.add(m); }
     if (IN.list.length) { const m = IN.mesh(G.mats.vc, { cast: false, receive: true }); m.name = 'tkc:noi-that'; scene.add(m); V.interior = m; }
     if (LB.list.length) { const m = LB.mesh(G.mats.lantern, { cast: false, receive: false }); m.name = 'tkc:den'; scene.add(m); }
@@ -23059,12 +23090,12 @@ function installActivitiesC(G) {
     ['mặt nước hồ sen & đàn cá', typeof installNuocCa === 'function' ? installNuocCa : null], // 19-nuoc-ca.js: sau vườn sau chùa (đọc mặt nước và hình hồ của G.vuonSau): sóng lăn tăn, phản chiếu trời, vòng sóng, quầng đèn hoa đăng, cá bơi (mô hình tải sau, lỗi thì giữ cá dựng bằng mã)
     ['sen trong hồ (mô hình 3D)', typeof installSenHo === 'function' ? installSenHo : null], // 19-sen-ho.js: sau vườn sau chùa (đọc chỗ đặt lá, hoa, nụ của G.vuonSau): thay lá sen, hoa sen bằng mô hình tải về khi người chơi tới gần hồ, lỗi thì giữ sen dựng bằng mã
     ['tượng Quan Âm giữa hồ (mô hình 3D)', typeof installQuanAmHo === 'function' ? installQuanAmHo : null], // 19-quan-am-ho.js: sau vườn sau chùa (đọc bệ tượng của G.vuonSau): thay thân tượng dựng bằng mã bằng mô hình tải về khi người chơi tới gần, lỗi thì giữ tượng cũ
-    ['đèn đá vườn sau (mô hình 3D)', typeof installDenDa === 'function' ? installDenDa : null], // 19-den-da.js: sau vườn sau chùa (đọc chỗ đặt đèn của G.vuonSau): thay đèn đá dựng bằng mã bằng mô hình tải về khi người chơi tới gần hồ, lỗi thì giữ đèn cũ
     ['Tàng Kinh Các (sân đông)', typeof buildTangKinhCac === 'function' ? buildTangKinhCac : null], // 19-tang-kinh-cac.js: sân mới ngoài tường đông, cổng nách, lầu hai tầng (mô hình tải sau); trước 12 và 13 vì hai nơi này đọc vật cản, nút dẫn đường, vùng chừa lúc dựng
     ['trang trí sân chùa', typeof buildDecorInside === 'function' ? buildDecorInside : null],
     ['biển báo trước cổng', typeof buildGateSign === 'function' ? buildGateSign : null], // trước cảnh vật: quầy hàng tự lùi chỗ
     ['cảnh vật quanh chùa', typeof buildScenery === 'function' ? buildScenery : null],
     ['cây mô hình 3D (sồi, thông)', typeof installCayMoHinh === 'function' ? installCayMoHinh : null], // 13-cay-mo-hinh.js: sau mọi nơi dựng cây (05, 09, 12, 13, 19): các nơi ấy đã ghi chỗ đứng từng cây vào G.cayDat; tải hai file mô hình sau khi game chạy, lỗi thì giữ cây dựng bằng mã
+    ['đèn đá (mô hình 3D)', typeof installDenDa === 'function' ? installDenDa : null], // 19-den-da.js: sau mọi nơi dựng đèn đá (05, 09, 12, 19-vuon-sau, 19-tang-kinh-cac): các nơi ấy đã ghi chỗ đứng từng đèn vào G.denDat; tải file mô hình sau khi game chạy, lỗi thì giữ đèn dựng bằng mã
     ['hiệu ứng', installFx],
     ['hậu kỳ', typeof installHauKy === 'function' ? installHauKy : null], // 07-hau-ky.js: bloom / AO / MSAA / chỉnh màu phim, chỉ chạy trong chính điện (G.post); tải addon three/addons không đồng bộ, lỗi thì vẽ thẳng như cũ
     ['nhân vật', installPlayer],

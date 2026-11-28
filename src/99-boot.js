@@ -16,12 +16,12 @@
     ['mặt nước hồ sen & đàn cá', typeof installNuocCa === 'function' ? installNuocCa : null], // 19-nuoc-ca.js: sau vườn sau chùa (đọc mặt nước và hình hồ của G.vuonSau): sóng lăn tăn, phản chiếu trời, vòng sóng, quầng đèn hoa đăng, cá bơi (mô hình tải sau, lỗi thì giữ cá dựng bằng mã)
     ['sen trong hồ (mô hình 3D)', typeof installSenHo === 'function' ? installSenHo : null], // 19-sen-ho.js: sau vườn sau chùa (đọc chỗ đặt lá, hoa, nụ của G.vuonSau): thay lá sen, hoa sen bằng mô hình tải về khi người chơi tới gần hồ, lỗi thì giữ sen dựng bằng mã
     ['tượng Quan Âm giữa hồ (mô hình 3D)', typeof installQuanAmHo === 'function' ? installQuanAmHo : null], // 19-quan-am-ho.js: sau vườn sau chùa (đọc bệ tượng của G.vuonSau): thay thân tượng dựng bằng mã bằng mô hình tải về khi người chơi tới gần, lỗi thì giữ tượng cũ
-    ['đèn đá vườn sau (mô hình 3D)', typeof installDenDa === 'function' ? installDenDa : null], // 19-den-da.js: sau vườn sau chùa (đọc chỗ đặt đèn của G.vuonSau): thay đèn đá dựng bằng mã bằng mô hình tải về khi người chơi tới gần hồ, lỗi thì giữ đèn cũ
     ['Tàng Kinh Các (sân đông)', typeof buildTangKinhCac === 'function' ? buildTangKinhCac : null], // 19-tang-kinh-cac.js: sân mới ngoài tường đông, cổng nách, lầu hai tầng (mô hình tải sau); trước 12 và 13 vì hai nơi này đọc vật cản, nút dẫn đường, vùng chừa lúc dựng
     ['trang trí sân chùa', typeof buildDecorInside === 'function' ? buildDecorInside : null],
     ['biển báo trước cổng', typeof buildGateSign === 'function' ? buildGateSign : null], // trước cảnh vật: quầy hàng tự lùi chỗ
     ['cảnh vật quanh chùa', typeof buildScenery === 'function' ? buildScenery : null],
     ['cây mô hình 3D (sồi, thông)', typeof installCayMoHinh === 'function' ? installCayMoHinh : null], // 13-cay-mo-hinh.js: sau mọi nơi dựng cây (05, 09, 12, 13, 19): các nơi ấy đã ghi chỗ đứng từng cây vào G.cayDat; tải hai file mô hình sau khi game chạy, lỗi thì giữ cây dựng bằng mã
+    ['đèn đá (mô hình 3D)', typeof installDenDa === 'function' ? installDenDa : null], // 19-den-da.js: sau mọi nơi dựng đèn đá (05, 09, 12, 19-vuon-sau, 19-tang-kinh-cac): các nơi ấy đã ghi chỗ đứng từng đèn vào G.denDat; tải file mô hình sau khi game chạy, lỗi thì giữ đèn dựng bằng mã
     ['hiệu ứng', installFx],
     ['hậu kỳ', typeof installHauKy === 'function' ? installHauKy : null], // 07-hau-ky.js: bloom / AO / MSAA / chỉnh màu phim, chỉ chạy trong chính điện (G.post); tải addon three/addons không đồng bộ, lỗi thì vẽ thẳng như cũ
     ['nhân vật', installPlayer],

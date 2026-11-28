@@ -21,7 +21,7 @@ function buildWorld(G) {
     wood: 0x8e2a22, woodD: 0x5a2418, gold: 0xd9a84a, goldD: 0xa87c2c, roof: 0xa8432d, ridge: 0x6e2a1c,
     bronze: 0x8f6a36, leaf: [0x4c7a35, 0x5d8c3d, 0x3f6b30, 0x6f9a45], bark: 0x6b5240, red: 0xc8302a, cream: 0xf3e3c3,
   };
-  const S = U.batch(), F = U.batch(), M = U.batch(), LB = U.batch(), FAR = U.batch();
+  const S = U.batch(), F = U.batch(), M = U.batch(), LB = U.batch(), FAR = U.batch(), DEN = U.batch(), DENS = U.batch(); // DEN / DENS (2026-11-28): thân đá và hộp sáng của đèn đá đi riêng hai lưới (W.meshes.D / DS) để 19-den-da.js ẩn đi khi mô hình đèn tải xong; chỗ đứng từng đèn ghi vào G.denDat
   const TR = U.batch(); // 2026-11-27: thân + tán của cây tròn và cây trong chậu cảnh đi riêng một lưới (W.meshes.T) để 13-cay-mo-hinh.js ẩn đi khi mô hình cây tải xong; chỗ đứng từng cây ghi vào G.cayDat
   const cayGhi = (o) => { (G.cayDat || (G.cayDat = [])).push(o); };
   const BOX = new THREE.BoxGeometry(1, 1, 1);
@@ -687,10 +687,10 @@ function buildWorld(G) {
     W.water = { material: new THREE.MeshPhongMaterial({ color: 0x1f5566, emissive: 0x0b2c38, shininess: 90, specular: 0x8a7a60 }) };
     // đèn đá
     for (const [x, z] of [[7.6, 9.0], [9.4, 26.4], [35.2, 7.4]]) { // 2026-11-26: đèn đá sát tường đông dời theo tường bên (22,9 → 35,2); hai đèn kia đứng giữa sân nên giữ nguyên
-      box(S, x, 0.15, z, 0.6, 0.3, 0.6, C.stoneD); box(S, x, 0.75, z, 0.28, 0.9, 0.28, C.stone);
-      box(S, x, 1.32, z, 0.56, 0.12, 0.56, C.stone); LB.add(BOX, 0xffd98a, { p: [x, 1.6, z], s: [0.36, 0.4, 0.36] });
-      S.add(new THREE.ConeGeometry(0.5, 0.36, 4), C.stoneD, { p: [x, 2.0, z], r: [0, PI / 4, 0] });
-      glow(x, 1.6, z, 1.4, [1.0, 0.75, 0.38], true); col.circle(x, z, 0.42, 'stonelamp');
+      box(DEN, x, 0.15, z, 0.6, 0.3, 0.6, C.stoneD); box(DEN, x, 0.75, z, 0.28, 0.9, 0.28, C.stone);
+      box(DEN, x, 1.32, z, 0.56, 0.12, 0.56, C.stone); DENS.add(BOX, 0xffd98a, { p: [x, 1.6, z], s: [0.36, 0.4, 0.36] });
+      DEN.add(new THREE.ConeGeometry(0.5, 0.36, 4), C.stoneD, { p: [x, 2.0, z], r: [0, PI / 4, 0] });
+      glow(x, 1.6, z, 1.4, [1.0, 0.75, 0.38], true); col.circle(x, z, 0.42, 'stonelamp'); (G.denDat || (G.denDat = [])).push({ x, y: 0, z });
     }
     // ghế đá (quay mặt về giữa khoảng sân bên đông)
     W.benchSeats = [];
@@ -862,7 +862,8 @@ function buildWorld(G) {
   const meshL = LB.mesh(G.mats.lantern, { cast: false, receive: false }); scene.add(meshL);
   const meshFar = FAR.mesh(G.mats.vc, { cast: false, receive: false }); scene.add(meshFar);
   const meshT = TR.mesh(G.mats.vc, { cast: true, receive: true }); meshT.name = 'cay-cu:san'; scene.add(meshT); (G.cayCu || (G.cayCu = [])).push(meshT); // cây dựng bằng mã (bản dự phòng của mô hình cây)
-  W.meshes = { S: meshS, F: meshF, M: meshM, L: meshL, FAR: meshFar, T: meshT };
+  const meshD = DEN.mesh(G.mats.vc, { cast: true, receive: true }); meshD.name = 'den-cu:san'; scene.add(meshD); const meshDS = DENS.mesh(G.mats.lantern, { cast: false, receive: false }); meshDS.name = 'den-cu:san-sang'; scene.add(meshDS); (G.denCu || (G.denCu = [])).push(meshD, meshDS); // đèn đá dựng bằng mã (bản dự phòng của mô hình đèn, 19-den-da.js)
+  W.meshes = { S: meshS, F: meshF, M: meshM, L: meshL, FAR: meshFar, T: meshT, D: meshD, DS: meshDS };
 
   // =====================================================================
   //  ĐIỂM MỐC DẪN ĐƯỜNG + VỊ TRÍ HOẠT ĐỘNG CHO KHÁCH AI

@@ -305,13 +305,15 @@ function buildDecorInside(G) {
   }
   const footBench = (yaw) => { const a = rot(yaw, -0.75, 0), b = rot(yaw, 0.75, 0), c = rot(yaw, 0, 0.85); return [[a[0], a[1], 0.4], [b[0], b[1], 0.4], [0, 0, 0.45], [c[0], c[1], 0.35, 1]]; };
   function placeBench(x, z, yaw, rad) { const p = find(x, z, footBench(yaw), rad || 2.5, 0.4); if (!p) return null; bench(p.x, p.z, yaw); mark(p.x, p.z, 1.0); return p; }
+  const DEN = U.batch(), DENS = U.batch(); // 2026-11-28: thân đá và hộp sáng của đèn đá đi riêng hai lưới để 19-den-da.js ẩn đi khi mô hình đèn tải xong; chỗ đứng từng đèn ghi vào G.denDat
   function stoneLamp(x, z) {
     const y0 = hy(x, z);
-    box(S, x, y0 + 0.15, z, 0.62, 0.3, 0.62, C.stoneD); box(S, x, y0 + 0.75, z, 0.28, 0.9, 0.28, C.stone);
-    box(S, x, y0 + 1.32, z, 0.56, 0.12, 0.56, C.stone); LB.add(BOX, 0xffd98a, { p: [x, y0 + 1.6, z], s: [0.36, 0.4, 0.36] });
-    put(S, CONE4, C.stoneD, x, y0 + 2.0, z, 1.0, 0.36, 1.0, { r: [0, PI / 4, 0] });
+    box(DEN, x, y0 + 0.15, z, 0.62, 0.3, 0.62, C.stoneD); box(DEN, x, y0 + 0.75, z, 0.28, 0.9, 0.28, C.stone);
+    box(DEN, x, y0 + 1.32, z, 0.56, 0.12, 0.56, C.stone); DENS.add(BOX, 0xffd98a, { p: [x, y0 + 1.6, z], s: [0.36, 0.4, 0.36] });
+    put(DEN, CONE4, C.stoneD, x, y0 + 2.0, z, 1.0, 0.36, 1.0, { r: [0, PI / 4, 0] });
     glow(x, y0 + 1.6, z, 1.4, [1.0, 0.75, 0.38], true);
     circ(x, z, 0.42, 'stonelamp');
+    (G.denDat || (G.denDat = [])).push({ x, y: y0, z });
   }
   function placeLamp(x, z, rad) { const p = find(x, z, [[0, 0, 0.42]], rad || 1.5, 0.3); if (!p) return null; stoneLamp(p.x, p.z); mark(p.x, p.z, 0.6); return p; }
   function frangipani(x, z, seed, ring) {
@@ -649,6 +651,8 @@ function buildDecorInside(G) {
   addMesh(F.mesh(G.mats.vc, { cast: false, receive: true }));
   addMesh(GD.mesh(G.mats.gold, { cast: false, receive: false }));
   addMesh(LB.mesh(G.mats.lantern, { cast: false, receive: false }));
+  if (DEN.list.length) { const m = addMesh(DEN.mesh(G.mats.vc, { cast: true, receive: true })); m.name = 'den-cu:trang-tri'; (G.denCu || (G.denCu = [])).push(m); }               // đèn đá dựng bằng mã (bản dự phòng của mô hình đèn, 19-den-da.js)
+  if (DENS.list.length) { const m = addMesh(DENS.mesh(G.mats.lantern, { cast: false, receive: false })); m.name = 'den-cu:trang-tri-sang'; (G.denCu || (G.denCu = [])).push(m); }
   let flagMesh = null;
   safe('flagMesh', () => {
     const nF = fNx.length, nC = cP.length / 12, nQ = nF + nC;

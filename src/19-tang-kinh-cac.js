@@ -191,11 +191,12 @@ function buildTangKinhCac(G) {
   const S = U.batch(), F = U.batch(), IN = U.batch(), LB = U.batch(), own = [];
   const DEN = U.batch(); // 2026-11-28: đôi đèn đá đi riêng một lưới 'tkc:den-da' để 19-den-da.js ẩn đi khi mô hình đèn tải xong; chỗ đứng ghi vào G.denDat
   const TR = U.batch(); // 2026-11-27: chín cây tán tròn của sân đi riêng một lưới 'tkc:cay' để 13-cay-mo-hinh.js ẩn đi khi mô hình cây tải xong; chỗ đứng ghi vào G.cayDat
-  function wall(x0, z0, x1, z1) { // như tường bao của 05-world.js: chân đá, thân vàng đất, mái ngói, cột mỗi 6 m
+  const TG = typeof tuongGach === 'function' ? tuongGach(G) : null; // 2026-11-28: thân tường dán ảnh gạch cũ (19-tuong-gach.js); không có module thì vẫn hộp vàng đất
+  function wall(x0, z0, x1, z1) { // như tường bao của 05-world.js: chân đá, thân gạch cũ (trước 2026-11-28: vàng đất), mái ngói, cột mỗi 6 m
     const lx = Math.abs(x1 - x0), lz = Math.abs(z1 - z0), cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, alongX = lx > lz, L = Math.max(lx, lz);
     const sz = (a, b) => (alongX ? [a, b] : [b, a]);
     const s1 = sz(L, 0.45), s2 = sz(L + 0.1, 0.62), s3 = sz(L + 0.2, 0.8), s4 = sz(L + 0.2, 0.22);
-    box(S, cx, 0.2, cz, s2[0], 0.4, s2[1], C.stoneD); box(S, cx, 1.05, cz, s1[0], 1.3, s1[1], C.ochre);
+    box(S, cx, 0.2, cz, s2[0], 0.4, s2[1], C.stoneD); if (TG) TG.than(x0, z0, x1, z1); else box(S, cx, 1.05, cz, s1[0], 1.3, s1[1], C.ochre);
     box(S, cx, 1.78, cz, s3[0], 0.18, s3[1], C.roof); box(S, cx, 1.93, cz, s4[0], 0.14, s4[1], C.ridge);
     const lo = alongX ? Math.min(x0, x1) : Math.min(z0, z1);
     for (let t = 0; t <= L + 0.01; t += 6) { const q = Math.min(lo + t, lo + L), px = alongX ? q : cx, pz = alongX ? cz : q; box(S, px, 1.0, pz, 0.62, 2.0, 0.62, C.ochreD); box(S, px, 2.08, pz, 0.78, 0.16, 0.78, C.ridge); }
@@ -336,6 +337,7 @@ function buildTangKinhCac(G) {
   });
   safe('gom mesh', () => {
     if (S.list.length) { const m = S.mesh(G.mats.vc, { cast: true, receive: true }); m.name = 'tkc:than'; scene.add(m); }
+    if (TG) { const m = TG.mesh('tkc'); if (m) scene.add(m); } // thân tường sân gạch cũ (19-tuong-gach.js)
     if (TR.list.length) { const m = TR.mesh(G.mats.vc, { cast: true, receive: true }); m.name = 'tkc:cay'; scene.add(m); (G.cayCu || (G.cayCu = [])).push(m); } // cây dựng bằng mã (bản dự phòng của mô hình cây)
     if (DEN.list.length) { const m = DEN.mesh(G.mats.vc, { cast: true, receive: true }); m.name = 'tkc:den-da'; scene.add(m); (G.denCu || (G.denCu = [])).push(m); } // đèn đá dựng bằng mã (bản dự phòng của mô hình đèn)
     if (F.list.length) { const m = F.mesh(G.mats.vc, { cast: false, receive: true }); m.name = 'tkc:phang'; scene.add(m); }

@@ -29,7 +29,7 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
 
 - Một file `index.html` duy nhất, dựng từ các phần trong `src/` bằng `node build.js`.
 - Dùng [Three.js](https://threejs.org/) r160 tải từ CDN jsDelivr (kể cả phần phụ trợ `three/addons/` cho hậu kỳ);
-  không có tệp ảnh hay phông chữ ngoài. Mọi hình khối, tranh phông và biểu tượng đều vẽ bằng mã, trừ mô hình 3D do chủ chùa chọn:
+  không có tệp ảnh hay phông chữ ngoài. Mọi hình khối, tranh phông và biểu tượng đều vẽ bằng mã, trừ mô hình 3D và ảnh gạch của tường bao do chủ chùa chọn:
   tượng Quan Âm nghìn mắt nghìn tay ở Quan Âm Các là bản quét 3D pho tượng chùa Bút Tháp
   ([Tuong Phat Ba 5K](https://sketchfab.com/3d-models/tuong-phat-ba-5k-da1a8fe064df40bf892adb03fa115e3d) của vudn54,
   giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã giảm số mặt, cắt phần nền, thu nhỏ ảnh bề mặt và chỉnh vật liệu),
@@ -45,6 +45,10 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
   giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã chỉnh sửa (giảm từ 490 nghìn xuống 67 nghìn / 27 nghìn tam giác, đổi sang màu gỗ cổ, ngói xám hợp với Tàng Kinh Các,
   gỡ chữ Hán trên bảng giữa và đôi câu đối để treo biển "Tàng Kinh Các" và câu đối tiếng Việt), lưu thành `assets/mo-hinh/cong-tkc.glb` (0,22 MB, máy tính) và `assets/mo-hinh/cong-tkc-nhe.glb` (0,10 MB, điện thoại);
   tải sau khi game chạy vài giây, chưa có file hoặc tải lỗi thì game hiện cổng dựng tạm bằng khối.
+  Thân tường bao (sân trước, sân Tàng Kinh Các, vườn sau) dán ảnh gạch cũ lấy từ mẫu
+  [Grungy Brick Wall](https://sketchfab.com/3d-models/grungy-brick-wall-9534ee78eb3746fa893d8a80cee9c1bb) của James Candy,
+  giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã chỉnh sửa (chỉ lấy ảnh màu, cắt một ô 12 viên × 18 hàng gạch nối liền mép, chỉnh màu cho hợp bảng màu cổ, thu còn 512 px),
+  lưu ở `assets/tuong/gach-cu.webp` (56 KB); tải ngay sau khi game chạy, chưa có file hoặc tải lỗi thì thân tường tô phẳng màu gạch cũ.
   Tàng Kinh Các ở sân đông (qua cổng ba gian nói trên) dựng từ mô hình
   [Procedural asian architecture test 11](https://sketchfab.com/3d-models/procedural-asian-architecture-test-11-fea52a7cf45a4f5893c872c84da501e0) của ghostnoface,
   giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã giản lược từ 410 nghìn xuống 63 nghìn tam giác (vách cửa và lan can thành tấm phẳng dán ảnh),

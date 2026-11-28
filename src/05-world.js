@@ -348,12 +348,13 @@ function buildWorld(G) {
   // =====================================================================
   //  TƯỜNG BAO
   // =====================================================================
+  const TG = typeof tuongGach === 'function' ? tuongGach(G) : null; // 2026-11-28: thân tường bao dán ảnh gạch cũ (19-tuong-gach.js); không có module thì vẫn hộp vàng đất như cũ
   function wall(x0, z0, x1, z1, o) { // o.posts (tuỳ chọn): toạ độ các cột dọc theo tường; mặc định mỗi 6 m kể từ đầu mút
     const lx = Math.abs(x1 - x0), lz = Math.abs(z1 - z0), cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, alongX = lx > lz, L = Math.max(lx, lz);
     const sz = (a, b) => (alongX ? [a, 0, b] : [b, 0, a]);
     const s1 = sz(L, 0.45), s2 = sz(L + 0.1, 0.62), s3 = sz(L + 0.2, 0.8), s4 = sz(L + 0.2, 0.22);
     box(S, cx, 0.2, cz, s2[0], 0.4, s2[2], C.stoneD);
-    box(S, cx, 1.05, cz, s1[0], 1.3, s1[2], C.ochre);
+    if (TG) TG.than(x0, z0, x1, z1); else box(S, cx, 1.05, cz, s1[0], 1.3, s1[2], C.ochre);
     box(S, cx, 1.78, cz, s3[0], 0.18, s3[2], C.roof);
     box(S, cx, 1.93, cz, s4[0], 0.14, s4[2], C.ridge);
     const lo = alongX ? Math.min(x0, x1) : Math.min(z0, z1), posts = [];
@@ -863,7 +864,8 @@ function buildWorld(G) {
   const meshFar = FAR.mesh(G.mats.vc, { cast: false, receive: false }); scene.add(meshFar);
   const meshT = TR.mesh(G.mats.vc, { cast: true, receive: true }); meshT.name = 'cay-cu:san'; scene.add(meshT); (G.cayCu || (G.cayCu = [])).push(meshT); // cây dựng bằng mã (bản dự phòng của mô hình cây)
   const meshD = DEN.mesh(G.mats.vc, { cast: true, receive: true }); meshD.name = 'den-cu:san'; scene.add(meshD); const meshDS = DENS.mesh(G.mats.lantern, { cast: false, receive: false }); meshDS.name = 'den-cu:san-sang'; scene.add(meshDS); (G.denCu || (G.denCu = [])).push(meshD, meshDS); // đèn đá dựng bằng mã (bản dự phòng của mô hình đèn, 19-den-da.js)
-  W.meshes = { S: meshS, F: meshF, M: meshM, L: meshL, FAR: meshFar, T: meshT, D: meshD, DS: meshDS };
+  const meshTG = TG ? TG.mesh('san') : null; if (meshTG) scene.add(meshTG); // thân tường bao gạch cũ (19-tuong-gach.js: ảnh tải sau, lỗi thì tô phẳng)
+  W.meshes = { S: meshS, F: meshF, M: meshM, L: meshL, FAR: meshFar, T: meshT, D: meshD, DS: meshDS, TG: meshTG };
 
   // =====================================================================
   //  ĐIỂM MỐC DẪN ĐƯỜNG + VỊ TRÍ HOẠT ĐỘNG CHO KHÁCH AI

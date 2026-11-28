@@ -272,12 +272,13 @@ function buildVuonSau(G) {
   const count = (name, fn) => { const t0 = totalNow(); safe(name, fn); tally[name] = Math.round(totalNow() - t0); };
 
   // ---------- tường bao vườn: cùng kiểu và cùng chiều cao với tường sân chùa (wall() ở 05-world.js:349) ----------
+  const TG = typeof tuongGach === 'function' ? tuongGach(G) : null; // 2026-11-28: thân tường dán ảnh gạch cũ (19-tuong-gach.js, lưới 'vuonSau:tuong-gach'); không có module thì vẫn hộp vàng đất
   count('tường vườn', () => {
     for (const [x0, z0, x1, z1] of WALLS) {
       const lx = abs(x1 - x0), lz = abs(z1 - z0), cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, alongX = lx > lz, L = Math.max(lx, lz);
       const sz = (a, b) => (alongX ? [a, 0, b] : [b, 0, a]);
       const s1 = sz(L, 0.45), s2 = sz(L + 0.1, 0.62), s3 = sz(L + 0.2, 0.8), s4 = sz(L + 0.2, 0.22);
-      box(S, cx, 0.2, cz, s2[0], 0.4, s2[2], C.stoneD); box(S, cx, 1.05, cz, s1[0], 1.3, s1[2], C.ochre);
+      box(S, cx, 0.2, cz, s2[0], 0.4, s2[2], C.stoneD); if (TG) TG.than(x0, z0, x1, z1); else box(S, cx, 1.05, cz, s1[0], 1.3, s1[2], C.ochre);
       box(S, cx, 1.78, cz, s3[0], 0.18, s3[2], C.roof); box(S, cx, 1.93, cz, s4[0], 0.14, s4[2], C.ridge);
       for (let t = 0; t <= L + 0.01; t += 6) {
         const px = alongX ? Math.min(x0, x1) + t : cx, pz = alongX ? cz : Math.min(z0, z1) + t;
@@ -694,6 +695,7 @@ function buildVuonSau(G) {
     const addMesh = (m, name, hideable) => { m.name = 'vuonSau:' + name; (hideable ? gNear : gFar).add(m); tris += m.geometry.attributes.position.count / 3; meshes++; };
     const pathMat = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }); // lối đá không nhấp nháy với thảm cỏ
     if (S.list.length) addMesh(S.mesh(G.mats.vc, { cast: true, receive: true }), 'than');
+    if (TG) { const m = TG.mesh('vuon'); if (m) addMesh(m, 'tuong-gach'); }                                         // thân tường vườn gạch cũ (19-tuong-gach.js)
     if (Fl.list.length) addMesh(Fl.mesh(G.mats.vc, { cast: false, receive: true }), 'phang');
     if (PATH.list.length) addMesh(PATH.mesh(pathMat, { cast: false, receive: true }), 'loi');
     if (LB.list.length) addMesh(LB.mesh(G.mats.lantern, { cast: false, receive: false }), 'den');

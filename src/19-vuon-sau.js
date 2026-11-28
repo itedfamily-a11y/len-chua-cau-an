@@ -250,6 +250,7 @@ function buildVuonSau(G) {
   const CAY = U.batch(); // 2026-11-27: thân + tán của tùng, cây trong chậu cảnh và cây bồ đề (trừ 6 cành thấp buộc dải lụa, vẫn ở DEC) đi riêng một lưới 'vuonSau:cay' trong nhóm "near" để 13-cay-mo-hinh.js ẩn đi khi mô hình cây tải xong; chỗ đứng ghi vào G.cayDat (nhom: 'vuon' = mô hình cũng vào nhóm "near", ẩn hiện theo vườn)
   const SEN = U.batch(); // 2026-11-28: lá, hoa, nụ sen dựng bằng mã đi riêng một lưới 'vuonSau:sen' trong nhóm "near" để 19-sen-ho.js ẩn đi khi mô hình sen tải xong; chỗ đặt ghi vào V.pads (lá nổi, hoa trên 22 lá đầu, nụ ở 10 lá kế) và V.senCao (12 lá vươn cao)
   const TUONG = U.batch(); // 2026-11-28: thân tượng Quan Âm dựng bằng mã (áo, đầu, hào quang, tay, bình) đi riêng một lưới 'vuonSau:tuong' trong nhóm "near" để 19-quan-am-ho.js ẩn đi khi mô hình tượng tải xong; bệ sen vẫn ở DEC
+  const DEN = U.batch(), DENS = U.batch(); // 2026-11-28: đèn đá dựng bằng mã đi riêng hai lưới 'vuonSau:denda' (thân đá, nhóm "near") và 'vuonSau:denda-sang' (hộp sáng, nhóm "far") để 19-den-da.js ẩn đi khi mô hình đèn tải xong; quầng sáng giữ nguyên
   const cayGhi = (o) => { (G.cayDat || (G.cayDat = [])).push(o); };
   const own = [];                                  // hình gốc tạm, giải phóng ở cuối
   const mk = (g) => (own.push(g), g);
@@ -267,7 +268,7 @@ function buildVuonSau(G) {
     return g;
   };
   const trisOf = (B) => { let n = 0; for (const g of B.list) n += g.attributes.position.count / 3; return n; };
-  const tally = V.tally, totalNow = () => trisOf(S) + trisOf(Fl) + trisOf(PATH) + trisOf(LB) + trisOf(GD) + trisOf(DEC) + trisOf(DECF) + trisOf(CAY) + trisOf(SEN) + trisOf(TUONG);
+  const tally = V.tally, totalNow = () => trisOf(S) + trisOf(Fl) + trisOf(PATH) + trisOf(LB) + trisOf(GD) + trisOf(DEC) + trisOf(DECF) + trisOf(CAY) + trisOf(SEN) + trisOf(TUONG) + trisOf(DEN) + trisOf(DENS);
   const count = (name, fn) => { const t0 = totalNow(); safe(name, fn); tally[name] = Math.round(totalNow() - t0); };
 
   // ---------- tường bao vườn: cùng kiểu và cùng chiều cao với tường sân chùa (wall() ở 05-world.js:349) ----------
@@ -409,9 +410,9 @@ function buildVuonSau(G) {
   // ---------- 2. Đèn đá ×14 (như stoneLantern 09-world2-geo.js:79) + quầng sáng ấm về đêm (không đèn thật) ----------
   count('đèn đá', () => {
     for (const l of LANTERNS) {
-      box(DEC, l.x, 0.15, l.z, 0.62, 0.3, 0.62, C.stoneD); box(DEC, l.x, 0.75, l.z, 0.28, 0.9, 0.28, C.stone); box(DEC, l.x, 1.32, l.z, 0.56, 0.12, 0.56, C.stone);
-      LB.add(BOX, 0xffd98a, { p: [l.x, 1.6, l.z], s: [0.36, 0.4, 0.36] });
-      put(DEC, CONE4, C.stoneD, l.x, 2.0, l.z, 1.0, 0.36, 1.0, { r: [0, PI / 4, 0] });
+      box(DEN, l.x, 0.15, l.z, 0.62, 0.3, 0.62, C.stoneD); box(DEN, l.x, 0.75, l.z, 0.28, 0.9, 0.28, C.stone); box(DEN, l.x, 1.32, l.z, 0.56, 0.12, 0.56, C.stone);
+      DENS.add(BOX, 0xffd98a, { p: [l.x, 1.6, l.z], s: [0.36, 0.4, 0.36] });
+      put(DEN, CONE4, C.stoneD, l.x, 2.0, l.z, 1.0, 0.36, 1.0, { r: [0, PI / 4, 0] });
       glow(l.x, 1.6, l.z, 1.4, [1.0, 0.75, 0.38], true);
     }
   });
@@ -688,6 +689,8 @@ function buildVuonSau(G) {
     if (DEC.list.length) addMesh(DEC.mesh(G.mats.vc, { cast: true, receive: true }), 'trangtri', true);
     if (CAY.list.length) { const m = CAY.mesh(G.mats.vc, { cast: true, receive: true }); addMesh(m, 'cay', true); (G.cayCu || (G.cayCu = [])).push(m); } // cây dựng bằng mã (bản dự phòng của mô hình cây)
     if (DECF.list.length) addMesh(DECF.mesh(G.mats.vc, { cast: false, receive: true }), 'trangtri-phang', true);
+    if (DEN.list.length) addMesh(DEN.mesh(G.mats.vc, { cast: true, receive: true }), 'denda', true);                 // đèn đá dựng bằng mã (bản dự phòng của mô hình đèn, 19-den-da.js)
+    if (DENS.list.length) addMesh(DENS.mesh(G.mats.lantern, { cast: false, receive: false }), 'denda-sang');         // hộp sáng của đèn đá (luôn vẽ như lưới 'den')
     if (TUONG.list.length) addMesh(TUONG.mesh(G.mats.vc, { cast: true, receive: true }), 'tuong', true);             // thân tượng Quan Âm dựng bằng mã (bản dự phòng của mô hình tượng, 19-quan-am-ho.js)
     if (SEN.list.length) addMesh(SEN.mesh(G.mats.vc, { cast: false, receive: true }), 'sen', true);                  // sen dựng bằng mã (bản dự phòng của mô hình sen, 19-sen-ho.js)
     if (waterMesh) addMesh(waterMesh, 'nuoc');

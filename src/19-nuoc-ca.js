@@ -1,5 +1,5 @@
 // =====================================================================
-//  HỒ SEN VƯỜN SAU (hồ thả đèn hoa đăng) — HIỆU ỨNG MẶT NƯỚC + ĐÀN CÁ BƠI (2026-11-27)
+//  HỒ SEN VƯỜN SAU (hồ thả đèn hoa đăng) — HIỆU ỨNG MẶT NƯỚC + ĐÀN CÁ BƠI (2026-11-27), THÊM CÁ CHÉP, ĐOM ĐÓM, SƯƠNG MỜ (2026-11-28)
 //  Chạy sau 19-vuon-sau.js (đọc G.vuonSau, mesh 'vuonSau:nuoc'). Không đổi hình hồ, vật cản, hoạt động.
 //
 //  1. MẶT NƯỚC. Thay chất liệu của mặt hồ (trước là chất liệu nước dùng chung, phẳng một màu) bằng một bản riêng, màu vẫn đổi theo giờ như cũ:
@@ -9,21 +9,30 @@
 //     - ven bờ và quanh đảo nước nông: màu trong hơn, ban ngày có vệt sáng đáy nước lay động;
 //     - vòng sóng lan: G.hoNuoc.ring(x, z, mạnh) — 40-activities-b.js gọi khi đèn hoa đăng chạm nước, cá gọi khi ngoi lên đớp nước;
 //     - quầng sáng ấm loang trên mặt nước dưới mỗi đèn hoa đăng đang trôi (đọc G.activitiesB.state().lanterns), rõ dần về đêm.
-//  2. ĐÀN CÁ. 16 con (máy cảm ứng / đồ hoạ thấp: 9; từ chiều 2026-11-28 hồ kéo dài 32 × 52 m: 22 / 12 con, 4 / 3 nhóm), bơi thành 3 (2) nhóm quanh những "điểm hẹn" đổi chỗ sau mỗi 9–18 giây; tránh bờ, đảo, thủy tạ, tránh nhau;
+//  2. ĐÀN CÁ. Hai loài: cá vàng đuôi dài (loài 0) và cá chép (loài 1, thêm tối 2026-11-28). Hồ 32 × 52 m: 18 cá vàng + 14 cá chép (máy cảm ứng / đồ hoạ thấp: 8 + 7), 4 (3) nhóm,
+//     mỗi loài bơi nhóm riêng (hồ nhỏ hơn 1 200 m²: 11 + 8 / 6 + 4 con, 3 / 2 nhóm); các nhóm bơi quanh những "điểm hẹn" đổi chỗ sau mỗi 9–18 giây; tránh bờ, đảo, thủy tạ, tránh nhau;
 //     người chơi đứng gần bờ thì một nhóm bơi lại gần; đèn hoa đăng chạm nước thì cá gần đó giật mình tản ra; thỉnh thoảng một con ngoi lên đớp nước (vòng sóng).
 //     - Hình cá: mô hình "Shiny Fish" của GenEugene trên Sketchfab, giấy phép CC BY 4.0 (assets/mo-hinh/ca-vang.glb 3 000 mặt, ảnh 1024 px; ca-vang-nhe.glb 1 700 mặt, ảnh 512 px).
 //       File trong game đã giảm số mặt (407 nghìn → 3 000), chỉ giữ ảnh màu, và NẮN THẲNG thân (bản gốc tạc sẵn thế uốn mình): dài 1 theo z, mũi ở +z, sống lưng x = 0.
 //       Lệnh dựng: tests-local/quan-am-tools/LENH-CA-VANG.md. Tải khi người chơi vào trong 75 m quanh hồ; máy bật "tiết kiệm dữ liệu" thì không tải.
 //       Trước khi tải xong / tải lỗi: cá dựng bằng mã (cá chép cam – trắng, khoảng 50 mặt). Lỗi tải thử lại một lần sau 45 giây bằng bản nhẹ.
+//     - Hình cá chép: mô hình "Fish-4K-BakeMaterialTest" của chiwei trên Sketchfab, giấy phép CC BY 4.0 (assets/mo-hinh/ca-chep.glb 2 000 mặt, ảnh 1024 px, 138 KB;
+//       ca-chep-nhe.glb 900 mặt, ảnh 512 px, 52 KB). Bản gốc là một con cá chạm nổi nằm trên đĩa gỗ, chỉ có nửa trên (đáy phẳng) và màu gỗ: cá trong hồ chỉ được nhìn từ trên xuống
+//       nên nửa trên là đủ. File trong game đã bỏ cái đĩa, xoay thẳng thân, đổi ảnh màu gỗ thành ảnh xám sáng (giữ vảy và nét chạm); game tự nhuộm từng con: nền trắng ngà /
+//       đỏ cam / vàng kim, cộng các mảng khoang đỏ – trắng – đen vẽ trong shader theo số riêng của từng con (aCa.w), nên không con nào giống con nào.
+//       Lệnh dựng: tests-local/quan-am-tools/LENH-CA-CHEP.md. Hai loài tải riêng, loài nào lỗi thì loài ấy giữ cá dựng bằng mã.
 //     - Bơi: shader uốn thân theo sóng chạy từ đầu tới đuôi (đuôi vẫy mạnh hơn đầu), nhịp vẫy theo tốc độ, thân cong theo hướng rẽ.
 //     - "Ở dưới nước" mà không khoét đất: mặt đất dưới hồ nằm ở y −0,03, sát dưới mặt nước (y 0,04), nên cá không thể đặt thật dưới nước.
-//       Cá dài 0,46–0,78 m (cả đuôi), vẫn có độ sâu riêng (tâm thân 0,2–0,55 m dưới mặt nước); khi vẽ, mỗi đỉnh được kéo dọc theo tia nhìn lên một lớp mỏng ngay trên mặt nước (y 0,044…0,066: trên mặt nước, dưới lá sen 0,07
+//       Cá dài 0,46–0,78 m (cả đuôi; cá chép 0,5–0,88 m), vẫn có độ sâu riêng (tâm thân 0,2–0,55 m dưới mặt nước); khi vẽ, mỗi đỉnh được kéo dọc theo tia nhìn lên một lớp mỏng ngay trên mặt nước (y 0,044…0,066: trên mặt nước, dưới lá sen 0,07
 //       và đèn 0,08). Vị trí trên màn hình vì thế đúng như cá ở sâu thật (có thị sai khi máy quay di chuyển), còn thứ tự che khuất do bộ đệm chiều sâu lo:
 //       lá sen, đèn, bờ đá, người, thủy tạ đều che được cá. Phần cá mà tia nhìn không đi qua mặt nước của hồ (ngoài mép nước, trong đảo) bị bỏ.
 //       Cá vẽ hai lượt: lượt 1 chỉ ghi chiều sâu, lượt 2 vẽ màu trong suốt (không lộ vây phía sau qua thân); độ trong giảm theo quãng đường tia nhìn đi trong nước
 //       và theo góc nhìn (nhìn xiên: mặt nước phản chiếu trời, cá mờ dần), màu ngả xanh nước theo độ sâu, hình cá lung linh theo gợn sóng phía trên.
-//  3. Trạng thái: G.hoNuoc = { ring, uniforms, water, fish: { state, url, error, tris, credit, list, groups, meshes() } }.
-//     Ghi công tác giả mô hình cá ở cuối bảng Cài đặt khi mô hình đang hiện (như cây mô hình, 13-cay-mo-hinh.js).
+//  3. ĐOM ĐÓM VÀ SƯƠNG MỜ (2026-11-28). 80 con đom đóm (máy cảm ứng / đồ hoạ thấp: 36) bay là là trên mặt hồ và ven bờ, hiện dần từ lúc chạng vạng, nhấp nháy từng con
+//     (bể quầng sáng riêng qua G.fx.glowPoints; bể 70 con dùng chung của 07-fx.js không đổi). Sương: 3 (2) tấm phẳng nằm ngang cách mặt nước 0,4–1,7 m, vân mây mờ trôi chậm,
+//     mờ dần ra mép, màu theo màu chân trời lúc ấy, ban ngày rất nhạt, về đêm đậm hơn một chút. Đom đóm và sương ẩn cùng lúc với cá (vườn ẩn trang trí, hoặc cách hồ hơn 110 m).
+//  4. Trạng thái: G.hoNuoc = { ring, uniforms, water, fish: { state, url, error, tris, credit, list, groups, meshes(), koi: { state, url, error, tris, credit } } }
+//     (fish.* là cá vàng, fish.koi.* là cá chép). Ghi công tác giả hai mô hình cá ở cuối bảng Cài đặt khi mô hình đang hiện (như cây mô hình, 13-cay-mo-hinh.js).
 //  Mô hình "Realistic Water and Plants" (Negitropic) chủ chùa gửi kèm KHÔNG dùng: giấy phép Sketchfab Standard không cho đưa file lên kho công khai; hiệu ứng nước ở đây viết bằng mã.
 // =====================================================================
 function installNuocCa(G) {
@@ -175,7 +184,10 @@ outgoingLight = mix(outgoingLight, mix(uHoHor, uHoTop, smoothstep(0.0, 0.55, hoR
   //  2. ĐÀN CÁ
   // =====================================================================
   const BIG = HX * HZ * 4 > 1200;                            // 2026-11-28: hồ kéo dài (32 × 52 m) thì thêm cá và thêm một nhóm
-  const N = BIG ? (low ? 12 : 22) : (low ? 9 : 16), NG = BIG ? (low ? 3 : 4) : (low ? 2 : 3), MARGIN = 0.9;
+  // 2026-11-28 (chủ chùa: "thêm cá"): hai loài. Loài 0: cá vàng đuôi dài (Shiny Fish, GenEugene). Loài 1: cá chép màu (Fish-4K-BakeMaterialTest, chiwei:
+  // cá chạm nổi nhìn từ trên xuống, chỉ có nửa trên, ảnh xám; game nhuộm từng con một màu nền + mảng màu thứ hai như cá koi). NK: số con mỗi loài.
+  const NK = BIG ? (low ? [8, 7] : [18, 14]) : (low ? [6, 4] : [11, 8]);
+  const N = NK[0] + NK[1], NG = BIG ? (low ? 3 : 4) : (low ? 2 : 3), NGA = Math.max(1, Math.ceil(NG / 2)), MARGIN = 0.9; // NGA nhóm đầu là cá vàng, các nhóm còn lại là cá chép
   const free = (x, z, m) => (LP && LP.inside ? LP.inside(x, z, m) : V.inPond(x, z, -m) && Math.hypot(x - ISL.x, z - ISL.z) > ISL.r + 0.3 + m); // mặt nước trống, cách bờ / đảo / thủy tạ ít nhất m
   const randPoint = (m) => {
     for (let k = 0; k < 80; k++) { const x = POND.x0 + m + rnd() * (POND.x1 - POND.x0 - 2 * m), z = POND.z0 + m + rnd() * (POND.z1 - POND.z0 - 2 * m); if (free(x, z, m)) return [x, z]; }
@@ -183,15 +195,16 @@ outgoingLight = mix(outgoingLight, mix(uHoHor, uHoTop, smoothstep(0.0, 0.55, hoR
   };
 
   const FV_HEAD = GL_WAVE + `
-attribute vec4 aCa;                       // pha vẫy đuôi, độ cong khi rẽ, biên độ vẫy, (để dành)
+attribute vec4 aCa;                       // pha vẫy đuôi, độ cong khi rẽ, biên độ vẫy, số ngẫu nhiên riêng của con cá (0…1: mảng màu cá chép)
 uniform float uHoY; uniform vec2 uHoC;
-varying vec3 vHoW;
+varying vec3 vHoW; varying vec2 vHoO; varying float vHoS;
 `;
   const FV_BEND = `
 {
   float hoU = clamp(0.5 - position.z, 0.0, 1.0);                                        // 0 ở mũi → 1 ở chót đuôi
   float hoFin = smoothstep(0.07, 0.3, abs(position.y) + abs(position.x) * 0.7);          // vây: phần xa trục thân, vẫy trễ hơn thân
   transformed.x += sin(aCa.x - hoU * 5.5 - hoFin * 1.4) * aCa.z * (0.012 + 0.15 * hoU * hoU + 0.03 * hoFin) + aCa.y * hoU * hoU * 0.5;
+  vHoO = position.xz; vHoS = aCa.w;
 }
 `;
   const FV_PROJ = `
@@ -211,7 +224,20 @@ gl_Position = projectionMatrix * mvPosition;
 `;
   const FF_HEAD = GL_SD + `
 uniform float uHoMurk; uniform float uHoLit; uniform vec3 uHoTint;
-varying vec3 vHoW;
+varying vec3 vHoW; varying vec2 vHoO; varying float vHoS;
+`;
+  // cá chép (define HO_KOI): mảng màu thứ hai theo vị trí trên thân + số riêng của con cá; khoảng 1/5 số cá một màu trơn. Màu tính ở không gian tuyến tính.
+  const FF_KOI = `
+#if defined( HO_KOI ) && defined( USE_COLOR )
+{
+  float hoS = vHoS * 6.2831;
+  float hoK = sin(vHoO.y * 8.0 + hoS) * sin(vHoO.x * 15.0 + hoS * 1.7) + 0.55 * sin(vHoO.y * 17.0 - hoS * 2.3 + vHoO.x * 6.0);
+  float hoM = smoothstep(0.08, 0.3, hoK) * step(0.2, fract(vHoS * 3.7));
+  float hoSel = fract(vHoS * 7.3);
+  vec3 hoC2 = hoSel < 0.45 ? vec3(0.95, 0.93, 0.85) : hoSel < 0.8 ? vec3(0.8, 0.07, 0.015) : vec3(0.02, 0.02, 0.025);   // trắng ngà / đỏ cam / đen
+  diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb / max(vColor.rgb, vec3(0.02)) * hoC2, hoM);
+}
+#endif
 `;
   const FF_CLIP = `
 vec3 hoRay = vHoW - cameraPosition;
@@ -224,8 +250,8 @@ float hoPath = max(uHoY - vHoW.y, 0.0) / hoCos;                                 
 outgoingLight = mix(outgoingLight, outgoingLight * uHoTint, clamp(hoPath * 1.2, 0.0, 0.85)) * uHoLit;
 diffuseColor.a *= exp(-hoPath * uHoMurk) * (1.0 - 0.9 * (0.02 + 0.98 * pow(1.0 - hoCos, 5.0)));
 `;
-  const hookFish = (mat, colour) => {
-    if (low) mat.defines = Object.assign(mat.defines || {}, { HO_NHE: 1 });
+  const hookFish = (mat, colour, koi) => {
+    if (low || koi) mat.defines = Object.assign(mat.defines || {}, low ? { HO_NHE: 1 } : {}, koi ? { HO_KOI: 1 } : {});
     mat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, UNI);
       sh.vertexShader = sh.vertexShader
@@ -235,30 +261,33 @@ diffuseColor.a *= exp(-hoPath * uHoMurk) * (1.0 - 0.9 * (0.02 + 0.98 * pow(1.0 -
       let fs = sh.fragmentShader
         .replace('#include <common>', '#include <common>\n' + FF_HEAD)
         .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\n' + FF_CLIP);
-      if (colour) { const o = opq(fs); fs = fs.replace(o, FF_OUT + o); }
+      if (colour) { const o = opq(fs); fs = fs.replace(o, FF_OUT + o).replace('#include <color_fragment>', '#include <color_fragment>\n' + FF_KOI); }
       sh.fragmentShader = fs;
     };
-    mat.customProgramCacheKey = () => 'ho-ca-' + (colour ? 'mau' : 'sau') + (low ? '-nhe' : '');
+    mat.customProgramCacheKey = () => 'ho-ca-' + (colour ? 'mau' : 'sau') + (low ? '-nhe' : '') + (koi ? '-koi' : '');
     return mat;
   };
-  const fishMat = (o) => hookFish(new THREE.MeshLambertMaterial(Object.assign({ side: THREE.DoubleSide, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }, o)), true);
+  const fishMat = (o, koi) => hookFish(new THREE.MeshLambertMaterial(Object.assign({ side: THREE.DoubleSide, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }, o)), true, koi);
 
-  // thuộc tính theo từng con (dùng chung cho hai lượt vẽ và cho cả hình dựng bằng mã lẫn mô hình tải về)
-  const iMat = new THREE.InstancedBufferAttribute(new Float32Array(N * 16), 16); iMat.setUsage(THREE.DynamicDrawUsage);
-  const iCa = new THREE.InstancedBufferAttribute(new Float32Array(N * 4), 4); iCa.setUsage(THREE.DynamicDrawUsage);
-  const iCol = new THREE.InstancedBufferAttribute(new Float32Array(N * 3), 3);
+  // thuộc tính theo từng con, riêng cho mỗi loài (dùng chung cho hai lượt vẽ và cho cả hình dựng bằng mã lẫn mô hình tải về)
   const BS = new THREE.Sphere(new THREE.Vector3(CX, WY, CZ), Math.hypot(HX, HZ) + 1);
-  let meshA = null, meshB = null; // A: lượt chỉ ghi chiều sâu (sau mọi vật đặc), B: lượt màu (đầu lượt trong suốt)
-  function setModel(geo, colMat) {
-    const old = [meshA, meshB];
-    geo.setAttribute('aCa', iCa);
+  const KIND = NK.map((n, k) => {
+    const K = { k, n, off: k ? NK[0] : 0, meshA: null, meshB: null }; // A: lượt chỉ ghi chiều sâu (sau mọi vật đặc), B: lượt màu (đầu lượt trong suốt)
+    K.iMat = new THREE.InstancedBufferAttribute(new Float32Array(n * 16), 16); K.iMat.setUsage(THREE.DynamicDrawUsage);
+    K.iCa = new THREE.InstancedBufferAttribute(new Float32Array(n * 4), 4); K.iCa.setUsage(THREE.DynamicDrawUsage);
+    K.iCol = new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3);
+    return K;
+  });
+  function setModel(K, geo, colMat) {
+    const old = [K.meshA, K.meshB];
+    geo.setAttribute('aCa', K.iCa);
     const mk = (mat, order, name) => {
-      const m = new THREE.InstancedMesh(geo, mat, N);
-      m.instanceMatrix = iMat; m.boundingSphere = BS; m.castShadow = m.receiveShadow = false; m.matrixAutoUpdate = false; m.renderOrder = order; m.name = name; m.visible = !old[0] || old[0].visible;
+      const m = new THREE.InstancedMesh(geo, mat, K.n);
+      m.instanceMatrix = K.iMat; m.boundingSphere = BS; m.castShadow = m.receiveShadow = false; m.matrixAutoUpdate = false; m.renderOrder = order; m.name = name; m.visible = !old[0] || old[0].visible;
       scene.add(m); return m;
     };
-    meshA = mk(hookFish(new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }), false), 5, 'hoNuoc:ca-sau');
-    meshB = mk(colMat, -5, 'hoNuoc:ca'); meshB.instanceColor = iCol;
+    K.meshA = mk(hookFish(new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }), false, false), 5, 'hoNuoc:ca-sau' + K.k);
+    K.meshB = mk(colMat, -5, 'hoNuoc:ca' + K.k); K.meshB.instanceColor = K.iCol;
     for (const o of old) if (o) { scene.remove(o); o.material.dispose(); }
     if (old[0]) old[0].geometry.dispose();
   }
@@ -282,11 +311,13 @@ diffuseColor.a *= exp(-hoPath * uHoMurk) * (1.0 - 0.9 * (0.02 + 0.98 * pow(1.0 -
   // ---------- đàn cá: khởi tạo ----------
   for (let g = 0; g < NG; g++) { const p = randPoint(2.2); groups.push({ x: p[0], z: p[1], next: 5 + rnd() * 8, visit: 0 }); }
   const TINT = [[1, 1, 1], [1, 1, 1], [1, 1, 1], [1.12, 1.05, 0.9], [1.08, 0.82, 0.78], [1.2, 1.18, 1.1]];
+  const KOI = [[0.95, 0.93, 0.85], [0.95, 0.93, 0.85], [0.85, 0.12, 0.02], [0.85, 0.12, 0.02], [0.9, 0.5, 0.06], [0.9, 0.78, 0.3]]; // màu nền cá chép (tuyến tính): trắng ngà, đỏ cam, vàng kim, vàng nhạt
   for (let i = 0; i < N; i++) {
-    const g = i % NG, gp = groups[g]; let x = gp.x, z = gp.z;
+    const kind = i < NK[0] ? 0 : 1, j = i - KIND[kind].off, g = kind ? Math.min(NG - 1, NGA + (j % Math.max(1, NG - NGA))) : j % NGA, gp = groups[g]; let x = gp.x, z = gp.z;
     for (let k = 0; k < 40; k++) { const a = rnd() * TAU, r = 0.4 + rnd() * 1.6, px = gp.x + Math.cos(a) * r, pz = gp.z + Math.sin(a) * r; if (free(px, pz, MARGIN)) { x = px; z = pz; break; } }
-    const len = 0.46 + rnd() * 0.32;                                          // dài cả đuôi (m); đèn hoa đăng rộng 0,67 m
+    const len = kind ? 0.5 + rnd() * 0.38 : 0.46 + rnd() * 0.32;                // dài cả đuôi (m); đèn hoa đăng rộng 0,7 m
     fish.push({
+      k: kind, seed: rnd(),
       x, z, y: WY - 0.3, yaw: rnd() * TAU, pitch: 0, v: 0.2, vc: 0.2 + rnd() * 0.16, len, g,
       oa: rnd() * TAU, os: (rnd() - 0.5) * 0.24, or: 0.5 + rnd() * 1.3,       // chỗ riêng quanh điểm hẹn của nhóm (góc, tốc độ xoay, bán kính)
       wf: 0.25 + rnd() * 0.3, wp: rnd() * 40, ph: rnd() * TAU, turn: 0,       // lượn, pha vẫy đuôi, tốc độ rẽ (đã làm mượt)
@@ -294,7 +325,7 @@ diffuseColor.a *= exp(-hoPath * uHoMurk) * (1.0 - 0.9 * (0.02 + 0.98 * pow(1.0 -
       su: 10 + rnd() * 50, st: -1, rung: false,                               // đếm lùi tới lần ngoi lên, đang ngoi (giây), đã tạo vòng sóng
       flee: 0, fa: 0, side: rnd() < 0.5 ? -1 : 1,
     });
-    const c = TINT[(rnd() * TINT.length) | 0]; iCol.setXYZ(i, c[0], c[1], c[2]);
+    const pal = kind ? KOI : TINT, c = pal[(rnd() * pal.length) | 0]; KIND[kind].iCol.setXYZ(j, c[0], c[1], c[2]);
   }
   function nextPoint(gp, t) {
     gp.visit = 0;
@@ -355,24 +386,35 @@ diffuseColor.a *= exp(-hoPath * uHoMurk) * (1.0 - 0.9 * (0.02 + 0.98 * pow(1.0 -
       // nhịp vẫy đuôi theo tốc độ (thân dài mỗi giây); thân cong theo hướng rẽ
       const bl = f.v / f.len;
       f.ph = (f.ph + dt * (1.6 + bl * 10.5)) % TAU;
-      iCa.setXYZW(i, f.ph, U.clamp((f.turn * f.len) / Math.max(f.v, 0.18), -1.1, 1.1) * 0.55, 0.5 + Math.min(1, bl * 0.9) * 0.6 + Math.min(0.4, Math.abs(f.turn) * 0.25), 0);
-      dummy.position.set(f.x, f.y, f.z); dummy.rotation.set(-f.pitch, f.yaw, -f.turn * 0.12, 'YXZ'); dummy.scale.setScalar(f.len); dummy.updateMatrix(); dummy.matrix.toArray(iMat.array, i * 16);
+      const K = KIND[f.k], j = i - K.off;
+      K.iCa.setXYZW(j, f.ph, U.clamp((f.turn * f.len) / Math.max(f.v, 0.18), -1.1, 1.1) * 0.55, 0.5 + Math.min(1, bl * 0.9) * 0.6 + Math.min(0.4, Math.abs(f.turn) * 0.25), f.seed);
+      dummy.position.set(f.x, f.y, f.z); dummy.rotation.set(-f.pitch, f.yaw, -f.turn * 0.12, 'YXZ'); dummy.scale.setScalar(f.len); dummy.updateMatrix(); dummy.matrix.toArray(K.iMat.array, j * 16);
     }
-    iMat.needsUpdate = true; iCa.needsUpdate = true;
+    for (const K of KIND) { K.iMat.needsUpdate = true; K.iCa.needsUpdate = true; }
   }
-  setModel(codeFish(), fishMat({ vertexColors: true }));
+  for (const K of KIND) setModel(K, codeFish(), fishMat({ vertexColors: true }, false)); // trước khi mô hình tải xong, cả hai loài đều là cá dựng bằng mã
   swim(0.016, 0);
 
   // ---------- mô hình cá tải về ----------
-  const CFG = { url: 'assets/mo-hinh/ca-vang-nhe.glb', urlHi: 'assets/mo-hinh/ca-vang.glb', near: 75, retryAfter: 45 };
-  const CREDIT = {
-    text: 'Cá trong hồ sen là mô hình 3D "Shiny Fish" của GenEugene trên Sketchfab, giấy phép CC BY 4.0, đã chỉnh sửa cho vừa trò chơi (giảm số mặt, thu nhỏ ảnh bề mặt, nắn thẳng thân để cá tự bơi).',
-    href: 'https://sketchfab.com/3d-models/shiny-fish-e0bddbcafc5e48c097b40b4bada3811a',
-    licence: 'https://creativecommons.org/licenses/by/4.0/', // CC BY 4.0: nêu tên tác giả, nguồn, giấy phép (kèm đường dẫn) và việc đã chỉnh sửa
-  };
-  const S = { state: 'idle', url: CFG.url, error: null, tris: 0, tries: 0, next: 0, credit: null, list: fish, groups, meshes: () => ({ depth: meshA, colour: meshB, pools: pool }) };
+  const CFG = { near: 75, retryAfter: 45 };
+  const FILES = [
+    { url: 'assets/mo-hinh/ca-vang-nhe.glb', urlHi: 'assets/mo-hinh/ca-vang.glb', credit: {
+      text: 'Cá vàng đuôi dài trong hồ sen là mô hình 3D "Shiny Fish" của GenEugene trên Sketchfab, giấy phép CC BY 4.0, đã chỉnh sửa cho vừa trò chơi (giảm số mặt, thu nhỏ ảnh bề mặt, nắn thẳng thân để cá tự bơi).',
+      href: 'https://sketchfab.com/3d-models/shiny-fish-e0bddbcafc5e48c097b40b4bada3811a',
+      licence: 'https://creativecommons.org/licenses/by/4.0/', // CC BY 4.0: nêu tên tác giả, nguồn, giấy phép (kèm đường dẫn) và việc đã chỉnh sửa
+    } },
+    { url: 'assets/mo-hinh/ca-chep-nhe.glb', urlHi: 'assets/mo-hinh/ca-chep.glb', credit: {
+      text: 'Cá chép màu trong hồ sen là mô hình 3D "Fish-4K-BakeMaterialTest" của chiwei trên Sketchfab, giấy phép CC BY 4.0, đã chỉnh sửa cho vừa trò chơi (bỏ đĩa gỗ, giảm số mặt, đổi ảnh gỗ thành ảnh xám để nhuộm màu từng con).',
+      href: 'https://sketchfab.com/3d-models/fish-4k-bakematerialtest-632d5b01bd914a7cbd2502acfd9127b1',
+      licence: 'https://creativecommons.org/licenses/by/4.0/',
+    } },
+  ];
+  // trạng thái tải của từng loài; S (loài 0) giữ thêm danh sách cá, nhóm và các lưới để gỡ lỗi (G.hoNuoc.fish), S.koi là loài 1
+  for (const K of KIND) K.S = { state: 'idle', url: FILES[K.k].url, error: null, tris: 0, tries: 0, next: 0, credit: null };
+  const S = Object.assign(KIND[0].S, { list: fish, groups, koi: KIND[1].S, meshes: () => ({ depth: KIND[0].meshA, colour: KIND[0].meshB, koiDepth: KIND[1].meshA, koiColour: KIND[1].meshB, pools: pool }) });
   let Loader = null, now = 0;
-  function place(gltf) {
+  function place(gltf, K) {
+    const S = K.S;
     const root = gltf && (gltf.scene || (gltf.scenes && gltf.scenes[0]));
     if (!root) throw new Error('mô hình không có cảnh');
     root.updateMatrixWorld(true);
@@ -386,26 +428,74 @@ diffuseColor.a *= exp(-hoPath * uHoMurk) * (1.0 - 0.9 * (0.02 + 0.98 * pow(1.0 -
     if (!(L > 1e-6) || !isFinite(L)) throw new Error('mô hình rỗng');
     if (Math.abs(L - 1) > 0.02 || Math.abs(b.max.z + b.min.z) > 0.02) { geo.translate(0, 0, -(b.max.z + b.min.z) / 2); geo.scale(1 / L, 1 / L, 1 / L); } // file đã chuẩn hoá sẵn; đề phòng file khác
     map.anisotropy = Math.min(4, G.renderer.capabilities.getMaxAnisotropy()); map.needsUpdate = true;
-    setModel(geo, fishMat({ map, emissive: 0xffffff, emissiveMap: map, emissiveIntensity: 0.16 })); // ảnh màu tự sáng nhẹ: bụng và vây khuất nắng vẫn rõ màu
+    // loài 0: ảnh màu tự sáng nhẹ (bụng và vây khuất nắng vẫn rõ màu). Loài 1 (cá chép): ảnh xám nhân màu từng con + mảng màu trong shader, không tự sáng
+    setModel(K, geo, K.k ? fishMat({ map }, true) : fishMat({ map, emissive: 0xffffff, emissiveMap: map, emissiveIntensity: 0.16 }, false));
     S.tris = Math.round((geo.index ? geo.index.count : geo.attributes.position.count) / 3);
-    S.credit = CREDIT;
+    S.credit = FILES[K.k].credit;
   }
-  async function load() {
+  async function load(K) {
+    const S = K.S, F = FILES[K.k];
     S.state = 'loading'; S.tries++;
     try {
       if (!Loader) {
         try { Loader = (await import('three/addons/loaders/GLTFLoader.js')).GLTFLoader; } catch (e) { S.tries = 99; throw e; }
         if (!Loader) { S.tries = 99; throw new Error('addon không có GLTFLoader'); }
       }
-      S.url = S.tries > 1 || low ? CFG.url : CFG.urlHi;                                     // lần thử lại: bản nhẹ
+      S.url = S.tries > 1 || low ? F.url : F.urlHi;                                         // lần thử lại: bản nhẹ
       const gltf = await new Loader().loadAsync(S.url);
-      try { place(gltf); } catch (e) { S.tries = 99; throw e; }
+      try { place(gltf, K); } catch (e) { S.tries = 99; throw e; }
       S.state = 'ready'; S.error = null;
     } catch (e) {
       S.error = (e && e.message) || String(e);
       if (S.tries < 2) { S.state = 'idle'; S.next = now + CFG.retryAfter; }
-      else { S.state = 'failed'; console.warn('[hồ sen] không tải được mô hình cá — giữ cá dựng bằng mã: ' + S.error); }
+      else { S.state = 'failed'; console.warn('[hồ sen] không tải được mô hình cá (' + S.url + ') — giữ cá dựng bằng mã: ' + S.error); }
     }
+  }
+
+  // =====================================================================
+  //  3. ĐOM ĐÓM VÀ SƯƠNG TRÊN HỒ (2026-11-28, chủ chùa: "thêm đom đóm ở hồ, nếu thêm được mây mờ nữa thì tốt")
+  // =====================================================================
+  // Đom đóm: bể riêng của hồ (bể chung của 07-fx.js chỉ có 70 con cho cả chùa), bay là là trên mặt nước và ven bờ, hiện dần từ lúc chạng vạng.
+  // G.fx chưa có lúc module này chạy (bước "hiệu ứng" đứng sau), nên bể quầng sáng tạo ở lần cập nhật đầu tiên.
+  const NFF = low ? 36 : 80, ffs = []; let ffG = null;
+  for (let i = 0; i < NFF; i++) ffs.push({ cx: POND.x0 - 2.5 + rnd() * (POND.x1 - POND.x0 + 5), cz: POND.z0 - 2.5 + rnd() * (POND.z1 - POND.z0 + 5), h: 0.35 + rnd() * rnd() * 3.4, p: rnd() * 100, s: 0.3 + rnd() * 0.4 });
+  // Sương: vài tấm phẳng nằm ngang ngay trên mặt nước (máy cảm ứng / đồ hoạ thấp: 2 tấm, còn lại 3), vân mây mờ trôi chậm, mờ dần ra mép tấm; đậm hơn về đêm.
+  // Tấm nằm ngang nên chỗ cắt qua cuống sen, đảo, tượng trông tự nhiên; không ghi chiều sâu, vẽ sau cá và quầng đèn (renderOrder 2), trước các quầng sáng (3).
+  const mistU = { uT: { value: 0 }, uK: { value: 0 }, uCol: { value: new THREE.Color(1, 1, 1) } }, mistLayers = [], WHITE = new THREE.Color(1, 1, 1);
+  {
+    const geo = new THREE.PlaneGeometry(HX * 2 + 14, HZ * 2 + 14); geo.rotateX(-Math.PI / 2);
+    (low ? [0.5, 1.3] : [0.4, 0.95, 1.7]).forEach((h, i) => {
+      const mat = new THREE.ShaderMaterial({
+        uniforms: { uT: mistU.uT, uK: mistU.uK, uCol: mistU.uCol, uO: { value: new THREE.Vector3(i * 17.3, i * 5.1, 1 - i * 0.24) } },
+        vertexShader: `varying vec2 vU; varying vec2 vW;
+          void main(){ vU = uv * 2.0 - 1.0; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+        fragmentShader: `uniform float uT, uK; uniform vec3 uCol, uO; varying vec2 vU; varying vec2 vW;
+          float hh(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+          float nn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(hh(i), hh(i + vec2(1.0, 0.0)), f.x), mix(hh(i + vec2(0.0, 1.0)), hh(i + vec2(1.0, 1.0)), f.x), f.y); }
+          void main(){ vec2 p = vW * 0.085 + uO.xy + vec2(uT * 0.011, uT * 0.006) * uO.z;
+            float d = smoothstep(0.44, 0.86, nn(p) * 0.62 + nn(p * 2.4 + 3.7) * 0.38);
+            gl_FragColor = vec4(uCol, d * (1.0 - smoothstep(0.55, 1.0, length(vU))) * uK); }`,
+        transparent: true, depthWrite: false, side: THREE.DoubleSide,
+      });
+      const m = new THREE.Mesh(geo, mat); m.position.set(CX, WY + h, CZ); m.matrixAutoUpdate = false; m.updateMatrix(); m.renderOrder = 2; m.name = 'hoNuoc:suong' + i; scene.add(m); mistLayers.push(m);
+    });
+  }
+  function updateAir(dt, t, night, show) {
+    if (ffG === null && G.fx && G.fx.glowPoints) { try { ffG = G.fx.glowPoints(NFF, { flicker: 0 }); } catch (e) { ffG = false; } }
+    const dusk = U.smoothstep(0.12, 0.7, night);
+    if (ffG) {
+      const on = show && dusk > 0.01; ffG.points.visible = on;
+      if (on) {
+        for (let i = 0; i < NFF; i++) {
+          const f = ffs[i], tt = t * f.s + f.p, blink = Math.max(0, Math.sin(t * (1.1 + f.s) + f.p * 3));
+          ffG.set(i, f.cx + Math.sin(tt * 0.7) * 1.6 + Math.sin(tt * 1.9) * 0.3, f.h + Math.sin(tt * 1.3) * 0.3, f.cz + Math.cos(tt * 0.6) * 1.6, 0.42, 0.8, 1.0, 0.5, dusk * blink * blink);
+        }
+        ffG.commit();
+      }
+    }
+    mistU.uT.value = t; mistU.uK.value = 0.1 + night * 0.07;                                         // mỗi tấm; đậm hơn nữa thì ban đêm mặt hồ thành một lớp trắng đục, mất màu nước
+    if (scene.fog) mistU.uCol.value.copy(scene.fog.color).convertLinearToSRGB().lerp(WHITE, 0.55);  // màu sương theo màu chân trời lúc ấy (shader này ghi thẳng màu, không đổi không gian màu)
+    for (const m of mistLayers) m.visible = show;
   }
 
   // =====================================================================
@@ -426,29 +516,35 @@ diffuseColor.a *= exp(-hoPath * uHoMurk) * (1.0 - 0.9 * (0.02 + 0.98 * pow(1.0 -
     UNI.uHoLit.value = 1 - night * 0.4;
     // cá, quầng đèn: ẩn cùng phần trang trí của vườn, và khi máy quay ở xa hồ (không tính bước bơi)
     const cdx = cam.position.x - CX, cdz = cam.position.z - CZ, show = !V.decorHidden && cdx * cdx + cdz * cdz < 110 * 110;
-    if (meshA) meshA.visible = show; if (meshB) meshB.visible = show; pool.visible = show;
+    for (const K of KIND) { if (K.meshA) K.meshA.visible = show; if (K.meshB) K.meshB.visible = show; } pool.visible = show;
     if (show) { swim(Math.min(dt || 0, 0.1), now); updatePools(); }
-    // tải mô hình cá khi người chơi tới gần hồ
-    if (S.state !== 'idle' || now < S.next) return;
+    updateAir(dt || 0, now, night, show);                                                    // đom đóm và sương trên hồ
+    // tải mô hình cá (từng loài) khi người chơi tới gần hồ
     const P = G.player; if (!P || !P.pos) return;
     const dx = P.pos.x - CX, dz = P.pos.z - CZ;
     if (dx * dx + dz * dz > near2) return;
     const conn = navigator.connection;
-    if (conn && conn.saveData) { S.state = 'skipped'; return; }                              // máy bật "tiết kiệm dữ liệu": giữ cá dựng bằng mã
-    load();
+    for (const K of KIND) {
+      if (K.S.state !== 'idle' || now < K.S.next) continue;
+      if (conn && conn.saveData) { K.S.state = 'skipped'; continue; }                        // máy bật "tiết kiệm dữ liệu": giữ cá dựng bằng mã
+      load(K);
+    }
   }, 78);
 
-  // ghi công tác giả mô hình cá (CC BY 4.0) ở cuối bảng Cài đặt, khi mô hình đang hiện
+  // ghi công tác giả hai mô hình cá (CC BY 4.0) ở cuối bảng Cài đặt, khi mô hình đang hiện
   if (G.events && G.events.on) G.events.on('ui:settings', (box) => {
-    if (!box || !box.appendChild || !S.credit) return;
-    const p = U.el('p', 'muted small', S.credit.text + ' ');
-    [['Xem mô hình gốc', S.credit.href], ['Giấy phép CC BY 4.0', S.credit.licence]].forEach(([label, href], i) => {
-      const a = U.el('a', null, label); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
-      a.style.cssText = 'color:inherit;display:inline-block;padding:13px 4px;margin:-13px -4px';
-      if (i) p.append(' · ');
-      p.append(a);
-    });
-    box.appendChild(p);
+    if (!box || !box.appendChild) return;
+    for (const K of KIND) {
+      const cr = K.S.credit; if (!cr) continue;
+      const p = U.el('p', 'muted small', cr.text + ' ');
+      [['Xem mô hình gốc', cr.href], ['Giấy phép CC BY 4.0', cr.licence]].forEach(([label, href], i) => {
+        const a = U.el('a', null, label); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        a.style.cssText = 'color:inherit;display:inline-block;padding:13px 4px;margin:-13px -4px';
+        if (i) p.append(' · ');
+        p.append(a);
+      });
+      box.appendChild(p);
+    }
   });
 
   G.hoNuoc = { ring, uniforms: UNI, water: wMat, fish: S };

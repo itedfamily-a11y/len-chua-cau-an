@@ -71,6 +71,16 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
   đã chỉnh sửa (bỏ toà đế, gộp đỉnh cho bề mặt mịn, làm rõ nếp áo, tô bóng khe nếp vào màu đỉnh),
   lưu thành `assets/mo-hinh/quan-am-ho.glb` (670 KB, máy tính) và `assets/mo-hinh/quan-am-ho-nhe.glb` (254 KB, điện thoại);
   tải một bản khi người chơi tới gần hồ, lỗi thì game dùng tượng dựng bằng mã.
+  Đàn cá chép trong hồ sen vườn sau dùng mô hình
+  [Fish-4K-BakeMaterialTest](https://sketchfab.com/3d-models/fish-4k-bakematerialtest-632d5b01bd914a7cbd2502acfd9127b1) của chiwei,
+  giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã chỉnh sửa (bỏ cái đĩa, xoay thẳng thân, giảm từ 35 nghìn xuống 2 000 mặt, đổi ảnh màu gỗ thành ảnh xám để game tự tô màu cá chép từng con),
+  lưu thành `assets/mo-hinh/ca-chep.glb` (138 KB, máy tính) và `assets/mo-hinh/ca-chep-nhe.glb` (52 KB, điện thoại);
+  tải một bản khi người chơi tới gần hồ, lỗi thì game dùng cá dựng bằng mã.
+  Đèn đá trong vườn sau (dọc lối đi quanh hồ và trên đảo) lấy từ mô hình
+  [Japanese stone lanterns](https://sketchfab.com/3d-models/japanese-stone-lanterns-bc153f0de79442289c449141834703c0) của patrakeevasveta,
+  giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã chỉnh sửa (lấy ba trong năm kiểu đèn, giảm số mặt, thu nhỏ ảnh bề mặt, chỉ giữ ảnh màu và ảnh ô cửa sáng),
+  lưu thành `assets/mo-hinh/den-da.glb` (754 KB, máy tính) và `assets/mo-hinh/den-da-nhe.glb` (232 KB, điện thoại);
+  tải một bản khi người chơi tới gần hồ, lỗi thì game dùng đèn dựng bằng mã. Đom đóm và sương mờ trên hồ viết bằng mã.
   Cây sồi và cây thông trong cảnh (cây quanh tường, cây đa đầu lối vào, cây bồ đề ở vườn sau, tùng, cây trong chậu) lấy từ hai mô hình
   [Oak trees pack (17var, LODs, seasons, gameready)](https://sketchfab.com/3d-models/oak-trees-pack-17var-lods-seasons-gameready-a5e4e64f9f1d4089bdcc6170a9333393) của LOLIPOP và
   [Pine Forest at Sunset](https://sketchfab.com/3d-models/pine-forest-at-sunset-bef89be6b189456095db79107045d726) của Jagobo,

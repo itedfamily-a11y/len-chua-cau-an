@@ -683,7 +683,7 @@ function buildWorld(G) {
   //  W.water chỉ còn giữ CHẤT LIỆU nước (không còn mặt nước ở sân trước): hồ Long Trì (09-world2-geo.js) và hồ trong vườn dùng chung, màu đổi theo giờ ở vòng cập nhật phía trên.
   // =====================================================================
   {
-    const px = 15.2, pz = 16.2; // tâm khoảng sân bên đông: hai ghế đá quay mặt về đây
+    const px = 15.2, pz = 17.55; // hai ghế đá quay mặt về đây: chân bậc trước của Quan Âm Các (2026-11-28 dời vào góc đông nam, mặt chính quay tây, 17-quan-am-cac.js); trước đó (15,2; 16,2) là tâm khoảng sân bên đông
     W.water = { material: new THREE.MeshPhongMaterial({ color: 0x1f5566, emissive: 0x0b2c38, shininess: 90, specular: 0x8a7a60 }) };
     // đèn đá
     for (const [x, z] of [[7.6, 9.0], [9.4, 26.4], [35.2, 7.4]]) { // 2026-11-26: đèn đá sát tường đông dời theo tường bên (22,9 → 35,2); hai đèn kia đứng giữa sân nên giữ nguyên
@@ -694,7 +694,7 @@ function buildWorld(G) {
     }
     // ghế đá (quay mặt về giữa khoảng sân bên đông)
     W.benchSeats = [];
-    for (const [x, z] of [[11.6, 27.2], [17.8, 27.4]]) {
+    for (const [x, z] of [[11.6, 27.2], [11.6, 7.9]]) { // 2026-11-28: ghế thứ hai (17,8; 27,4) nằm trong nền Quan Âm Các mới nên dời sang (11,6; 7,9), đối xứng ghế kia qua trục điện z 17,55
       const yaw = U.yawTo(x, z, px, pz);
       box(S, x, 0.42, z, 1.8, 0.14, 0.55, C.stoneL, { r: [0, yaw, 0] });
       for (const s of [-0.65, 0.65]) box(S, x + Math.cos(yaw) * s, 0.2, z - Math.sin(yaw) * s, 0.2, 0.4, 0.45, C.stoneD, { r: [0, yaw, 0] });
@@ -798,7 +798,7 @@ function buildWorld(G) {
     }
     if (collide) col.circle(x, z, 0.85, 'bamboo');
   }
-  roundTree(-33.3, 27.5, 1, 61); roundTree(33.3, 27.5, 1, 62); // 2026-11-26: cây tròn góc sân trước dời theo tường bên (±21 → ±33,3)
+  roundTree(-33.3, 27.5, 1, 61); roundTree(33.5, 1.0, 1, 62); // 2026-11-26: cây tròn góc sân trước dời theo tường bên (±21 → ±33,3). 2026-11-28: góc đông nam nay là Quan Âm Các, cây phía đông dời lên (33,5; 1,0), sát tường đông, phía bắc cổng nách Tàng Kinh Các
   bamboo(-34.5, 6, 71); bamboo(-34.5, -8.0, 72); // 2026-11-26: hai khóm tre sát tường tây dời theo tường (−22,2 → −34,5)
   // cây cối bên ngoài tường
   {

@@ -2109,7 +2109,7 @@ function buildWorld(G) {
   //  W.water chỉ còn giữ CHẤT LIỆU nước (không còn mặt nước ở sân trước): hồ Long Trì (09-world2-geo.js) và hồ trong vườn dùng chung, màu đổi theo giờ ở vòng cập nhật phía trên.
   // =====================================================================
   {
-    const px = 15.2, pz = 16.2; // tâm khoảng sân bên đông: hai ghế đá quay mặt về đây
+    const px = 15.2, pz = 17.55; // hai ghế đá quay mặt về đây: chân bậc trước của Quan Âm Các (2026-11-28 dời vào góc đông nam, mặt chính quay tây, 17-quan-am-cac.js); trước đó (15,2; 16,2) là tâm khoảng sân bên đông
     W.water = { material: new THREE.MeshPhongMaterial({ color: 0x1f5566, emissive: 0x0b2c38, shininess: 90, specular: 0x8a7a60 }) };
     // đèn đá
     for (const [x, z] of [[7.6, 9.0], [9.4, 26.4], [35.2, 7.4]]) { // 2026-11-26: đèn đá sát tường đông dời theo tường bên (22,9 → 35,2); hai đèn kia đứng giữa sân nên giữ nguyên
@@ -2120,7 +2120,7 @@ function buildWorld(G) {
     }
     // ghế đá (quay mặt về giữa khoảng sân bên đông)
     W.benchSeats = [];
-    for (const [x, z] of [[11.6, 27.2], [17.8, 27.4]]) {
+    for (const [x, z] of [[11.6, 27.2], [11.6, 7.9]]) { // 2026-11-28: ghế thứ hai (17,8; 27,4) nằm trong nền Quan Âm Các mới nên dời sang (11,6; 7,9), đối xứng ghế kia qua trục điện z 17,55
       const yaw = U.yawTo(x, z, px, pz);
       box(S, x, 0.42, z, 1.8, 0.14, 0.55, C.stoneL, { r: [0, yaw, 0] });
       for (const s of [-0.65, 0.65]) box(S, x + Math.cos(yaw) * s, 0.2, z - Math.sin(yaw) * s, 0.2, 0.4, 0.45, C.stoneD, { r: [0, yaw, 0] });
@@ -2224,7 +2224,7 @@ function buildWorld(G) {
     }
     if (collide) col.circle(x, z, 0.85, 'bamboo');
   }
-  roundTree(-33.3, 27.5, 1, 61); roundTree(33.3, 27.5, 1, 62); // 2026-11-26: cây tròn góc sân trước dời theo tường bên (±21 → ±33,3)
+  roundTree(-33.3, 27.5, 1, 61); roundTree(33.5, 1.0, 1, 62); // 2026-11-26: cây tròn góc sân trước dời theo tường bên (±21 → ±33,3). 2026-11-28: góc đông nam nay là Quan Âm Các, cây phía đông dời lên (33,5; 1,0), sát tường đông, phía bắc cổng nách Tàng Kinh Các
   bamboo(-34.5, 6, 71); bamboo(-34.5, -8.0, 72); // 2026-11-26: hai khóm tre sát tường tây dời theo tường (−22,2 → −34,5)
   // cây cối bên ngoài tường
   {
@@ -3804,7 +3804,7 @@ function buildWorld2(G) {
       { id: 'cau-da', name: 'Cầu đá & ao Long Trì', rects: [[-11, 11, -21.5, -12.5]] },
       { id: 'linh-thu', name: 'Sân linh thú', rects: [[-6, 6, -43, -26]] },
       { id: 'tich-thien-am', name: 'Tích Thiện Am', rects: [[-5.7, 5.7, -56.6, -44]] },
-      { id: 'quan-am', name: 'Quan Âm Các', rects: [[13.62, 32.88, -8.55, 6.65]] }, // 2026-11-27: nền của toà điện mới (17-quan-am-cac.js: tâm 23,25; −0,95, nền 19,26 × 15,2 m). Trước đó [11.4, 21.5, -1, 7.2]
+      { id: 'quan-am', name: 'Quan Âm Các', rects: [[17.25, 32.45, 7.92, 27.18]] }, // nền toà điện (17-quan-am-cac.js ghi đè bằng SITE.platform). 2026-11-28: dời vào góc đông nam sân trước, tâm (24,85; 17,55), mặt chính quay tây, nền 15,2 × 19,26 m. Trước đó [13.62, 32.88, -8.55, 6.65] (27/11) và [11.4, 21.5, -1, 7.2]
       { id: 'bao-nghiem', name: 'Bảo tháp', rects: [[BN.x - 6, BN.x + 6, BN.z - 6, BN.z + 6]] }, // trong vườn sau chùa từ 2026-11-26 (rect cũ [−20,4…−11,5; −45…−35] theo BN)
       { id: 'vuon-thap', name: 'Vườn tháp', rects: [[23.3, 32.3, -169.5, -135.5]] }, // trong vườn sau chùa từ 2026-11-26
       { id: 'hanh-lang', name: 'Hành lang', rects: [[-35.9, -32.9, -113, -13], [32.9, 35.9, -113, -13]] }, // 2026-11-26: hành lang dời ra x ±(32,9…35,9)
@@ -9503,9 +9503,14 @@ function buildDienPhu(G) {
 //  QUAN ÂM CÁC MỚI (2026-11-27) — điện lớn hai tầng mái thay toà điện nhỏ 9 × 8,2 m
 //  Chủ chùa: "Quan Âm Các quá bé và không phù hợp với tượng", rồi chọn mô hình "Procedural asian architecture test 3"
 //  của ghostnoface trên Sketchfab (CC BY 4.0, cùng tác giả với Tàng Kinh Các) và cho phép dời ra khu đất mới nếu cần.
-//  Không cần khu đất mới: nửa đông sân trước đủ chỗ khi xoay trục dài theo hướng đông – tây, mặt chính quay về NAM (ra phía cổng).
+//  Không cần khu đất mới: nửa đông sân trước đủ chỗ. Bản đầu (27/11) đặt ở nửa bắc của nửa đông sân, tâm (23,25; −0,95), mặt chính quay về nam.
+//  2026-11-28, chủ chùa: "Quan Âm Các đẩy vào góc này" (ảnh chụp góc ĐÔNG NAM sân trước, nơi tường đông x 36,3 gặp tường trước z 31).
+//  Toà điện dời vào sát góc ấy và xoay cho mặt chính quay về TÂY (ra lối giữa sân, như điện phụ mặt 'W' của 17-dien-phu.js): mặt chính quay về nam
+//  thì ba gian cửa sẽ nhìn thẳng vào tường trước cách 1,7 m. Trục dài nay chạy bắc – nam dọc tường đông.
+//  Cổng nách sang sân Tàng Kinh Các (tường đông z 9…13) giữ nguyên chỗ: cổng mở vào dải đất 3,5 m giữa nền điện và tường đông, lối vào dải ở góc đông bắc của điện.
 //
-//  HỆ TOẠ ĐỘ CỤC BỘ (mét, gốc ở tâm toà nhà trên mặt đất): x sang đông, z ra nam (mặt chính), y lên. Thế giới = (OX + x, OZ + z), không xoay.
+//  HỆ TOẠ ĐỘ CỤC BỘ (mét, gốc ở tâm toà nhà trên mặt đất): x ngang mặt chính, z ra phía mặt chính, y lên. Mọi số đo dưới đây là số CỤC BỘ;
+//  ra thế giới qua fr = A.frame(OX, OZ, YAW) của 17-dien-phu.js, YAW = −π/2: thế giới x = OX − z, thế giới z = OZ + x (mặt chính +z → tây, +x → nam).
 //  File mô hình đã được đổi sẵn về hệ này lúc chuyển đổi (x mới = −z gốc, z mới = x gốc). Mọi số dưới đây đo từ hình khối của mô hình
 //  (scratchpad v7/hall/analyze3.mjs → analyze3.txt), KHÔNG ước lượng:
 //    nền đá cao 1,0 m, |x| ≤ 9,63, |z| ≤ 7,6; bốn bậc thang giữa bốn cạnh, rộng 2,4 m, vươn tới |z| 9,46 / |x| 11,46;
@@ -9530,12 +9535,21 @@ function buildQuanAmCac(G, A) {
   const Q = W.ext && W.ext.quanAm;
 
   // ---------- số đo ----------
-  const OX = 23.25, OZ = -0.95, FY = 1.0;   // gốc mô hình trong sân; sàn điện cao 1 m
+  // 2026-11-28: góc đông nam sân trước, mặt chính quay về tây. Đầu bậc cách mặt trong tường 1,7 m (tường đông 36,0, tường trước 30,7):
+  // bậc sau tới x OX + SZ = 34,31, bậc đầu hồi nam tới z OZ + SX = 29,01 — còn rãnh 0,7 m cho đường dẫn (bán kính kiểm tra 0,45) giữa đầu tay vịn và tường.
+  // Nền thế giới x 17,25…32,45, z 7,92…27,18 (bậc trước tới x 15,39, bậc đầu hồi bắc tới z 6,09). Trước đó (23,25; −0,95), không xoay.
+  const OX = 24.85, OZ = 17.55, YAW = -Math.PI / 2, FY = 1.0;   // gốc mô hình trong sân; sàn điện cao 1 m
   const PX = 9.63, PZ = 7.6, RX = 9.42, RZ = 7.42, SX = 11.46, SZ = 9.46, SW = 1.2;
-  const wx = (x) => OX + x, wz = (z) => OZ + z;
-  const fr = A.frame(OX, OZ, 0);
-  const SITE = { ox: OX, oz: OZ, floor: FY, platform: [OX - PX, OX + PX, OZ - PZ, OZ + PZ], bbox: [OX - SX, OX + SX, OZ - SZ, OZ + SZ],
+  const fr = A.frame(OX, OZ, YAW);
+  const wx = (x, z) => fr.X(x, z), wz = (x, z) => fr.Z(x, z);   // điểm cục bộ → thế giới
+  const wbox = (x0, z0, x1, z1) => { // hộp cục bộ → hộp thế giới [x0, x1, z0, z1] (xoay bội số 90° nên vẫn thẳng trục)
+    const xs = [wx(x0, z0), wx(x1, z1), wx(x0, z1), wx(x1, z0)], zs = [wz(x0, z0), wz(x1, z1), wz(x0, z1), wz(x1, z0)];
+    return [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)];
+  };
+  const cbox = (x0, z0, x1, z1, tag) => { const b = wbox(x0, z0, x1, z1); col.box(b[0], b[2], b[1], b[3], tag); };
+  const SITE = { ox: OX, oz: OZ, yaw: YAW, floor: FY, platform: wbox(-PX, -PZ, PX, PZ), bbox: wbox(-SX, -SZ, SX, SZ),
     url: 'assets/mo-hinh/quan-am-cac.glb', urlLo: 'assets/mo-hinh/quan-am-cac-nhe.glb' };
+  { const st = W.ext && W.ext.sites && W.ext.sites.find((s) => s.id === 'quan-am'); if (st) st.rects = [SITE.platform.slice()]; } // ô "dấu ấn hành hương" (08-world2.js) đi theo nền điện
   const WALLS = [ // tim vách [x0, z0, x1, z1], dày 0,2 m
     [-8, 6, -3.43, 6], [3.43, 6, 8, 6],                                               // mặt nam: ba gian giữa đã mở
     [-3.43, -6, -1.14, -6], [1.14, -6, 3.43, -6],                                     // mặt bắc
@@ -9560,20 +9574,20 @@ function buildQuanAmCac(G, A) {
   const maroon = 0x7a2418;
 
   // ---------- dọn nút dẫn đường / chỗ đứng cũ nằm trong nền và bậc ----------
-  const inFoot = (x, z, m = 0.5) => { const ax = Math.abs(x - OX), az = Math.abs(z - OZ); return (ax < PX + m && az < PZ + m) || (ax < SW + 0.4 && az < SZ + 0.3) || (az < SW + 0.4 && ax < SX + 0.3); };
+  const inFoot = (x, z, m = 0.5) => { const ax = Math.abs(fr.lx(x, z)), az = Math.abs(fr.lz(x, z)); return (ax < PX + m && az < PZ + m) || (ax < SW + 0.4 && az < SZ + 0.3) || (az < SW + 0.4 && ax < SX + 0.3); };
   G.nav.nodes = G.nav.nodes.filter((n) => !inFoot(n.x, n.z)); G.nav.built = false;
   for (const k of Object.keys(G.spots || {})) { const a = G.spots[k]; if (Array.isArray(a)) for (let i = a.length - 1; i >= 0; i--) if (a[i] && inFoot(a[i].x, a[i].z)) a.splice(i, 1); }
 
   // ---------- vật cản ----------
-  const seg = (s, t, tag) => { const [x0, z0, x1, z1] = s; col.box(wx(Math.min(x0, x1)) - t, wz(Math.min(z0, z1)) - t, wx(Math.max(x0, x1)) + t, wz(Math.max(z0, z1)) + t, tag); };
+  const seg = (s, t, tag) => { const [x0, z0, x1, z1] = s; cbox(Math.min(x0, x1) - t, Math.min(z0, z1) - t, Math.max(x0, x1) + t, Math.max(z0, z1) + t, tag); };
   for (const s of WALLS) seg(s, 0.1, 'qac');
   for (const s of RAILS) seg(s, 0.1, 'qac-rail');
-  for (const [x, z] of COLS) col.circle(wx(x), wz(z), 0.22, 'col');
-  col.box(wx(-PW / 2), wz(PZ0), wx(PW / 2), wz(PZ0 + PD), 'altar'); col.box(wx(-1.3), wz(TZ - 0.4), wx(1.3), wz(TF), 'altar');
+  for (const [x, z] of COLS) col.circle(wx(x, z), wz(x, z), 0.22, 'col');
+  cbox(-PW / 2, PZ0, PW / 2, PZ0 + PD, 'altar'); cbox(-1.3, TZ - 0.4, 1.3, TF, 'altar');
 
   // ---------- độ cao: nền 1 m, bốn bậc là dốc thẳng ----------
   A.floors.push((x, z) => {
-    const ax = Math.abs(x - OX), az = Math.abs(z - OZ);
+    const ax = Math.abs(fr.lx(x, z)), az = Math.abs(fr.lz(x, z));
     if (ax <= PX && az <= PZ) return FY;
     if (ax <= SW && az <= SZ) return FY * U.clamp((SZ - az) / (SZ - PZ), 0, 1);
     if (az <= SW && ax <= SX) return FY * U.clamp((SX - ax) / (SX - PX), 0, 1);
@@ -9582,12 +9596,12 @@ function buildQuanAmCac(G, A) {
 
   // ---------- máy quay: dưới mái thì giữ máy thấp; vách và khối mái chắn tia ngắm ----------
   G.roofZones.push(SITE.platform.slice());
-  const blk = (x0, y0, z0, x1, y1, z1) => G.cam.blockers.push(new THREE.Box3(new THREE.Vector3(wx(Math.min(x0, x1)), y0, wz(Math.min(z0, z1))), new THREE.Vector3(wx(Math.max(x0, x1)), y1, wz(Math.max(z0, z1)))));
+  const blk = (x0, y0, z0, x1, y1, z1) => { const b = wbox(x0, z0, x1, z1); G.cam.blockers.push(new THREE.Box3(new THREE.Vector3(b[0], y0, b[2]), new THREE.Vector3(b[1], y1, b[3]))); };
   // vách bao (z ±6, hồi x ±8) có dải vách trên tới mái; vách ngăn trong chỉ cao 3 m
   for (const [x0, z0, x1, z1] of WALLS) { const outer = (Math.abs(z0) > 5.9 && Math.abs(z1) > 5.9) || (Math.abs(x0) > 7.9 && Math.abs(x1) > 7.9); blk(x0 - 0.1, FY, z0 - 0.1, x1 + 0.1, outer ? 6.5 : 4.0, z1 + 0.1); }
   blk(-10.3, 4.3, -8.3, 10.3, 10.4, 8.3);                                   // khối hai tầng mái
   blk(-PX, 0, -PZ, PX, FY - 0.05, PZ);                                      // khối nền đá
-  (G.decorBans = G.decorBans || []).push([OX - SX - 1.2, OX + SX + 1.0, OZ - SZ - 1.0, OZ + SZ + 2.4]);
+  (G.decorBans = G.decorBans || []).push(wbox(-SX - 1.2, -SZ - 1.0, SX + 1.0, SZ + 2.4)); // chừa thêm 2,4 m trước mặt chính
 
   // ---------- nội thất dựng bằng mã (gom chung lưới với các điện phụ): bệ tượng, bàn thờ, đồ cúng, thảm, bồ đoàn ----------
   const T = A.locals(), g0 = W.glows.length, s0 = (W.smokeSpots || []).length;
@@ -9601,36 +9615,41 @@ function buildQuanAmCac(G, A) {
   A.cushion(T, 0, FY, C1, true); A.cushion(T, -1.7, FY, C1); A.cushion(T, 1.7, FY, C1); A.cushion(T, 0, FY, C2); A.cushion(T, -1.7, FY, C2); A.cushion(T, 1.7, FY, C2);
   glow(0, FY + TH + 0.3, TZ, 1.5, [0.5, 0.36, 0.16], false);                  // quầng sáng nhỏ ở bàn thờ (toạ độ cục bộ, toWorldFx đổi ra thế giới)
   A.flush(T, fr); A.toWorldFx(fr, g0, s0);
-  addSign(['QUAN ÂM CÁC'], 3.0, 0.62, wx(0), 6.35, wz(6.95), 0, { ppu: 260 });  // biển treo giữa hai tầng mái, mặt nam (y 6,04…6,66: dưới diềm mái trên ở 6,7)
+  addSign(['QUAN ÂM CÁC'], 3.0, 0.62, wx(0, 6.95), 6.35, wz(0, 6.95), YAW, { ppu: 260 });  // biển treo giữa hai tầng mái, mặt chính (y 6,04…6,66: dưới diềm mái trên ở 6,7)
 
-  // ---------- tượng: đặt lên bệ, mặt quay ra cửa (nam); điểm đứng và máy quay của "Lần chuỗi hạt" ----------
-  const alt = { x: wx(0), z: wz(PZC) }, sy = FY + PH + 0.08, ss = 1.12;
+  // ---------- tượng: đặt lên bệ, mặt quay ra cửa (mặt chính); điểm đứng và máy quay của "Lần chuỗi hạt" ----------
+  const alt = { x: wx(0, PZC), z: wz(0, PZC) }, sy = FY + PH + 0.08, ss = 1.12;
   if (Q && Q.statue) {
     const st = Q.statue;
-    st.position.set(alt.x, sy, alt.z); st.rotation.y = 0; st.scale.setScalar(ss); scene.add(st);
+    st.position.set(alt.x, sy, alt.z); st.rotation.y = YAW; st.scale.setScalar(ss); scene.add(st);
     const env = W.banTho && W.banTho.envTex && W.banTho.envTex(); // tượng dựng bằng mã (dự phòng) mượn bản đồ phản chiếu của ban thờ chính điện
     if (env && Q.mats) for (const m of Q.mats) { m.envMap = env; if (m.userData.metalEnv != null) m.metalness = m.userData.metalEnv; m.emissive.setHex(0x000000); m.needsUpdate = true; W.banTho.envMats.push(m); }
-    Q.poi = { x: wx(0), z: wz(C2 + 0.9), r: 2.2 };                                                   // sau hàng bồ đoàn thứ hai, trong điện
-    Q.stand = { x: wx(0), z: wz(TF + 0.5), yaw: U.yawTo(wx(0), wz(TF + 0.5), alt.x, alt.z) };       // sát bàn thờ, quay vào tượng
-    Q.cam = { pos: [wx(0.8), FY + 2.0, wz(5.4)], look: [alt.x, sy + 2.05 * ss, alt.z] };            // sát cửa trong (cách tượng ~8 m), máy thấp: trên màn hình dọc lõi máy quay kéo lùi tới ×1,5, ra ngoài thềm; máy ở y 3 thì tia ngắm vẫn lọt dưới dải vách trên cửa (y 4) và thấy trọn tượng
+    Q.poi = { x: wx(0, C2 + 0.9), z: wz(0, C2 + 0.9), r: 2.2 };                                     // sau hàng bồ đoàn thứ hai, trong điện
+    Q.stand = { x: wx(0, TF + 0.5), z: wz(0, TF + 0.5), yaw: U.yawTo(wx(0, TF + 0.5), wz(0, TF + 0.5), alt.x, alt.z) }; // sát bàn thờ, quay vào tượng
+    Q.cam = { pos: [wx(0.8, 5.4), FY + 2.0, wz(0.8, 5.4)], look: [alt.x, sy + 2.05 * ss, alt.z] };            // sát cửa trong (cách tượng ~8 m), máy thấp: trên màn hình dọc lõi máy quay kéo lùi tới ×1,5, ra ngoài thềm; máy ở y 3 thì tia ngắm vẫn lọt dưới dải vách trên cửa (y 4) và thấy trọn tượng
   }
 
   // ---------- nút dẫn đường (17-dien-phu.js thêm vào đồ thị) và chỗ đứng cho khách ----------
-  const N = (x, z, id) => ({ x: wx(x), z: wz(z), id });
+  // Tên nút theo hướng thế giới của chỗ đặt 2026-11-28 (mặt chính quay tây): qacTay = chân bậc trước, qacDong = chân bậc sau (sát tường đông), qacBac / qacNam = chân bậc hai đầu hồi.
+  // Chân bậc sau và bậc đầu hồi nam đứng giữa rãnh còn lại giữa đầu tay vịn và tường (cục bộ SZ + 0,9 / SX + 0,9) để đường dẫn đi được dọc dải đất sát tường.
+  const N = (x, z, id) => ({ x: wx(x, z), z: wz(x, z), id });
+  const BK = SZ + 0.9, GN = SX + 0.9; // tim rãnh sau bậc sau (thế giới x ≈ 35,2) và sau bậc đầu hồi nam (thế giới z ≈ 29,9)
   const nodes = [
-    N(0, 10.2, 'qacNam'), N(0, -10.2, 'qacBac'), N(-12.2, 0, 'qacTay'), N(12.2, 0, 'qacDong'),           // chân bốn bậc (bậc đông: nút nằm giữa đầu tay vịn 11,56 và tường bao 12,75 để còn nối được dọc dải đất sát tường)
+    N(0, 10.2, 'qacTay'), N(0, -BK, 'qacDong'), N(-12.2, 0, 'qacBac'), N(GN, 0, 'qacNam'),                // chân bốn bậc
     N(0, 6.72, 'qacThem'), N(0, -6.72), N(-8.72, 0), N(8.72, 0),                                         // đầu bốn bậc, trên nền
     N(-8.72, 6.72), N(8.72, 6.72), N(-8.72, -6.72), N(8.72, -6.72), N(-4.6, 6.72), N(4.6, 6.72), N(-4.6, -6.72), N(4.6, -6.72), // vòng hiên quanh điện
     N(0, 5.0, 'quan-am-cacDoor'), N(0, (C1 + C2) / 2 + 1.4, 'quan-am-cacIn'), N(-2.9, 2.6), N(2.9, 2.6), N(-4.2, 4.6), N(4.2, 4.6),
+    // dải đất giữa điện và hai bức tường: góc đông bắc (lối vào dải, sát cổng nách sang Tàng Kinh Các), dọc tường đông, góc đông nam, dọc tường trước, góc tây nam
+    N(-11.55, -8.55, 'qacGocDB'), N(-4.2, -BK), N(4.2, -BK), N(GN, -BK, 'qacGocDN'), N(GN, -4.2), N(GN, 4.2), N(11.75, 8.65, 'qacGocTN'),
   ];
-  const spots = [[-1.7, C1], [1.7, C1], [0, C2], [-1.7, C2], [1.7, C2]].map(([x, z]) => ({ x: wx(x), z: wz(z), yaw: U.yawTo(wx(x), wz(z), alt.x, alt.z) }));
+  const spots = [[-1.7, C1], [1.7, C1], [0, C2], [-1.7, C2], [1.7, C2]].map(([x, z]) => ({ x: wx(x, z), z: wz(x, z), yaw: U.yawTo(wx(x, z), wz(x, z), alt.x, alt.z) }));
   const h = {
-    id: 'quan-am-cac', title: 'Quan Thế Âm Bồ Tát', extra: [], lamp: [wx(0), FY + 3.8, wz(1.4)], lampK: 0.85, // đèn điểm dùng chung của 17: đặt giữa gian, cách tượng hơn 4 m; mạnh hơn nữa thì tượng (vốn tự sáng 0,55) bị bạc màu
-    cushion: { x: wx(0), z: wz(C1), y: FY + 0.16, yaw: U.yawTo(wx(0), wz(C1), alt.x, alt.z) }, altar: alt,
-    front: { x: wx(0), z: wz(6.9) },                                                                    // điểm "Lễ Quan Âm": trên thềm, ngay trước ba gian cửa
+    id: 'quan-am-cac', title: 'Quan Thế Âm Bồ Tát', extra: [], lamp: [wx(0, 1.4), FY + 3.8, wz(0, 1.4)], lampK: 0.85, // đèn điểm dùng chung của 17: đặt giữa gian, cách tượng hơn 4 m; mạnh hơn nữa thì tượng (vốn tự sáng 0,55) bị bạc màu
+    cushion: { x: wx(0, C1), z: wz(0, C1), y: FY + 0.16, yaw: U.yawTo(wx(0, C1), wz(0, C1), alt.x, alt.z) }, altar: alt,
+    front: { x: wx(0, 6.9), z: wz(0, 6.9) },                                                            // điểm "Lễ Quan Âm": trên thềm, ngay trước ba gian cửa
     nodes, spots,
-    cam: { pos: [wx(0.3), FY + 2.5, wz(5.6)], look: [wx(1.8), sy + ss * 1.25, wz(PZC)] },               // trong điện, sát cửa; nhìn lệch phải để tượng nằm bên trái bảng
-    camP: { pos: [wx(0), FY + 1.9, wz(13.4)], look: [wx(0), FY - 1.9, wz(1.5)] },                       // màn hình dọc hẹp: đứng ngoài sân nhìn qua ba gian cửa
+    cam: { pos: [wx(0.3, 5.6), FY + 2.5, wz(0.3, 5.6)], look: [wx(1.8, PZC), sy + ss * 1.25, wz(1.8, PZC)] }, // trong điện, sát cửa; nhìn lệch phải để tượng nằm bên trái bảng
+    camP: { pos: [wx(0, 13.4), FY + 1.9, wz(0, 13.4)], look: [wx(0, 1.5), FY - 1.9, wz(0, 1.5)] },          // màn hình dọc hẹp: đứng ngoài sân nhìn qua ba gian cửa
   };
 
   // =====================================================================
@@ -9651,7 +9670,7 @@ function buildQuanAmCac(G, A) {
     addRoof(SB, 0, 4.3, 0, 20.6, 16.6, 2.1, { curl: 0.45, sag: 0.1, seg: 8, color: RC, under: 0x8a5a3a, edge: 0x5a2420, metal: MB }); // under sáng: mặt dưới mái chỉ nhận ánh hắt từ đất, màu sẫm sẽ ra đen kịt
     for (const s of [-1, 1]) { boxMM(SB, -7.0, 6.0, s * 5.2 - 0.08, 7.0, 6.8, s * 5.2 + 0.08, 0x6a2a22); boxMM(SB, s * 7.0 - 0.08, 6.0, -5.2, s * 7.0 + 0.08, 6.8, 5.2, 0x6a2a22); } // dải vách giữa hai tầng mái (chỉ bốn mặt, để lòng điện thông lên mái)
     addRoof(SB, 0, 6.7, 0, 18.2, 14.6, 3.5, { curl: 0.45, sag: 0.08, seg: 8, color: RC, under: 0x8a5a3a, edge: 0x5a2420, metal: MB });
-    const mv = (B, o) => { if (!B.list.length) return; const m = B.mesh(G.mats.vc, o); m.name = 'qac:tam'; m.position.set(OX, 0, OZ); m.matrixAutoUpdate = false; m.updateMatrix(); standIn.add(m); };
+    const mv = (B, o) => { if (!B.list.length) return; const m = B.mesh(G.mats.vc, o); m.name = 'qac:tam'; m.position.set(OX, 0, OZ); m.rotation.y = YAW; m.matrixAutoUpdate = false; m.updateMatrix(); standIn.add(m); };
     mv(SB, { cast: true, receive: true }); mv(FB, { cast: false, receive: true }); mv(MB, { cast: false, receive: true });
   }
   scene.add(standIn);
@@ -9696,7 +9715,7 @@ function buildQuanAmCac(G, A) {
     if (tris < 1000) throw new Error('mô hình quá ít mặt: ' + tris);
     if (!maps) throw new Error('mô hình không có ảnh bề mặt');
     for (const m of swap.keys()) m.dispose();
-    const hold = new THREE.Group(); hold.name = 'qac:mo-hinh'; hold.position.set(OX, 0, OZ); hold.add(root); hold.updateMatrixWorld(true);
+    const hold = new THREE.Group(); hold.name = 'qac:mo-hinh'; hold.position.set(OX, 0, OZ); hold.rotation.y = YAW; hold.add(root); hold.updateMatrixWorld(true);
     scene.add(hold);
     V.mesh = hold; V.tris = Math.round(tris);
     V.show = (model) => { hold.visible = !!model; standIn.visible = !model; if (Q) Q.creditHall = model ? CREDIT : null; try { G.renderer.shadowMap.needsUpdate = true; } catch (e) { /* bỏ qua */ } };
@@ -9727,7 +9746,7 @@ function buildQuanAmCac(G, A) {
     now = t || 0;
     if (V.state !== 'idle' || now < V.next) return;
     const conn = navigator.connection;
-    if (conn && conn.saveData) { const P = G.player; if (!P || !P.pos || Math.hypot(P.pos.x - OX, P.pos.z - OZ) > 40) return; } // tiết kiệm dữ liệu: chỉ tải khi đã qua cổng (chỗ vào game cách điện 44,5 m)
+    if (conn && conn.saveData) { const P = G.player; if (!P || !P.pos || Math.hypot(P.pos.x - OX, P.pos.z - OZ) > 30) return; } // tiết kiệm dữ liệu: chỉ tải khi tới gần cổng (chỗ vào game cách điện 31,6 m, giữa cổng tam quan 28 m)
     load();
   }, 57);
 

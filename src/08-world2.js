@@ -155,7 +155,7 @@ function buildWorld2(G) {
       { id: 'cau-da', name: 'Cầu đá & ao Long Trì', rects: [[-11, 11, -21.5, -12.5]] },
       { id: 'linh-thu', name: 'Sân linh thú', rects: [[-6, 6, -43, -26]] },
       { id: 'tich-thien-am', name: 'Tích Thiện Am', rects: [[-5.7, 5.7, -56.6, -44]] },
-      { id: 'quan-am', name: 'Quan Âm Các', rects: [[13.62, 32.88, -8.55, 6.65]] }, // 2026-11-27: nền của toà điện mới (17-quan-am-cac.js: tâm 23,25; −0,95, nền 19,26 × 15,2 m). Trước đó [11.4, 21.5, -1, 7.2]
+      { id: 'quan-am', name: 'Quan Âm Các', rects: [[17.25, 32.45, 7.92, 27.18]] }, // nền toà điện (17-quan-am-cac.js ghi đè bằng SITE.platform). 2026-11-28: dời vào góc đông nam sân trước, tâm (24,85; 17,55), mặt chính quay tây, nền 15,2 × 19,26 m. Trước đó [13.62, 32.88, -8.55, 6.65] (27/11) và [11.4, 21.5, -1, 7.2]
       { id: 'bao-nghiem', name: 'Bảo tháp', rects: [[BN.x - 6, BN.x + 6, BN.z - 6, BN.z + 6]] }, // trong vườn sau chùa từ 2026-11-26 (rect cũ [−20,4…−11,5; −45…−35] theo BN)
       { id: 'vuon-thap', name: 'Vườn tháp', rects: [[23.3, 32.3, -169.5, -135.5]] }, // trong vườn sau chùa từ 2026-11-26
       { id: 'hanh-lang', name: 'Hành lang', rects: [[-35.9, -32.9, -113, -13], [32.9, 35.9, -113, -13]] }, // 2026-11-26: hành lang dời ra x ±(32,9…35,9)

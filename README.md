@@ -44,7 +44,7 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
   [Procedural asian architecture test 11](https://sketchfab.com/3d-models/procedural-asian-architecture-test-11-fea52a7cf45a4f5893c872c84da501e0) của ghostnoface,
   giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã giản lược từ 410 nghìn xuống 63 nghìn tam giác (vách cửa và lan can thành tấm phẳng dán ảnh),
   lưu ở `assets/mo-hinh/tang-kinh-cac.glb`, tải sau khi game chạy vài giây; chưa có file hoặc tải lỗi thì game hiện bản dựng tạm bằng khối hộp.
-  Quan Âm Các (toà điện hai tầng mái ở nửa đông sân trước) dựng từ mô hình
+  Quan Âm Các (toà điện hai tầng mái ở góc đông nam sân trước, cửa quay ra lối giữa sân) dựng từ mô hình
   [Procedural asian architecture test 3](https://sketchfab.com/3d-models/procedural-asian-architecture-test-3-0384ffc832f44e979770b98a6d124f64) của ghostnoface,
   giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã chỉnh sửa (bỏ tấm trần, mở ba gian cửa, lan can và cửa thành tấm phẳng dán ảnh, giảm từ 429 nghìn xuống 133 nghìn tam giác, thu nhỏ ảnh bề mặt),
   lưu thành `assets/mo-hinh/quan-am-cac.glb` (2,3 MB, máy tính) và `assets/mo-hinh/quan-am-cac-nhe.glb` (1,1 MB, điện thoại);

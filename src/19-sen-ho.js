@@ -9,6 +9,7 @@
 //    la   một lá sen tròn (640 / 280 mặt): rốn lá ở gốc, mặt lá đã xoay nằm ngang, đường kính 1.
 //  Cuống không lấy từ file (mỗi cuống gần 600 nghìn mặt gai): game dựng cuống thẳng năm cạnh. Lệnh dựng: tests-local/quan-am-tools/LENH-SEN-HO.md.
 //  Chỗ đặt lấy từ 19-vuon-sau.js, không đổi: G.vuonSau.pads (60 lá nổi; 22 lá đầu có hoa, 10 lá kế có nụ) và G.vuonSau.senCao (12 lá vươn cao).
+//  (Chiều 2026-11-28 hồ kéo dài thành 32 × 52 m: 86 lá nổi, 30 hoa, 14 nụ, 16 lá vươn cao, 8 gương sen; lá nào mang gì đọc ở G.vuonSau.senChia.)
 //    - Lá nổi: lá mô hình ép dẹp (gợn cao 3 cm) đặt trên mặt nước đúng độ cao lá cũ (nước + 3 cm), rộng hơn lá cũ một chút.
 //    - Lá vươn cao: lá mô hình nguyên dáng trên cuống cao 0,35–0,85 m, nghiêng nhẹ.
 //    - Hoa: trước nằm sát mặt nước trên lá, nay nở trên cuống cao 0,45–0,8 m cạnh lá (cao hơn đèn hoa đăng đang trôi), rộng 0,46–0,6 m, vài bông ngả trắng.
@@ -69,6 +70,7 @@ function installSenHo(G) {
     // ---------- chỗ đặt (số ngẫu nhiên cố định: ai chơi cũng thấy cùng một hồ sen) ----------
     const r = U.rng ? U.rng(4711) : Math.random, TAU = Math.PI * 2;
     const pads = V.pads, tall = V.senCao || [];
+    const CHIA = V.senChia || { hoa: [0, 22], nu: [22, 32], cao: [32, 44], dai: [44, 50] };       // lá nào mang hoa / nụ / gương (19-vuon-sau.js; hồ dài thêm thì nhiều hơn)
     const L = [], H = [], N = [], D = [], T = [];   // lá, hoa, nụ, gương, cuống: { x, y, z, sx, sy, sz, rx, ry, rz, c: [r, g, b] }
     const laLo = gLa.boundingBox.min.y, laRelief = Math.max(1e-4, gLa.boundingBox.max.y - laLo);
     for (const p of pads) { // lá nổi
@@ -82,17 +84,17 @@ function installSenHo(G) {
       stem(p.x, p.z, p.h, 0.018);
     }
     const beside = (p, d0, d1) => { const a = r() * TAU, d = d0 + r() * (d1 - d0); return [p.x + Math.cos(a) * d, p.z + Math.sin(a) * d]; };
-    pads.slice(0, 22).forEach((p) => { // hoa
+    pads.slice(CHIA.hoa[0], CHIA.hoa[1]).forEach((p) => { // hoa
       const [x, z] = beside(p, 0.1, 0.24), h = 0.45 + r() * 0.35, d = 0.46 + r() * 0.14, w = r() < 0.3 ? 0.25 + r() * 0.3 : 0; // w: ngả trắng
       H.push({ x, y: WY + h, z, sx: d, sy: d, sz: d, rx: (r() - 0.5) * 0.28, ry: r() * TAU, rz: (r() - 0.5) * 0.28, c: [1 + w * 0.1, 1 + w * 0.5, 1 + w * 0.4] });
       stem(x, z, h, 0.016);
     });
-    pads.slice(22, 32).forEach((p) => { // nụ
+    pads.slice(CHIA.nu[0], CHIA.nu[1]).forEach((p) => { // nụ
       const x = p.x + 0.15, z = p.z, h = 0.4 + r() * 0.45, s = 0.26 + r() * 0.08;
       N.push({ x, y: WY + h, z, sx: s, sy: s, sz: s, rx: (r() - 0.5) * 0.32, ry: r() * TAU, rz: (r() - 0.5) * 0.32, c: [1, 1, 1] });
       stem(x, z, h, 0.013);
     });
-    pads.slice(44, 50).forEach((p) => { // gương sen
+    pads.slice(CHIA.dai[0], CHIA.dai[1]).forEach((p) => { // gương sen
       const [x, z] = beside(p, 0.12, 0.26), h = 0.5 + r() * 0.3, d = 0.2 + r() * 0.06, a = r() * TAU, t = 0.25 + r() * 0.25;
       D.push({ x, y: WY + h, z, sx: d, sy: d, sz: d, rx: Math.cos(a) * t, ry: r() * TAU, rz: Math.sin(a) * t, c: [1, 1, 1] });
       stem(x, z, h, 0.016);

@@ -25,17 +25,22 @@ function buildVuonSau(G) {
   // =====================================================================
   //  SỐ LIỆU BỐ CỤC (mét, toạ độ thế giới; sâu hơn = z âm hơn). Mọi mô hình và vật cản đều đọc từ đây.
   // =====================================================================
-  const RECT = { x0: -36, x1: 36, z0: -187.6, z1: -118.3 };                       // lòng vườn (72 × 69,3 m = 4 990 m²)
+  // 2026-11-28 (chủ chùa: "tượng Phật bé quá, hồ cũng hơi bé, cho hồ to hơn, dài hơn, mở rộng không gian ra"): vườn kéo dài về phía sau thêm DAI = VUON_DAI mét (00-core.js),
+  // hồ dài thêm đúng chừng ấy (mép bắc giữ ở z −138, mép nam lùi), đảo + tượng dời về z −156 và lớn gấp TK lần; mọi thứ ở nửa nam của vườn (lối vòng cạnh nam, bồn bồ đề, rừng trúc, tường sau) lùi DAI.
+  const DAI = typeof VUON_DAI === 'number' ? VUON_DAI : 0, ZS = -DAI;              // ZS: độ dời (âm) của nửa nam so với bản v5
+  const TK = 3.0;                                                                  // bệ sen + tượng lớn gấp mấy lần bản v5 (tượng dựng bằng mã 3,0 m → 9,0 m)
+  const RECT = { x0: -36, x1: 36, z0: -187.6 - DAI, z1: -118.3 };                 // lòng vườn (72 × 97,3 m khi DAI = 28; bản v5: 72 × 69,3 m = 4 990 m²)
   const GATES = [{ x0: -23.4, x1: -21.4, z: -118 }, { x0: 21.4, x1: 23.4, z: -118 }]; // hai cổng nách trên tường sau của sân chùa
   // hồ: x0…z1 là mép NƯỚC; bờ đá rộng 0,4 m nằm ngoài mép nước (như bờ ao Long Trì, 09-world2-geo.js); mặt nước y 0,04 (mặt đất lưới cỏ y −0,03 chưa khoét được, nên không hạ nước xuống −0,25)
-  const POND = { x0: -16, x1: 16, z0: -162, z1: -138, r: 4, water: 0.04, rimTop: 0.25, rim: 0.4 };
-  const ISLAND = { x: 0, z: -150, r: 3.2, top: 1.2 };
-  const STATUE = { x: 0, z: -150, base: 1.6, h: 3.0, yaw: 0 };                     // quay mặt về +z (phía chính điện và hai cổng); yaw 0 = nhìn +z
+  const POND = { x0: -16, x1: 16, z0: -162 - DAI, z1: -138, r: 4, water: 0.04, rimTop: 0.25, rim: 0.4 }; // 32 × 52 m khi DAI = 28 (bản v5: 32 × 24 m)
+  const PCZ = (POND.z0 + POND.z1) / 2, PHX = (POND.x1 - POND.x0) / 2, PHZ = (POND.z1 - POND.z0) / 2;      // tâm hồ theo z, nửa bề ngang, nửa chiều dài
+  const ISLAND = { x: 0, z: -156, r: 5.5, top: 1.2 };                              // 2026-11-28: đảo dời từ z −150 về −156 (cách bờ bắc 18 m, phần hồ dài nằm sau lưng tượng), bán kính 3,2 → 5,5
+  const STATUE = { x: 0, z: -156, base: 1.1 + 0.5 * TK, h: 3.0 * TK, yaw: 0, k: TK }; // quay mặt về +z (phía chính điện và hai cổng); base: mặt bệ sen (1,6 ở bản v5 → 2,6); h: chiều cao thân tượng (19-quan-am-ho.js đặt mô hình cao đúng h)
   const PAV = { x: 17.5, z: -150, R: 3.4, floor: 0.45 };                           // thủy tạ lục giác: cạnh phẳng quay ±x, đỉnh ở ±z
-  const PLANTER = { x: 0, z: -177, r: 4.5, h: 0.5 };
+  const PLANTER = { x: 0, z: -177 + ZS, r: 4.5, h: 0.5 };
   const PLACE = { x: 0, z: -124.5 };                                               // mục "Vườn sau chùa" trên bản đồ
   const POI = { x: 16.2, z: -150, yaw: -PI / 2 };                                  // "Ngồi ngắm hồ sen": đứng ở đây, nhìn về −x (tượng Quan Âm)
-  const LOOP = { cx: 0, cz: -150, hx: 21, hz: 17, r: 6 };                           // đường tâm lối vòng quanh hồ (hình chữ nhật bo góc)
+  const LOOP = { cx: 0, cz: PCZ, hx: 21, hz: PHZ + 5, r: 6 };                       // đường tâm lối vòng quanh hồ (hình chữ nhật bo góc), cách mép nước 5 m
   const PATHW = 1.5;                                                               // nửa bề rộng lối đá (lối rộng 3 m)
   const BED = { x0: -17.5, x1: 17.5, z0: -122.3, z1: -118.3 };                      // bồn sỏi hàng cây cảnh (có gờ đá thấp), sát tường sau sân chùa
   const APRON = { x0: -20.7, x1: 20.7, z0: -125.3, z1: -122.3 };                    // thềm đá trước bồn cây cảnh
@@ -47,9 +52,10 @@ function buildVuonSau(G) {
   const BONSAI = [-16, -12, -8, -4, 0, 4, 8, 12, 16].map((x) => ({ x, z: -121.5 }));
   const LANTERNS = [
     [-23.2, -140], [-23.2, -157], [-23.2, -164], [23.2, -140], [23.2, -157], [23.2, -164],  // dọc lối vòng (phía ngoài; chừa đoạn z −149…−151 phía đông cho lối lên thủy tạ)
-    [-2.1, -129], [2.1, -129], [-2.1, -169.5], [2.1, -169.5],                               // hai bên lối trục
+    [-2.1, -129], [2.1, -129], [-2.1, -169.5 + ZS], [2.1, -169.5 + ZS],                     // hai bên lối trục
     [-24.2, -127.5], [24.2, -127.5],                                                         // dọc lối từ cổng
     [-19.9, -120.4], [19.9, -120.4],                                                         // một đèn trong mỗi cổng
+    ...(DAI >= 20 ? [[-23.2, -176], [23.2, -176], [-23.2, -162 + ZS], [23.2, -162 + ZS]] : []), // 2026-11-28: đoạn lối vòng mới dọc phần hồ kéo dài (phía nam vườn tháp / bảo tháp)
   ].map(([x, z]) => ({ x, z }));
   const benchAt = (x, z, yaw, where) => ({ x, z, yaw, y: 0.42, where });             // ghế đá 1,8 × 0,55, mặt ghế cao 0,42 trên nền
   const BENCHES = [];
@@ -57,15 +63,17 @@ function buildVuonSau(G) {
     const x = PLANTER.x + 6.5 * Math.sin(a), z = PLANTER.z + 6.5 * Math.cos(a);
     BENCHES.push(benchAt(x, z, U.yawTo(x, z, PLANTER.x, PLANTER.z), 'bodhi'));
   }
-  for (const [x, z] of [[-18.4, -142.5], [-18.4, -157.5], [18.4, -142.5], [18.4, -157.5]]) BENCHES.push(benchAt(x, z, x < 0 ? PI / 2 : -PI / 2, 'ho')); // 4 ghế dọc lối vòng, mặt quay ra hồ
+  const HO_Z = [-142.5, -157.5]; for (let z = -172.5; z > POND.z0 + 3; z -= 15) HO_Z.push(z);                    // 2026-11-28: thêm ghế mỗi 15 m dọc phần hồ kéo dài (DAI = 28: z −172,5 và −187,5)
+  for (const x of [-18.4, 18.4]) for (const z of HO_Z) BENCHES.push(benchAt(x, z, x < 0 ? PI / 2 : -PI / 2, 'ho')); // ghế dọc lối vòng, mặt quay ra hồ (bản v5: 4 ghế)
   const PAV_BENCHES = [{ x: 18.9, z: -151.7, yaw: -PI / 2, y: PAV.floor + 0.42 }, { x: 18.9, z: -148.3, yaw: -PI / 2, y: PAV.floor + 0.42 }]; // trong thủy tạ: chỉ người chơi ngồi (không cho khách AI)
   // hàng hoa đại hai bên; cả hai phía bỏ ba cây z −140 / −150 / −160 (2026-11-26: phía đông là vườn tháp, 08-world2.js G.L2.vuonThap; phía tây là tháp Báo Nghiêm, G.L2.baoNghiem; cùng dựng ở 09-world2-geo.js)
   const FRANGI = []; for (const sx of [-1, 1]) [-130, -140, -150, -160, -170].forEach((z, i) => { if (!(z <= -140 && z >= -160)) FRANGI.push({ x: sx * 29, z, seed: 700 + i + (sx > 0 ? 5 : 0) }); });
+  for (const sx of [-1, 1]) for (let z = -182, i = 0; z > RECT.z0 + 16; z -= 12, i++) FRANGI.push({ x: sx * 29, z, seed: 720 + i + (sx > 0 ? 10 : 0) }); // 2026-11-28: thêm hoa đại dọc hai dải bên của phần vườn kéo dài
   const CYPRESS = []; for (const sx of [-1, 1]) for (const z of [-121.6, -125.6]) CYPRESS.push({ x: sx * 26.4, z, s: 1.5, seed: 800 + CYPRESS.length });
-  const BAMBOO = [{ x: -30, z: -181, r: 4.4, seed: 900 }, { x: 30, z: -181, r: 4.4, seed: 901 }];
+  const BAMBOO = [{ x: -30, z: -181 + ZS, r: 4.4, seed: 900 }, { x: 30, z: -181 + ZS, r: 4.4, seed: 901 }];
   const BEDS = [{ x: -30.8, z: -122.4, w: 4.0, d: 1.6 }, { x: 30.8, z: -122.4, w: 4.0, d: 1.6 }]; // bồn mai – quất gần mỗi cổng
   // hai điểm dạo gần chỗ đứng mới của hoạt động (đèn hoa đăng ở (0, −136,9), dải lụa ở (0, −171,75)) dời sang bên: cách chỗ đứng ≥ 2,5 m và không nằm trên lối đi thẳng tới chỗ đứng
-  const STROLL = [[-6, -125.8, 0], [6, -125.8, 0], [-21, -146, PI / 2], [21, -146, -PI / 2], [-21, -154, PI / 2], [21, -154, -PI / 2], [-3.4, -135.2, U.yawTo(-3.4, -135.2, STATUE.x, STATUE.z)], [-3.2, -168.9, U.yawTo(-3.2, -168.9, PLANTER.x, PLANTER.z)]];
+  const STROLL = [[-6, -125.8, 0], [6, -125.8, 0], [-21, -146, PI / 2], [21, -146, -PI / 2], [-21, -154, PI / 2], [21, -154, -PI / 2], [-3.4, -135.2, U.yawTo(-3.4, -135.2, STATUE.x, STATUE.z)], [-3.2, -168.9 + ZS, U.yawTo(-3.2, -168.9 + ZS, PLANTER.x, PLANTER.z)]];
   const LAN_REL = { x: 0, z: -139.1 };                                            // chỗ đặt đèn hoa đăng xuống nước (cách mép nước bắc 1,1 m); lá sen, hoa, nụ cách chỗ này ≥ 1,8 m
   // 6 cành thấp của cây bồ đề để buộc dải lụa: [góc từ +x quay về +z (π/2 = phía bắc, phía chỗ đứng), bán kính ngang tới đầu cành, y chỗ mọc từ thân, y đầu cành]: 6 cành đối xứng qua trục bắc – nam (cặp chéo bắc 45° ±, cặp đông / tây, cặp lệch nam 20° so với đông / tây), không cành nào chĩa thẳng về phía chỗ đứng (dải xếp chồng lên nhau khi nhìn dọc cành) và không dải nào khuất sau thân; 20 / 30 neo nằm ở phía bắc thân cây
   const LOW = [[0.78, 4.0, 3.35, 3.72], [2.36, 4.0, 3.35, 3.72], [0.25, 3.9, 3.45, 3.82], [2.89, 3.9, 3.45, 3.82], [-0.35, 3.7, 3.5, 3.9], [3.49, 3.7, 3.5, 3.9]];
@@ -102,7 +110,7 @@ function buildVuonSau(G) {
     if (x >= APRON.x0 && x <= APRON.x1 && z <= APRON.z1 && z >= APRON.z0) return true;                       // thềm trước bồn cây cảnh
     for (const s of [-1, 1]) if (segD(x, z, s * 22.4, -118.3, s * 21, -133) <= PATHW) return true;             // lối từ cổng
     if (abs(sdRR(x, z, LOOP.cx, LOOP.cz, LOOP.hx, LOOP.hz, LOOP.r)) <= PATHW) return true;                    // lối vòng quanh hồ
-    if (abs(x) <= PATHW && ((z <= APRON.z1 && z >= -138) || (z <= -162 && z >= -172.5))) return true;         // lối trục: thềm → bờ hồ, bờ hồ → bồn bồ đề
+    if (abs(x) <= PATHW && ((z <= APRON.z1 && z >= POND.z1) || (z <= POND.z0 && z >= -172.5 + ZS))) return true; // lối trục: thềm → bờ hồ, bờ hồ → bồn bồ đề
     return false;
   };
   const TP = G.L2 && G.L2.vuonThap && G.L2.vuonThap.pad;                                                    // nền lát đá của vườn tháp (2026-11-26)
@@ -114,14 +122,14 @@ function buildVuonSau(G) {
     if (x > XE && x < XE + STEP_RUN && abs(z - PAV.z) <= STEP_HALF) return PAV.floor * (1 - (x - XE) / STEP_RUN);
     return null;
   };
-  const inPond = (x, z, m = 0) => abs(x) < 16 + m && z < -138 + m && z > -162 - m && sdRR(x, z, 0, -150, 16 + m, 12 + m, 4 + m) <= 0;
+  const inPond = (x, z, m = 0) => abs(x) < PHX + m && z < POND.z1 + m && z > POND.z0 - m && sdRR(x, z, 0, PCZ, PHX + m, PHZ + m, POND.r + m) <= 0;
 
   // dữ liệu công khai (các module khác và bài kiểm tra đọc); tris / meshes điền ở cuối
   const V = (G.vuonSau = {
     rect: RECT, gates: GATES, pond: POND, island: ISLAND, statue: STATUE, pavilion: PAV, planter: PLANTER,
     place: PLACE, poi: POI, spots: [], tris: 0, meshes: 0, tally: {}, decorHidden: false, petalSources: 0,
     layout: { bonsai: BONSAI, lanterns: LANTERNS, benches: BENCHES, pavBenches: PAV_BENCHES, frangipani: FRANGI, cypress: CYPRESS, bamboo: BAMBOO, beds: BEDS, bed: BED, apron: APRON, loop: LOOP },
-    inside, surfaceAt, pavilionAt, inPond,
+    inside, surfaceAt, pavilionAt, inPond, dai: DAI,
   });
 
   // heightAt: sàn thủy tạ và ba bậc (bọc lên chuỗi 00 → 08 → 17 → 18; chỉ vùng thủy tạ khác 0)
@@ -136,7 +144,7 @@ function buildVuonSau(G) {
   // =====================================================================
   //  VẬT CẢN (mặt phẳng XZ, như col.* của các module khác)
   // =====================================================================
-  const WALLS = [[-36.6, -187.9, 36.6, -187.9], [36.3, -188.2, 36.3, -118], [-36.3, -188.2, -36.3, -118], [24.3, -118, 36.6, -118], [-36.6, -118, -24.3, -118]]; // sau, hai bên, hai đoạn chắn phía trước
+  const WALLS = [[-36.6, -187.9 + ZS, 36.6, -187.9 + ZS], [36.3, -188.2 + ZS, 36.3, -118], [-36.3, -188.2 + ZS, -36.3, -118], [24.3, -118, 36.6, -118], [-36.6, -118, -24.3, -118]]; // sau, hai bên, hai đoạn chắn phía trước
   const benchCols = (b) => { for (const s of [-0.75, 0.75]) col.circle(b.x + Math.cos(b.yaw) * s, b.z - Math.sin(b.yaw) * s, 0.22, 'bench'); };
   safe('vật cản', () => {
     for (const [x0, z0, x1, z1] of WALLS) {
@@ -150,9 +158,11 @@ function buildVuonSau(G) {
     // người chơi từ sân trước lọt nửa người vào đầu tường rồi đi dọc mặt ngoài tường bên (g03-rail-sweep.mjs). 2026-11-26: tường bao sân chùa đã dời ra x ±36,3 (nối thẳng với tường bên của vườn) nên không còn dải ngoài tường ở đây; hai hộp này chỉ còn vá mối nối, giữ nguyên
     col.box(36.6, -118.3, 37.4, -117.7, 'wall'); col.box(-37.4, -118.3, -36.6, -117.7, 'wall');
     // hồ + bờ (hình chữ nhật bo góc x ±16,4, z −137,6…−162,4, góc bo 4,4), chừa chỗ cho sàn thủy tạ ở mép đông (z −153…−147)
-    col.box(-16.4, -158, 12, -142, 'pond'); col.box(-12, -162.4, 12, -137.6, 'pond');
-    col.box(12, -158, 16.4, -153, 'pond'); col.box(12, -147, 16.4, -142, 'pond'); col.box(12, -153, 14.4, -147, 'pond');
-    for (const sx of [-1, 1]) for (const cz of [-142, -158]) col.circle(sx * 12, cz, 4.4, 'pond');
+    // 2026-11-28: tính từ POND (hồ dài thêm): zs / zn = mép ngoài bờ nam / bắc
+    const zs = POND.z0 - 0.4, zn = POND.z1 + 0.4;
+    col.box(-16.4, zs + 4.4, 12, zn - 4.4, 'pond'); col.box(-12, zs, 12, zn, 'pond');
+    col.box(12, zs + 4.4, 16.4, PAV.z - 3, 'pond'); col.box(12, PAV.z + 3, 16.4, zn - 4.4, 'pond'); col.box(12, PAV.z - 3, 14.4, PAV.z + 3, 'pond');
+    for (const sx of [-1, 1]) for (const cz of [zn - 4.4, zs + 4.4]) col.circle(sx * 12, cz, 4.4, 'pond');
     col.circle(ISLAND.x, ISLAND.z, ISLAND.r + 0.3, 'island');
     // thủy tạ: sáu chân trụ ở đỉnh lục giác, lan can (chuỗi vòng tròn nhỏ) trên năm cạnh — trừ cạnh đông có bậc —, má bậc, hai ghế trong thủy tạ
     const hv = []; for (let k = 0; k < 6; k++) hv.push([PAV.x + PAV.R * Math.sin((k * PI) / 3), PAV.z + PAV.R * Math.cos((k * PI) / 3)]); // k=0: đỉnh +z; đi theo chiều kim đồng hồ nhìn từ trên
@@ -188,14 +198,15 @@ function buildVuonSau(G) {
       N(s * 22.3, -124.3, 'vuonLoiCong' + t); N(s * 21.6, -129); N(s * 21, -133);
       N(s * 12, -124.3); N(s * 6, -124.3); N(s * 17.5, -124.3);                         // thềm trước bồn cây cảnh
       N(s * 7.5, -133); N(s * 15, -133); N(s * 19.24, -134.76);                          // vòng quanh hồ: cạnh bắc + góc
-      for (const z of [-139, -161]) N(s * 21, z);                                        // hai đầu cạnh đông / tây
-      N(s * 19.24, -164.24); N(s * 15, -167); N(s * 7.5, -167);                          // cạnh nam + góc
-      N(s * 17.2, -142.5, 'vuonGheHo'); N(s * 17.2, -157.5, 'vuonGheHo');                // trước bốn ghế dọc lối vòng
-      N(s * 17.2, -139.5); N(s * 17.2, -160.5);                                          // nối ghế với lối vòng (đi dọc hàng ghế, không xuyên mặt ghế)
+      for (const z of [-139, -161 + ZS]) N(s * 21, z);                                   // hai đầu cạnh đông / tây
+      N(s * 19.24, -164.24 + ZS); N(s * 15, -167 + ZS); N(s * 7.5, -167 + ZS);            // cạnh nam + góc
+      for (const z of HO_Z) N(s * 17.2, z, 'vuonGheHo');                                  // trước các ghế dọc lối vòng
+      N(s * 17.2, -139.5); N(s * 17.2, HO_Z[HO_Z.length - 1] - 3);                         // nối ghế với lối vòng (đi dọc hàng ghế, không xuyên mặt ghế)
+      for (let z = -162.5; z > -161 + ZS + 2; z -= 7.5) N(s * 21, z);                      // 2026-11-28: dọc cạnh đông / tây của phần hồ kéo dài, mỗi 7,5 m
     }
     for (const z of [-145, -150, -155]) N(-21, z);                                       // cạnh tây của lối vòng
     N(22.3, -146); N(22.3, -154); N(22.3, -150, 'vuonChanBac');                          // cạnh đông đi vòng ngoài hai má bậc thủy tạ (x ≥ 22,3), nút giữa là chân ba bậc
-    N(0, -133, 'vuonTruc'); N(0, -167); N(0, -128.5);
+    N(0, -133, 'vuonTruc'); N(0, -167 + ZS); N(0, -128.5);
     N(19.6, -150, 'vuonThuyTa'); N(17.4, -150, 'vuonThuyTaGiua');                         // trên sàn thủy tạ (giữa hai ghế, tới chỗ đứng (16,2; −150))
     for (let k = 0; k < 8; k++) { const a = (k * PI) / 4; N(PLANTER.x + 5.65 * Math.sin(a), PLANTER.z + 5.65 * Math.cos(a), 'vuonBoDe'); } // vòng quanh bồn bồ đề, trước bốn ghế
   });
@@ -210,7 +221,7 @@ function buildVuonSau(G) {
     // khách AI kiểu 'tree' (ngước nhìn tán, vái) và 'pond' (đứng ngắm hồ) của 20-crowd.js: cây bồ đề lớn và hồ sen ở sân trước đã bỏ 2026-11-25, nên chỗ đứng chỉ còn ở vườn
     // quanh bồn bồ đề (bán kính 5,6; tránh phía bắc là chỗ đứng treo dải lụa, tránh bốn góc chéo là bốn ghế) và trên cỏ bờ hồ (bắc, tây, nam; phía đông là thủy tạ), mặt quay vào cây / về tượng
     G.spots.tree = [PI / 2, -PI / 2, PI, PI - 0.45, 0.45 - PI].map((a) => { const x = PLANTER.x + 5.6 * Math.sin(a), z = PLANTER.z + 5.6 * Math.cos(a); return { x, z, yaw: U.yawTo(x, z, PLANTER.x, PLANTER.z) }; });
-    G.spots.pond = [[-9, -136.6], [8.5, -136.6], [-17.3, -147], [-17.3, -153], [-8, -163.4], [8, -163.4]].map(([x, z]) => ({ x, z, yaw: U.yawTo(x, z, STATUE.x, STATUE.z) }));
+    G.spots.pond = [[-9, -136.6], [8.5, -136.6], [-17.3, -147], [-17.3, -153], [-8, -163.4 + ZS], [8, -163.4 + ZS], ...(DAI >= 20 ? [[-17.3, -165], [-17.3, -180], [17.3, -165], [17.3, -180]] : [])].map(([x, z]) => ({ x, z, yaw: U.yawTo(x, z, STATUE.x, STATUE.z) }));
   });
 
   // =====================================================================
@@ -222,11 +233,12 @@ function buildVuonSau(G) {
     W.ext.thuyTa = {
       poi: { x: POI.x, z: POI.z, r: 3.4 }, stand: { x: POI.x, z: POI.z, yaw: POI.yaw },
       seat: { x: seat.x, z: seat.z, yaw: seat.yaw, y: seat.y },                              // ghế phía nam trong thủy tạ, mặt ghế cao 0,87
-      cam: { pos: [20.3, 1.75, -152.9], look: [9, 1.5, -150] },                              // sau lưng người ngồi, nhìn qua hồ về tượng Quan Âm
+      cam: { pos: [14.95, PAV.floor + 1.3, PAV.z - 0.4], look: [STATUE.x, STATUE.base + STATUE.h * 0.45, STATUE.z] },      // 2026-11-28: tượng nay cao 9 m và lệch về z −156: máy quay cũ (sau lưng người ngồi, [20,3; 1,75; −152,9] nhìn [9; 1,5; −150]) bị cột và mái thủy tạ che gần hết tượng, nên dời ra sát lan can phía tây, thấp, ngước nhìn qua hồ lên tượng (tầm mắt người ngồi)
     };
     G.roofZones.push([14.9, 20.1, -152.3, -147.7]);                                            // dưới mái thủy tạ: máy quay đứng gần, bước chân 'hall' (gỗ)
     G.decorBans = G.decorBans || []; G.decorBans.push([RECT.x0 - 1, RECT.x1 + 1, RECT.z0 - 1, RECT.z1 + 0.7]); // 12-decor-inside không rải gì vào vườn
     W.fireflyAreas.push({ x: 0, z: -150, r: 14 });                                             // đom đóm quanh hồ (dùng bể đom đóm có sẵn của 07-fx.js)
+    if (DAI >= 20) W.fireflyAreas.push({ x: 0, z: -150 + ZS, r: 14 });                         // 2026-11-28: và quanh nửa nam của hồ kéo dài
   });
 
   // =====================================================================
@@ -237,6 +249,7 @@ function buildVuonSau(G) {
   const S = U.batch(), Fl = U.batch(), PATH = U.batch(), LB = U.batch(), GD = U.batch(), DEC = U.batch(), DECF = U.batch();
   const CAY = U.batch(); // 2026-11-27: thân + tán của tùng, cây trong chậu cảnh và cây bồ đề (trừ 6 cành thấp buộc dải lụa, vẫn ở DEC) đi riêng một lưới 'vuonSau:cay' trong nhóm "near" để 13-cay-mo-hinh.js ẩn đi khi mô hình cây tải xong; chỗ đứng ghi vào G.cayDat (nhom: 'vuon' = mô hình cũng vào nhóm "near", ẩn hiện theo vườn)
   const SEN = U.batch(); // 2026-11-28: lá, hoa, nụ sen dựng bằng mã đi riêng một lưới 'vuonSau:sen' trong nhóm "near" để 19-sen-ho.js ẩn đi khi mô hình sen tải xong; chỗ đặt ghi vào V.pads (lá nổi, hoa trên 22 lá đầu, nụ ở 10 lá kế) và V.senCao (12 lá vươn cao)
+  const TUONG = U.batch(); // 2026-11-28: thân tượng Quan Âm dựng bằng mã (áo, đầu, hào quang, tay, bình) đi riêng một lưới 'vuonSau:tuong' trong nhóm "near" để 19-quan-am-ho.js ẩn đi khi mô hình tượng tải xong; bệ sen vẫn ở DEC
   const cayGhi = (o) => { (G.cayDat || (G.cayDat = [])).push(o); };
   const own = [];                                  // hình gốc tạm, giải phóng ở cuối
   const mk = (g) => (own.push(g), g);
@@ -254,7 +267,7 @@ function buildVuonSau(G) {
     return g;
   };
   const trisOf = (B) => { let n = 0; for (const g of B.list) n += g.attributes.position.count / 3; return n; };
-  const tally = V.tally, totalNow = () => trisOf(S) + trisOf(Fl) + trisOf(PATH) + trisOf(LB) + trisOf(GD) + trisOf(DEC) + trisOf(DECF) + trisOf(CAY) + trisOf(SEN);
+  const tally = V.tally, totalNow = () => trisOf(S) + trisOf(Fl) + trisOf(PATH) + trisOf(LB) + trisOf(GD) + trisOf(DEC) + trisOf(DECF) + trisOf(CAY) + trisOf(SEN) + trisOf(TUONG);
   const count = (name, fn) => { const t0 = totalNow(); safe(name, fn); tally[name] = Math.round(totalNow() - t0); };
 
   // ---------- tường bao vườn: cùng kiểu và cùng chiều cao với tường sân chùa (wall() ở 05-world.js:349) ----------
@@ -287,7 +300,7 @@ function buildVuonSau(G) {
   count('thảm cỏ', () => {
     const a = new THREE.Color(0x5f8a3a), b = new THREE.Color(0x7d9a45), tmp = new THREE.Color(), R = Raw();
     const grass = (x, z) => { const n = Math.sin(x * 0.21) * Math.cos(z * 0.17) * 0.5 + 0.5; tmp.copy(a).lerp(b, n); return [tmp.r, tmp.g, tmp.b]; };
-    const nx = 12, nz = 11, dx = (RECT.x1 - RECT.x0) / nx, dz = (RECT.z1 - RECT.z0) / nz;
+    const nx = 12, nz = Math.round((RECT.z1 - RECT.z0) / 6.3), dx = (RECT.x1 - RECT.x0) / nx, dz = (RECT.z1 - RECT.z0) / nz;
     for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) quadUp(R, RECT.x0 + i * dx, RECT.z0 + j * dz, RECT.x0 + (i + 1) * dx, RECT.z0 + (j + 1) * dz, 0.006, grass);
     Fl.addGeo(rawGeo(R));
   });
@@ -315,7 +328,7 @@ function buildVuonSau(G) {
   let waterMesh = null;
   count('bờ hồ', () => {
     const cz0 = (POND.z0 + POND.z1) / 2, rim = POND.rim / 2;
-    const pts = rrPoints(0, cz0, 16 + rim, 12 + rim, POND.r + rim, 0.9), rnd = U.rng(2411), pal = [C.stone, 0x9d9382, C.stoneL, 0x948a79];
+    const pts = rrPoints(0, cz0, PHX + rim, PHZ + rim, POND.r + rim, 0.9), rnd = U.rng(2411), pal = [C.stone, 0x9d9382, C.stoneL, 0x948a79];
     for (let i = 0; i < pts.length; i++) {
       const a = pts[i], b = pts[(i + 1) % pts.length], mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2, len = hypot(b[0] - a[0], b[1] - a[1]);
       if (inHex(mx, mz, PAV.R + 0.3)) continue;                                                                      // dưới sàn thủy tạ không cần bờ
@@ -323,7 +336,7 @@ function buildVuonSau(G) {
       box(Fl, mx, h / 2, mz, len + 0.06, h, POND.rim, pal[(rnd() * pal.length) | 0], { r: [0, Math.atan2(-(b[1] - a[1]), b[0] - a[0]), 0] });
     }
     // mặt nước: quạt tam giác từ tâm hồ ra chu vi mép nước (mở rộng 0,2 m vào dưới bờ cho khỏi hở)
-    const wp = rrPoints(0, cz0, 16 + rim, 12 + rim, POND.r + rim, 1.2), pos = [], nor = [];
+    const wp = rrPoints(0, cz0, PHX + rim, PHZ + rim, POND.r + rim, 1.2), pos = [], nor = [];
     const cxw = 0, czw = cz0, y = POND.water;
     for (let i = 0; i < wp.length; i++) {
       const a = wp[i], b = wp[(i + 1) % wp.length];
@@ -361,7 +374,7 @@ function buildVuonSau(G) {
   //  Hình gộp vào DEC (rắn, đổ bóng) / DECF (phẳng, nhỏ) / LB (thân đèn) / GD (vàng). Phong cách nhà: low-poly phẳng, màu theo đỉnh, jitter ±7 %.
   //  Mỗi phần: count(tên, fn) ghi số tam giác vào G.vuonSau.tally; phần phụ đi qua optional(tên, ước lượng, fn): vượt ngân sách thì bỏ.
   // ===================================================================
-  const BUDGET = 50000, TAU = PI * 2;
+  const BUDGET = DAI >= 20 ? 66000 : 50000, TAU = PI * 2; // 2026-11-28: vườn dài thêm (thêm ghế, đèn, hoa đại, sen, tường) nên nới ngân sách
   const { branch, lathe, beam, hangLanternInto } = GB;
   const ICO = mk(new THREE.IcosahedronGeometry(1, 0)), ICO1 = mk(new THREE.IcosahedronGeometry(1, 1)), OCT = mk(new THREE.OctahedronGeometry(1, 0)), DOD = mk(new THREE.DodecahedronGeometry(1, 0));
   const TET = mk(new THREE.TetrahedronGeometry(1, 0)), CONE4 = mk(new THREE.ConeGeometry(0.5, 1, 4)), CONE6 = mk(new THREE.ConeGeometry(0.5, 1, 6));
@@ -473,8 +486,8 @@ function buildVuonSau(G) {
     for (let i = anchors.length - 1; i > 0; i--) for (let j = 0; j < i; j++) if (hypot(anchors[i].x - anchors[j].x, anchors[i].y - anchors[j].y, anchors[i].z - anchors[j].z) < 0.42) { anchors.splice(i, 1); break; } // bảo đảm: hai neo bất kỳ cách nhau ≥ 0,42 m
     V.ribbonTree = {
       x: tx, z: tz, anchors,                                                                                                         // [{x, y, z, b: số cành, t}]
-      poi: { x: 0, z: -171.0, r: 3.1 }, stand: { x: 0, z: -171.75, yaw: PI },                                                        // lối trục phía bắc bồn, nhìn về cây; cách tâm bồn 5,25 m (vật cản bồn r 4,6 + người r 0,35 = 4,95)
-      cam: { pos: [2.4, 2.6, -164.0], look: [0.3, 3.0, -176.5] },
+      poi: { x: 0, z: -171.0 + ZS, r: 3.1 }, stand: { x: 0, z: -171.75 + ZS, yaw: PI },                                              // lối trục phía bắc bồn, nhìn về cây; cách tâm bồn 5,25 m (vật cản bồn r 4,6 + người r 0,35 = 4,95)
+      cam: { pos: [2.4, 2.6, -164.0 + ZS], look: [0.3, 3.0, -176.5 + ZS] },
       hidden: () => V.decorHidden,                                                                                                   // 40-activities-b.js ẩn dải lụa cùng lúc với nhóm "near" của vườn
     };
     W.petalSources.push({ x: tx, y: 7.5, z: tz, r: 5, kind: 'leaf' });
@@ -483,23 +496,26 @@ function buildVuonSau(G) {
 
   // ---------- 8. Đảo đá giữa hồ: chân đảo, gò rêu, tảng đá lớn nhỏ, ba mỏm đá phía sau tượng, vài bụi cây ----------
   count('đảo đá', () => {
-    const I = ISLAND, r = U.rng(5101), stones = [0x8f8a80, 0x7d776d, 0xa8a094, 0x9a948a];
+    const I = ISLAND, r = U.rng(5101), stones = [0x8f8a80, 0x7d776d, 0xa8a094, 0x9a948a], ks = I.r / 3.2;                              // ks: đảo lớn gấp mấy lần bản v5 (bán kính 3,2): khoảng cách ngang nhân theo, đá và mỏm đá lớn theo vừa phải
     cyl(DEC, I.x, 0.45, I.z, I.r - 0.2, I.r + 0.25, 0.9, 0x8d8576, 14);
     put(DEC, ICO1, 0x6f9a45, I.x, 0.9, I.z, I.r - 0.3, 0.3, I.r - 0.3, { j: 0.08 });                                                    // gò rêu (đỉnh ≈ 1,15; bệ tượng cắm vào)
-    for (let i = 0; i < 14; i++) { const a = (i / 14) * TAU + r() * 0.2, d = I.r - 0.2 + r() * 0.5, s = 0.5 + r() * 0.4; put(DEC, DOD, stones[i % 4], I.x + Math.cos(a) * d, 0.25 + r() * 0.3, I.z + Math.sin(a) * d, s * 1.2, s * 0.7, s, { r: [r(), a, r() * 0.3], j: 0.1 }); }
-    for (const [dx, dz, h, w] of [[-1.3, -2.1, 2.0, 0.55], [0.4, -2.5, 2.4, 0.62], [1.6, -1.9, 1.7, 0.5]]) put(DEC, OCT, stones[((h * 3) | 0) % 4], I.x + dx, 0.6 + h / 2, I.z + dz, w, h / 2, w * 0.8, { r: [0, r() * 3, 0.06], j: 0.1 }); // ba mỏm đá cao phía sau
-    for (let i = 0; i < 9; i++) { const a = r() * TAU, d = 1.1 + r() * 1.6; put(DEC, DOD, stones[i % 4], I.x + Math.cos(a) * d, 1.0 + r() * 0.2, I.z + Math.sin(a) * d, 0.2 + r() * 0.15, 0.14, 0.2 + r() * 0.15, { r: [r(), r() * 6, 0], j: 0.1 }); }
-    for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU + 0.5, d = 2.3 + r() * 0.5; put(DEC, ICO, C.leaf[i % 4], I.x + Math.cos(a) * d, 1.15, I.z + Math.sin(a) * d, 0.34, 0.2, 0.3, { j: 0.12 }); } // bụi cây thấp
+    const nRim = Math.round(14 * ks);
+    for (let i = 0; i < nRim; i++) { const a = (i / nRim) * TAU + r() * 0.2, d = I.r - 0.2 + r() * 0.5, s = (0.5 + r() * 0.4) * Math.sqrt(ks); put(DEC, DOD, stones[i % 4], I.x + Math.cos(a) * d, 0.25 + r() * 0.3, I.z + Math.sin(a) * d, s * 1.2, s * 0.7, s, { r: [r(), a, r() * 0.3], j: 0.1 }); }
+    for (const [dx, dz, h, w] of [[-1.3, -2.1, 2.0, 0.55], [0.4, -2.5, 2.4, 0.62], [1.6, -1.9, 1.7, 0.5]]) put(DEC, OCT, stones[((h * 3) | 0) % 4], I.x + dx * ks * 1.45, 0.6 + (h * ks) / 2, I.z + dz * ks, w * ks, (h * ks) / 2, w * 0.8 * ks, { r: [0, r() * 3, 0.06], j: 0.1 }); // ba mỏm đá cao phía sau (2026-11-28: lớn theo đảo, giãn ra hai bên cho khỏi chạm bệ sen)
+    for (let i = 0; i < 9; i++) { const a = r() * TAU, d = (1.1 + r() * 1.6) * ks + 1.2; put(DEC, DOD, stones[i % 4], I.x + Math.cos(a) * Math.min(d, I.r - 0.6), 1.0 + r() * 0.2, I.z + Math.sin(a) * Math.min(d, I.r - 0.6), 0.2 + r() * 0.15, 0.14, 0.2 + r() * 0.15, { r: [r(), r() * 6, 0], j: 0.1 }); }
+    for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU + 0.5, d = (2.3 + r() * 0.5) * ks; put(DEC, ICO, C.leaf[i % 4], I.x + Math.cos(a) * d, 1.15, I.z + Math.sin(a) * d, 0.34, 0.2, 0.3, { j: 0.12 }); } // bụi cây thấp
   });
 
   // ---------- 9. Tượng Quan Âm đứng (đá trắng, cao 3,0 m trên bệ sen; mặt quay +z): xem bản vẽ trong kế hoạch ----------
   count('tượng Quan Âm', () => {
-    const X = STATUE.x, Z = STATUE.z, Y = STATUE.base, stone = 0xeee9de, stoneL = 0xf6f2e8, rose = 0xf2d6d8;
-    // bệ sen: đế tròn → hai vòng cánh sen → mặt bệ (đỉnh y 1,6 = STATUE.base)
-    cyl(DEC, X, 1.2, Z, 0.95, 1.1, 0.2, 0xd8d0bf, 14);
-    for (let i = 0; i < 16; i++) { const a = (i / 16) * TAU; put(DEC, CONE4, i % 2 ? 0xf6dfe5 : rose, X + Math.sin(a) * 0.82, 1.44, Z + Math.cos(a) * 0.82, 0.36, 0.5, 0.15, { r: [0.6, a, 0], order: 'YXZ' }); }
-    for (let i = 0; i < 10; i++) { const a = ((i + 0.5) / 10) * TAU; put(DEC, CONE4, 0xfbe9ee, X + Math.sin(a) * 0.55, 1.52, Z + Math.cos(a) * 0.55, 0.3, 0.42, 0.13, { r: [0.28, a, 0], order: 'YXZ' }); }
-    cyl(DEC, X, Y - 0.03, Z, 0.55, 0.62, 0.06, 0xf3ead8, 12);
+    // 2026-11-28: bệ sen và thân tượng vẫn dựng theo số đo của bản v5 (mặt bệ y 1,6, tượng cao 3 m) vào hai bộ gom tạm PED / TUONG,
+    // rồi cuối khối này phóng to cả hai TK lần quanh điểm (X; 1,1; Z) là chân bệ trên gò rêu: mặt bệ thành STATUE.base, tượng cao STATUE.h.
+    const X = STATUE.x, Z = STATUE.z, Y = 1.6, stone = 0xeee9de, stoneL = 0xf6f2e8, rose = 0xf2d6d8, PED = U.batch();
+    // bệ sen: đế tròn → hai vòng cánh sen → mặt bệ (đỉnh y 1,6 trước khi phóng to)
+    cyl(PED, X, 1.2, Z, 0.95, 1.1, 0.2, 0xd8d0bf, 14);
+    for (let i = 0; i < 16; i++) { const a = (i / 16) * TAU; put(PED, CONE4, i % 2 ? 0xf6dfe5 : rose, X + Math.sin(a) * 0.82, 1.44, Z + Math.cos(a) * 0.82, 0.36, 0.5, 0.15, { r: [0.6, a, 0], order: 'YXZ' }); }
+    for (let i = 0; i < 10; i++) { const a = ((i + 0.5) / 10) * TAU; put(PED, CONE4, 0xfbe9ee, X + Math.sin(a) * 0.55, 1.52, Z + Math.cos(a) * 0.55, 0.3, 0.42, 0.13, { r: [0.28, a, 0], order: 'YXZ' }); }
+    cyl(PED, X, Y - 0.03, Z, 0.55, 0.62, 0.06, 0xf3ead8, 12);
     // áo choàng dài kèm khăn choàng vai: MỘT lathe 18 cạnh khép kín (đường viền đi từ gấu lên cổ, y tăng dần nên pháp tuyến hướng ra ngoài).
     // Khăn choàng nay nằm trong cùng mặt khép kín này: từ eo (y 1,40, bán kính 0,30) loe dần ra vai (bán kính tới 0,50 ở y 2,0); độ dốc ≤ 0,6 (bán kính / chiều cao)
     // để bóng của khăn không rơi xuống phần áo bên dưới. Trước đây khăn là lathe hở thứ hai vẽ từ cổ xuống (y giảm dần → pháp tuyến hướng vào trong): mặt gần bị cắt bỏ khi vẽ
@@ -511,27 +527,32 @@ function buildVuonSau(G) {
       const f = 1 + (Math.random() - 0.5) * 0.08; _col.set(stoneL);
       for (let v = 0; v < 3; v++) robeC.setXYZ(t + v, _col.r * f, _col.g * f, _col.b * f);
     }
-    DEC.addGeo(robeG);
+    TUONG.addGeo(robeG);                                                                       // từ đây trở xuống là thân tượng: bộ gom TUONG (lưới 'vuonSau:tuong'), ẩn khi mô hình tượng hiện (19-quan-am-ho.js)
     // đầu: cúi nhẹ, búi tóc, vành trán; không vẽ chi tiết mặt
-    put(DEC, SPHH, stoneL, X, Y + 2.63, Z + 0.02, 0.19, 0.225, 0.2, { j: 0.03 });
-    put(DEC, SPHM, stone, X, Y + 2.9, Z - 0.02, 0.1, 0.1, 0.1, { j: 0.03 });
-    DEC.add(mk(new THREE.TorusGeometry(0.195, 0.022, 4, 14)), 0xe6d9a8, { p: [X, Y + 2.74, Z + 0.01], r: [PI / 2, 0, 0], s: [1, 1, 1.0], j: 0.03 });
+    put(TUONG, SPHH, stoneL, X, Y + 2.63, Z + 0.02, 0.19, 0.225, 0.2, { j: 0.03 });
+    put(TUONG, SPHM, stone, X, Y + 2.9, Z - 0.02, 0.1, 0.1, 0.1, { j: 0.03 });
+    TUONG.add(mk(new THREE.TorusGeometry(0.195, 0.022, 4, 14)), 0xe6d9a8, { p: [X, Y + 2.74, Z + 0.01], r: [PI / 2, 0, 0], s: [1, 1, 1.0], j: 0.03 });
     // vầng hào quang mảnh sau đầu
-    DEC.add(mk(new THREE.TorusGeometry(0.5, 0.03, 4, 20)), 0xe6d9a8, { p: [X, Y + 2.72, Z - 0.34], j: 0.03 });
+    TUONG.add(mk(new THREE.TorusGeometry(0.5, 0.03, 4, 20)), 0xe6d9a8, { p: [X, Y + 2.72, Z - 0.34], j: 0.03 });
     // hai tay: tay phải (bên −x) đưa ra trước, lòng bàn tay ngửa; tay trái (bên +x) cầm bình tịnh thủy
-    const arm = (sx, e, h) => { const sh = [X + sx * 0.36, Y + 2.2, Z + 0.02]; branch(DEC, sh, [X + e[0], Y + e[1], Z + e[2]], 0.1, 0.085, stone, 6); branch(DEC, [X + e[0], Y + e[1], Z + e[2]], [X + h[0], Y + h[1], Z + h[2]], 0.085, 0.06, stone, 6); put(DEC, SPHS, stoneL, X + h[0], Y + h[1], Z + h[2], 0.075); };
+    const arm = (sx, e, h) => { const sh = [X + sx * 0.36, Y + 2.2, Z + 0.02]; branch(TUONG, sh, [X + e[0], Y + e[1], Z + e[2]], 0.1, 0.085, stone, 6); branch(TUONG, [X + e[0], Y + e[1], Z + e[2]], [X + h[0], Y + h[1], Z + h[2]], 0.085, 0.06, stone, 6); put(TUONG, SPHS, stoneL, X + h[0], Y + h[1], Z + h[2], 0.075); };
     arm(-1, [-0.5, 1.72, 0.12], [-0.34, 1.82, 0.5]);
     arm(1, [0.5, 1.62, 0.1], [0.4, 1.3, 0.44]);
     const VASE = mk(lathe([[0.001, 0], [0.05, 0], [0.09, 0.05], [0.115, 0.14], [0.1, 0.22], [0.05, 0.27], [0.055, 0.34], [0.07, 0.37], [0.001, 0.37]], 10));
-    put(DEC, VASE, stoneL, X + 0.4, Y + 1.24, Z + 0.5, 1, 1, 1, { j: 0.03 });
-    for (const [dx, dz] of [[0.12, 0.05], [-0.05, 0.12], [0.05, -0.1]]) rod(DEC, [X + 0.4, Y + 1.58, Z + 0.5], [X + 0.4 + dx * 2.2, Y + 2.0, Z + 0.5 + dz * 2.2], 0.012, 0.008, 0x4f7a34, 4); // cành dương liễu nhỏ trong bình
+    put(TUONG, VASE, stoneL, X + 0.4, Y + 1.24, Z + 0.5, 1, 1, 1, { j: 0.03 });
+    for (const [dx, dz] of [[0.12, 0.05], [-0.05, 0.12], [0.05, -0.1]]) rod(TUONG, [X + 0.4, Y + 1.58, Z + 0.5], [X + 0.4 + dx * 2.2, Y + 2.0, Z + 0.5 + dz * 2.2], 0.012, 0.008, 0x4f7a34, 4); // cành dương liễu nhỏ trong bình
+    // phóng to bệ sen + thân tượng quanh chân bệ; bệ sen nhập vào DEC, thân tượng ở lại TUONG
+    for (const B of [PED, TUONG]) for (const g of B.list) { g.translate(-X, -1.1, -Z); g.scale(TK, TK, TK); g.translate(X, 1.1, Z); }
+    for (const g of PED.list) DEC.addGeo(g); PED.list.length = 0;
   });
 
   // ---------- 10. Sen: 60 lá nổi, 22 hoa, 10 nụ, 12 lá vươn cao; tránh đảo, thủy tạ ----------
   count('sen', () => {
     const r = U.rng(31), pads = [], PAD = mk(new THREE.CircleGeometry(1, 8, 0.3, PI * 1.85).rotateX(-PI / 2)), y = POND.water;
     const ok = (x, z) => inPond(x, z, -1.0) && hypot(x - ISLAND.x, z - ISLAND.z) > ISLAND.r + 0.9 && !inHex(x, z, PAV.R + 1.3) && hypot(x - LAN_REL.x, z - LAN_REL.z) > 1.95 && pads.every((q) => hypot(q[0] - x, q[1] - z) > 0.95); // > 1,95 m: chỗ đặt đèn hoa đăng để trống (nụ và cuống lệch 0,15 m nên vẫn cách ≥ 1,8 m)
-    for (let i = 0; i < 60; i++) {
+    // 2026-11-28: hồ dài hơn nên nhiều sen hơn (bản v5: 60 lá, 22 hoa, 10 nụ, 12 lá vươn cao). CHIA: lá nào mang gì, theo thứ tự đặt; 19-sen-ho.js đọc V.senChia
+    const big = DAI >= 20, NPAD = big ? 86 : 60, CHIA = (V.senChia = big ? { hoa: [0, 30], nu: [30, 44], cao: [44, 60], dai: [60, 68] } : { hoa: [0, 22], nu: [22, 32], cao: [32, 44], dai: [44, 50] });
+    for (let i = 0; i < NPAD; i++) {
       let x = 0, z = 0, good = false;
       for (let t = 0; t < 60 && !good; t++) { x = POND.x0 + 1 + r() * (POND.x1 - POND.x0 - 2); z = POND.z0 + 1 + r() * (POND.z1 - POND.z0 - 2); good = ok(x, z); }
       if (!good) continue;
@@ -539,14 +560,14 @@ function buildVuonSau(G) {
       SEN.add(PAD, i % 2 ? 0x4f8a3c : 0x3f7a33, { p: [x, y + 0.03, z], s: [rr, 1, rr], r: [0, r() * 6, 0] });
     }
     V.pads = pads.map(([x, z, rr]) => ({ x, z, r: rr }));                                                          // vị trí lá sen (bài kiểm tra: cách chỗ đặt đèn ≥ 1,8 m)
-    pads.slice(0, 22).forEach(([x, z], i) => {
+    pads.slice(CHIA.hoa[0], CHIA.hoa[1]).forEach(([x, z], i) => {
       const pk = i % 3 ? 0xf29bb5 : 0xfff0f4, ph = r() * 6;
       petalRing(SEN, x, y + 0.05, z, 0.03, 6, 0.2, 0.1, 0.7, pk, ph, 0.5); petalRing(SEN, x, y + 0.05, z, 0.0, 4, 0.14, 0.09, 0.25, i % 3 ? 0xf8b9cc : 0xffffff, ph + 0.4, 0.5);
       put(SEN, SPHS, 0xf5d03a, x, y + 0.1, z, 0.045, 0.04, 0.045);
     });
-    pads.slice(22, 32).forEach(([x, z]) => { rod(SEN, [x + 0.15, y, z], [x + 0.15, y + 0.5, z], 0.012, 0.012, 0x4f8a3c, 4); put(SEN, CONE6, 0xf28aaa, x + 0.15, y + 0.62, z, 0.14, 0.26, 0.14); });
+    pads.slice(CHIA.nu[0], CHIA.nu[1]).forEach(([x, z]) => { rod(SEN, [x + 0.15, y, z], [x + 0.15, y + 0.5, z], 0.012, 0.012, 0x4f8a3c, 4); put(SEN, CONE6, 0xf28aaa, x + 0.15, y + 0.62, z, 0.14, 0.26, 0.14); });
     V.senCao = [];                                                                                                 // 12 lá vươn cao: chỗ đặt + chiều cao cuống (19-sen-ho.js đặt lá mô hình vào đúng chỗ)
-    pads.slice(32, 44).forEach(([x, z]) => { const h = 0.35 + r() * 0.5; V.senCao.push({ x, z, h }); rod(SEN, [x, y, z], [x, y + h, z], 0.014, 0.018, 0x4f7a34, 4); SEN.add(mk(new THREE.ConeGeometry(0.36, 0.12, 9, 1, true)), 0x5a9440, { p: [x, y + h + 0.06, z], r: [(r() - 0.5) * 0.4, r() * 6, (r() - 0.5) * 0.4] }); }); // nón hở đỉnh hướng lên (như chiếc ô): nhìn từ trên và từ bờ đều thấy mặt ngoài; bộ gom một mặt (G.mats.vc)
+    pads.slice(CHIA.cao[0], CHIA.cao[1]).forEach(([x, z]) => { const h = 0.35 + r() * 0.5; V.senCao.push({ x, z, h }); rod(SEN, [x, y, z], [x, y + h, z], 0.014, 0.018, 0x4f7a34, 4); SEN.add(mk(new THREE.ConeGeometry(0.36, 0.12, 9, 1, true)), 0x5a9440, { p: [x, y + h + 0.06, z], r: [(r() - 0.5) * 0.4, r() * 6, (r() - 0.5) * 0.4] }); }); // nón hở đỉnh hướng lên (như chiếc ô): nhìn từ trên và từ bờ đều thấy mặt ngoài; bộ gom một mặt (G.mats.vc)
   });
 
   // ---------- 11. Bồn mai – quất ×2 gần hai cổng: bồn đá thấp 4,0 × 1,6, mỗi bồn hai chậu mai vàng + hai chậu quất (như mai / quat 12-decor-inside.js:197, 222) ----------
@@ -636,7 +657,7 @@ function buildVuonSau(G) {
   // =====================================================================
   safe('hoạt động cầu an', () => {
     V.lanternPond = {
-      x: 0, z: -145.2, rx: 12.6, rz: 6.4,                                                                                            // vùng trôi: elip trước và bên cạnh tượng (z −138,8 … −151,6)
+      x: 0, z: -144.9, rx: 12.6, rz: 6.1,                                                                                            // vùng trôi: elip trước tượng (z −138,8 … −151,0; 2026-11-28: mép bắc của đảo mới ở −150,5)
       waterY: POND.water, floatY: POND.water + 0.04,                                                                                 // đèn nổi trên đỉnh lá sen (lá ở y nước + 0,03)
       island: { x: ISLAND.x, z: ISLAND.z, r: ISLAND.r },
       avoid: [{ x: PAV.x, z: PAV.z, r: PAV.R + 0.3 }],                                                                               // thủy tạ: đường tròn ngoại tiếp lục giác + 0,3 m
@@ -667,6 +688,7 @@ function buildVuonSau(G) {
     if (DEC.list.length) addMesh(DEC.mesh(G.mats.vc, { cast: true, receive: true }), 'trangtri', true);
     if (CAY.list.length) { const m = CAY.mesh(G.mats.vc, { cast: true, receive: true }); addMesh(m, 'cay', true); (G.cayCu || (G.cayCu = [])).push(m); } // cây dựng bằng mã (bản dự phòng của mô hình cây)
     if (DECF.list.length) addMesh(DECF.mesh(G.mats.vc, { cast: false, receive: true }), 'trangtri-phang', true);
+    if (TUONG.list.length) addMesh(TUONG.mesh(G.mats.vc, { cast: true, receive: true }), 'tuong', true);             // thân tượng Quan Âm dựng bằng mã (bản dự phòng của mô hình tượng, 19-quan-am-ho.js)
     if (SEN.list.length) addMesh(SEN.mesh(G.mats.vc, { cast: false, receive: true }), 'sen', true);                  // sen dựng bằng mã (bản dự phòng của mô hình sen, 19-sen-ho.js)
     if (waterMesh) addMesh(waterMesh, 'nuoc');
     scene.add(gFar, gNear);

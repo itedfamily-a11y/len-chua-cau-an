@@ -18,6 +18,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "9652", "--bind", "127.0.0.1", "--directory", "D:\\dichua"],
       "port": 9652
+    },
+    {
+      "name": "chua-ho",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "9663", "--bind", "127.0.0.1", "--directory", "D:\\dichua"],
+      "port": 9663
     }
   ]
 }

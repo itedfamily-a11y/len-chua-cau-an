@@ -136,8 +136,8 @@ function buildScenery(G) {
   const STRIPS = [
     [36.6, -117.7, 38.25, 33.6], [-38.25, -117.7, -36.6, 33.6],              // đông / tây tường bao (2026-11-26: tường bên dời ra x ±36,3, vật cản 36,0…36,6 → dải 36,6…38,25 nối thẳng với dải ngoài tường bên vườn; v5: dừng ở z −117,7; v4: −120)
     // (2026-11-26: bỏ hai dải dọc mặt bắc đoạn tường z −118 của vườn, |x| 24,3…36,6 — vùng ấy nay nằm trong khuôn viên, canPlace đã chặn)
-    [36.6, -189.85, 38.25, -116.05], [-38.25, -189.85, -36.6, -116.05],      // ngoài hai tường bên của vườn (x ±36,6)
-    [-38.25, -189.85, 38.25, -188.2],                                        // ngoài tường sau của vườn (z −188,2)
+    [36.6, -189.85 - VUON_DAI, 38.25, -116.05], [-38.25, -189.85 - VUON_DAI, -36.6, -116.05], // ngoài hai tường bên của vườn (x ±36,6)
+    [-38.25, -189.85 - VUON_DAI, 38.25, -188.2 - VUON_DAI],                  // ngoài tường sau của vườn (z −188,2 − VUON_DAI; 2026-11-28: vườn kéo dài, xem 00-core.js)
     [7, 31.3, 38.25, 32.95], [-38.25, 31.3, -7, 32.95], [-9, 28.5, 9, 34.5], // hai cánh cổng (2026-11-26: tường trước kéo dài tới ±36,3) và sân trước cổng
   ]; // dải đi bộ 1,65 m sát tường ngoài phải để trống (v4: tường sau ở z −118; v5: vườn sau chùa)
   const TK = typeof TKC_SITE !== 'undefined' ? TKC_SITE.keep : null;
@@ -145,7 +145,7 @@ function buildScenery(G) {
   function canPlace(x, z, r) {
     if (col.hit(x, z, r)) return false;
     if (Math.abs(x) < 2.6 + r && z > 28 && z < 80) return false;                                  // lối vào chùa
-    if (x > -36.9 - r && x < 36.9 + r && z > -188.5 - r && z < -117.4 + r) return false;               // trong vườn sau chùa kể cả tường (v5: x ±36,6, z −188,2…−117,7)
+    if (x > -36.9 - r && x < 36.9 + r && z > -188.5 - VUON_DAI - r && z < -117.4 + r) return false;               // trong vườn sau chùa kể cả tường (v5: x ±36,6, z −188,2…−117,7)
     if (x > -38.5 - r && x < 38.5 + r && z > -121 - r && z < 34) return false;                     // trong khuôn viên + dải đi bộ ngoài tường bên (2026-11-26: tường bên ra x ±36,3 nên cấm x ±38,5, z −121…34; trước x ±24,3, z −118,4…31,4; mép trước z 34 = hàng bụi hoa / cau ngoài tường trước)
     for (const s of STRIPS) if (rectHit(x, z, r, s[0], s[1], s[2], s[3])) return false;
     if (inTK(x, z, r)) return false;                                                               // 2026-11-27: sân Tàng Kinh Các phía đông (19-tang-kinh-cac.js), kể cả tường và 2 m quanh tường
@@ -331,7 +331,7 @@ function buildScenery(G) {
   const EXC = [], BOATS = [];    // vùng cấm dựng ruộng: hình tròn {x,z,r}
   if (TK) for (let x = TK.x0 + 6; x < TK.x1 + 6; x += 12) for (let z = TK.z0 + 6; z < TK.z1 + 6; z += 12) EXC.push({ x: Math.min(x, TK.x1 - 6), z: Math.min(z, TK.z1 - 6), r: 9 }); // 2026-11-27: sân Tàng Kinh Các nằm ngoài tầm canPlace của ruộng xa nên phủ bằng các hình tròn
   safe('sông', () => {
-    const CP = W.riverCP || [[205, -160], [150, -140], [100, -136], [84, -170], [64, -204], [34, -218], [0, -220], [-34, -218], [-64, -204], [-77, -170], [-78, -128], [-76, -70], [-68, -30], [-74, 8], [-70, 40], [-76, 76], [-92, 110], [-112, 140]]; // danh sách điểm điều khiển nằm ở 05-world.js (cùng nguồn với núi xa); v5: đoạn giữa vòng ra sau vườn sau chùa. Bản sao sau || chỉ để dự phòng nếu khối núi xa của 05 chưa chạy (hai danh sách phải giống hệt nhau)
+    const CP = W.riverCP || [[205, -160], [150, -140], [100, -136], [84, -170 - VUON_DAI / 2], [64, -204 - VUON_DAI], [34, -218 - VUON_DAI], [0, -220 - VUON_DAI], [-34, -218 - VUON_DAI], [-64, -204 - VUON_DAI], [-77, -170 - VUON_DAI / 2], [-78, -128], [-76, -70], [-68, -30], [-74, 8], [-70, 40], [-76, 76], [-92, 110], [-112, 140]]; // danh sách điểm điều khiển nằm ở 05-world.js (cùng nguồn với núi xa); v5: đoạn giữa vòng ra sau vườn sau chùa. Bản sao sau || chỉ để dự phòng nếu khối núi xa của 05 chưa chạy (hai danh sách phải giống hệt nhau)
     const dense = [];
     for (let i = 0; i < CP.length - 1; i++) {
       const p0 = CP[Math.max(0, i - 1)], p1 = CP[i], p2 = CP[i + 1], p3 = CP[Math.min(CP.length - 1, i + 2)];
@@ -658,7 +658,7 @@ function buildScenery(G) {
   });
   // cỏ cao và hoa dại rải ở bãi cỏ ngoài tường cho thảm cỏ bớt phẳng
   safe('cỏ dại', () => {
-    const zones = [[-38, 38, 33.8, 75.5], [38.8, 44, -116, 33], [-44, -38.8, -116, 33], [-37, 37, -193.5, -190.3], [38.8, 44, -186, -119], [-44, -38.8, -186, -119]]; // 2026-11-26: bãi cỏ trước cổng rộng ra x ±38 (tường trước tới ±36,3); hai dải bên tường bao dời ra x 38,8…44 (cách mặt tường ngoài 2,2 m như dải ngoài tường vườn). v5: hai dải bên tường bao dừng ở z −116; dải sau tường và hai dải bên ngoài vườn sau chùa
+    const zones = [[-38, 38, 33.8, 75.5], [38.8, 44, -116, 33], [-44, -38.8, -116, 33], [-37, 37, -193.5 - VUON_DAI, -190.3 - VUON_DAI], [38.8, 44, -186 - VUON_DAI, -119], [-44, -38.8, -186 - VUON_DAI, -119]]; // 2026-11-26: bãi cỏ trước cổng rộng ra x ±38 (tường trước tới ±36,3); hai dải bên tường bao dời ra x 38,8…44 (cách mặt tường ngoài 2,2 m như dải ngoài tường vườn). v5: hai dải bên tường bao dừng ở z −116; dải sau tường và hai dải bên ngoài vườn sau chùa
     let n = 0;
     for (let t = 0; t < 3100 && n < 300; t++) {
       const zn = zones[[0, 0, 1, 0, 2, 0, 3, 4, 5][t % 9]], x = rr(zn[0], zn[1]), z = rr(zn[2], zn[3]);
@@ -677,7 +677,7 @@ function buildScenery(G) {
       domeTree(x, z, s, 1800 + ((x + z) | 0), true, true); EXC.push({ x, z, r: 4.5 });
     }
     for (let row = 0; row < 3; row++) for (let x = -44; x < 45; x += rr(7, 10)) {
-      const z = -194 - row * 5.2 + rr(-1, 1);  // hàng cây sau tường sau vườn (v5: tường ở z −188,2, dải đi bộ ngoài tường đến −189,85; v4: −124 sau tường bao): cách mặt tường ≥ 4,8 m, và chừa bờ sông
+      const z = -194 - VUON_DAI - row * 5.2 + rr(-1, 1);  // hàng cây sau tường sau vườn (v5: tường ở z −188,2, dải đi bộ ngoài tường đến −189,85; v4: −124 sau tường bao): cách mặt tường ≥ 4,8 m, và chừa bờ sông
       if (nearOld(x, z, 2.2) || riverDist(x, z) < 8) continue;
       const t = rnd(), sd = 1500 + ((x * 3) | 0) + row;
       t < 0.45 ? domeTree(x, z, rr(1.1, 1.6), sd, false) : t < 0.7 ? umbrellaTree(x, z, rr(1, 1.3), sd, false) : t < 0.85 ? bamboo(x, z, sd, 7, false) : areca(x, z, rr(8, 10.5), false);
@@ -786,8 +786,8 @@ function buildScenery(G) {
     };
     // dải hai bên tường (chừa lối đi bộ 1.65 m sát tường) và dải sau tường
     for (const sx of [1, -1]) for (let z = -116; z < 30; z += rr(7.5, 11)) put(sx * rr(40.9, 42.7), z, pick([0, 0, 1, 2, 3, 4])); // 2026-11-26: tường bên ra x ±36,3 (mặt ngoài 36,6) nên dải cây ra x 40,9…42,7, nối thẳng với dải ngoài tường bên vườn (trước x 28,6…30,4)
-    for (const sx of [1, -1]) for (let z = -122; z > -186; z -= rr(7.5, 11)) put(sx * rr(40.9, 42.7), z, pick([0, 0, 1, 2, 3, 4])); // v5: dải cây ngoài hai tường bên của vườn (cách tường 4,3…6,1 m như dải của sân chùa)
-    for (let x = -34; x < 35; x += rr(6.5, 9.5)) put(x, rr(-193.6, -191.8), pick([0, 1, 1, 2, 3])); // v5: dải sau tường sau vườn, cách mặt tường −188,2 từ 3,6 m (tán dome rộng tới 6,45 m nên không chạm vào vườn; v4: x ±22, z −122,6…−120,8 sau tường bao)
+    for (const sx of [1, -1]) for (let z = -122; z > -186 - VUON_DAI; z -= rr(7.5, 11)) put(sx * rr(40.9, 42.7), z, pick([0, 0, 1, 2, 3, 4])); // v5: dải cây ngoài hai tường bên của vườn (cách tường 4,3…6,1 m như dải của sân chùa)
+    for (let x = -34; x < 35; x += rr(6.5, 9.5)) put(x, rr(-193.6 - VUON_DAI, -191.8 - VUON_DAI), pick([0, 1, 1, 2, 3])); // v5: dải sau tường sau vườn, cách mặt tường −188,2 từ 3,6 m (tán dome rộng tới 6,45 m nên không chạm vào vườn; v4: x ±22, z −122,6…−120,8 sau tường bao)
     // rặng cây, cau, dừa dọc đường làng
     for (const r of ROADS) for (let k = 0; k < r.pts.length - 1; k++) for (let t = 0.2; t < 1; t += 0.5) {
       const x = r.pts[k][0] + (r.pts[k + 1][0] - r.pts[k][0]) * t, z = r.pts[k][1] + (r.pts[k + 1][1] - r.pts[k][1]) * t, sd = rnd() < 0.5 ? 1 : -1, ox = x + sd * 3.0, oz = z + sd * 1.0;
@@ -797,7 +797,7 @@ function buildScenery(G) {
     // mảng cây trên vùng đất xa và quanh xóm (tránh ô ruộng đã đặt)
     for (let g = 0; g < 16; g++) {
       const gx = rr(-130, 130), gz = rr(-150, 150);
-      if (Math.hypot(gx, gz - 20) < 75 || (gx > -48 && gx < 48 && gz > -128 && gz < 40) || (gx > -50 && gx < 50 && gz > -201 && gz < -105) || EXC.some((e) => Math.hypot(e.x - gx, e.z - gz) < e.r + 8) || riverDist(gx, gz) < 14 || placed.some((q) => rectNear(q, gx, gz, 11))) continue;
+      if (Math.hypot(gx, gz - 20) < 75 || (gx > -48 && gx < 48 && gz > -128 && gz < 40) || (gx > -50 && gx < 50 && gz > -201 - VUON_DAI && gz < -105) || EXC.some((e) => Math.hypot(e.x - gx, e.z - gz) < e.r + 8) || riverDist(gx, gz) < 14 || placed.some((q) => rectNear(q, gx, gz, 11))) continue;
       for (let k = 0; k < 4; k++) { const x = gx + rr(-8, 8), z = gz + rr(-8, 8); rnd() < 0.7 ? domeTree(x, z, rr(1.2, 1.9), (rnd() * 1e6) | 0, false) : bamboo(x, z, (rnd() * 1e6) | 0, 5, false); }
     }
   });

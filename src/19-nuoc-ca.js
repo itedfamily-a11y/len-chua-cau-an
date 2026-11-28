@@ -9,7 +9,7 @@
 //     - ven bờ và quanh đảo nước nông: màu trong hơn, ban ngày có vệt sáng đáy nước lay động;
 //     - vòng sóng lan: G.hoNuoc.ring(x, z, mạnh) — 40-activities-b.js gọi khi đèn hoa đăng chạm nước, cá gọi khi ngoi lên đớp nước;
 //     - quầng sáng ấm loang trên mặt nước dưới mỗi đèn hoa đăng đang trôi (đọc G.activitiesB.state().lanterns), rõ dần về đêm.
-//  2. ĐÀN CÁ. 16 con (máy cảm ứng / đồ hoạ thấp: 9), bơi thành 3 (2) nhóm quanh những "điểm hẹn" đổi chỗ sau mỗi 9–18 giây; tránh bờ, đảo, thủy tạ, tránh nhau;
+//  2. ĐÀN CÁ. 16 con (máy cảm ứng / đồ hoạ thấp: 9; từ chiều 2026-11-28 hồ kéo dài 32 × 52 m: 22 / 12 con, 4 / 3 nhóm), bơi thành 3 (2) nhóm quanh những "điểm hẹn" đổi chỗ sau mỗi 9–18 giây; tránh bờ, đảo, thủy tạ, tránh nhau;
 //     người chơi đứng gần bờ thì một nhóm bơi lại gần; đèn hoa đăng chạm nước thì cá gần đó giật mình tản ra; thỉnh thoảng một con ngoi lên đớp nước (vòng sóng).
 //     - Hình cá: mô hình "Shiny Fish" của GenEugene trên Sketchfab, giấy phép CC BY 4.0 (assets/mo-hinh/ca-vang.glb 3 000 mặt, ảnh 1024 px; ca-vang-nhe.glb 1 700 mặt, ảnh 512 px).
 //       File trong game đã giảm số mặt (407 nghìn → 3 000), chỉ giữ ảnh màu, và NẮN THẲNG thân (bản gốc tạc sẵn thế uốn mình): dài 1 theo z, mũi ở +z, sống lưng x = 0.
@@ -174,7 +174,8 @@ outgoingLight = mix(outgoingLight, mix(uHoHor, uHoTop, smoothstep(0.0, 0.55, hoR
   // =====================================================================
   //  2. ĐÀN CÁ
   // =====================================================================
-  const N = low ? 9 : 16, NG = low ? 2 : 3, MARGIN = 0.9;
+  const BIG = HX * HZ * 4 > 1200;                            // 2026-11-28: hồ kéo dài (32 × 52 m) thì thêm cá và thêm một nhóm
+  const N = BIG ? (low ? 12 : 22) : (low ? 9 : 16), NG = BIG ? (low ? 3 : 4) : (low ? 2 : 3), MARGIN = 0.9;
   const free = (x, z, m) => (LP && LP.inside ? LP.inside(x, z, m) : V.inPond(x, z, -m) && Math.hypot(x - ISL.x, z - ISL.z) > ISL.r + 0.3 + m); // mặt nước trống, cách bờ / đảo / thủy tạ ít nhất m
   const randPoint = (m) => {
     for (let k = 0; k < 80; k++) { const x = POND.x0 + m + rnd() * (POND.x1 - POND.x0 - 2 * m), z = POND.z0 + m + rnd() * (POND.z1 - POND.z0 - 2 * m); if (free(x, z, m)) return [x, z]; }

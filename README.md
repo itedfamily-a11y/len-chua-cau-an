@@ -65,6 +65,12 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
   giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), đã chỉnh sửa (tách cụm sen thành hoa, nụ, gương, lá; giảm từ 5,2 triệu mặt xuống còn vài nghìn; dựng lại nhị và cuống),
   lưu thành `assets/mo-hinh/sen-ho.glb` (95 KB, máy tính) và `assets/mo-hinh/sen-ho-nhe.glb` (75 KB, điện thoại);
   tải một bản khi người chơi tới gần hồ, lỗi thì game dùng sen dựng bằng mã.
+  Tượng Quan Âm trên đảo giữa hồ sen dựng từ mô hình
+  [Tsz Shan Monastery - Guan Yin Statue](https://sketchfab.com/3d-models/tsz-shan-monastery-guan-yin-statue-b9d823667b1e4bfb9b68e124ba4e28d9) của Patrick Kin Yu YOUNG
+  (dữ liệu gốc của Chính quyền Đặc khu Hồng Kông), giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/),
+  đã chỉnh sửa (bỏ toà đế, gộp đỉnh cho bề mặt mịn, làm rõ nếp áo, tô bóng khe nếp vào màu đỉnh),
+  lưu thành `assets/mo-hinh/quan-am-ho.glb` (670 KB, máy tính) và `assets/mo-hinh/quan-am-ho-nhe.glb` (254 KB, điện thoại);
+  tải một bản khi người chơi tới gần hồ, lỗi thì game dùng tượng dựng bằng mã.
   Cây sồi và cây thông trong cảnh (cây quanh tường, cây đa đầu lối vào, cây bồ đề ở vườn sau, tùng, cây trong chậu) lấy từ hai mô hình
   [Oak trees pack (17var, LODs, seasons, gameready)](https://sketchfab.com/3d-models/oak-trees-pack-17var-lods-seasons-gameready-a5e4e64f9f1d4089bdcc6170a9333393) của LOLIPOP và
   [Pine Forest at Sunset](https://sketchfab.com/3d-models/pine-forest-at-sunset-bef89be6b189456095db79107045d726) của Jagobo,

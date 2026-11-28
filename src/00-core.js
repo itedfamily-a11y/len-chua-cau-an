@@ -289,9 +289,10 @@ function qualityTick(raw) {
 // =====================================================================
 //  VA CHẠM: hình tròn / hộp / elip trên mặt phẳng XZ
 // =====================================================================
+const VUON_DAI = 28; // 2026-11-28: vườn sau chùa kéo dài thêm về phía sau chừng này mét so với bản v5 (tường sau z −188,2 → −216,2) để hồ sen dài thêm. Mọi con số "phía sau vườn" ở 05-world, 08-world2, 13-scenery, 19-vuon-sau đều cộng thêm hằng này: muốn đổi chiều dài vườn chỉ sửa ở đây (sông tự lùi theo)
 G.collide = {
   list: [],
-  bounds: { x0: -37, x1: 37, z0: -189, z1: 76 }, // v5 vườn sau chùa: x ±37 (tường bên vườn x ±36,6), z0 −189 (tường sau vườn z −188,2). Trước đó x ±31, z0 −119 (v4: tường bao sau −118; v3: −101)
+  bounds: { x0: -37, x1: 37, z0: -189 - VUON_DAI, z1: 76 }, // v5 vườn sau chùa: x ±37 (tường bên vườn x ±36,6), z0 −189 (tường sau vườn z −188,2). Trước đó x ±31, z0 −119 (v4: tường bao sau −118; v3: −101)
   circle(x, z, r, tag) { const c = { t: 0, x, z, r, tag }; this.list.push(c); return c; },
   box(x0, z0, x1, z1, tag) { const c = { t: 1, x0: Math.min(x0, x1), z0: Math.min(z0, z1), x1: Math.max(x0, x1), z1: Math.max(z0, z1), tag }; this.list.push(c); return c; },
   ellipse(x, z, rx, rz, tag) { const c = { t: 2, x, z, rx, rz, tag }; this.list.push(c); return c; },

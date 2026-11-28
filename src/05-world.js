@@ -273,7 +273,7 @@ function buildWorld(G) {
     for (const m of signs) m.emissiveIntensity = 0.18 + tod.night * 0.32;
     if (W.water) { _wc.copy(waterDeep).lerp(cur.top, 0.25).multiplyScalar(0.75 - tod.night * 0.3); W.water.material.color.copy(_wc); }
     if (G.player) { // tâm vùng bóng bám theo người chơi, bước 12 m
-      const sx = Math.round(G.player.pos.x / 12) * 12, sz = U.clamp(Math.round((G.player.pos.z - 16) / 12) * 12, -160, 4); // tới −160 (v5): vườn sau chùa z −118…−188 nằm trong hộp bóng ±40 m (v4: −94, chính điện lùi sâu đến z ≈ −113)
+      const sx = Math.round(G.player.pos.x / 12) * 12, sz = U.clamp(Math.round((G.player.pos.z - 16) / 12) * 12, -160 - VUON_DAI, 4); // tới −160 (v5): vườn sau chùa z −118…−188 nằm trong hộp bóng ±40 m (v4: −94, chính điện lùi sâu đến z ≈ −113)
       if (sx !== tod.shX || sz !== tod.shZ) { tod.shX = sx; tod.shZ = sz; sun.target.position.set(sx, 0, sz); sun.target.updateMatrixWorld(); tod.lastShadowT = -1; }
     }
     sun.position.add(sun.target.position);
@@ -295,7 +295,7 @@ function buildWorld(G) {
 
   // độ cao mặt cỏ (phẳng khắp vùng đi lại được, nhấp nhô dần ra xa) — dùng chung cho cảnh vật bên ngoài
   G.terrainY = (x, z) => {
-    const ox = Math.max(0, Math.abs(x) - (x > 0 && typeof TKC_SITE !== 'undefined' ? TKC_SITE.flatX : 32)), oz = Math.max(0, z - 77, -197.2 - z), dOut = Math.hypot(ox, oz); // 2026-11-27: phía đông phẳng tới x 87 cho sân Tàng Kinh Các (19-tang-kinh-cac.js) // v5: −197,2 = tường sau vườn (−188,2) − 9 m (v4: −109 = tường bao −118 + 9): phẳng (−0,03) khắp vườn và quanh vườn |x| ≤ 57, z ≥ −222,2
+    const ox = Math.max(0, Math.abs(x) - (x > 0 && typeof TKC_SITE !== 'undefined' ? TKC_SITE.flatX : 32)), oz = Math.max(0, z - 77, -197.2 - VUON_DAI - z), dOut = Math.hypot(ox, oz); // 2026-11-27: phía đông phẳng tới x 87 cho sân Tàng Kinh Các (19-tang-kinh-cac.js) // v5: −197,2 = tường sau vườn (−188,2) − 9 m (v4: −109 = tường bao −118 + 9): phẳng (−0,03) khắp vườn và quanh vườn |x| ≤ 57, z ≥ −222,2
     return (Math.sin(x * 0.031) * Math.cos(z * 0.027) * 3.2 + Math.sin(x * 0.012 + 1.3) * 4) * U.smoothstep(25, 120, dOut) - 0.03;
   };
   // =====================================================================
@@ -831,7 +831,7 @@ function buildWorld(G) {
     // như 13-scenery.js (lề 12 m), thêm viền vườn (lề 6 m). k tối đa 1,6 (v4: 1,4): núi 24 nằm ngay sau đoạn sông mới, ở k = 1,4 không thoát được dù thu chân còn 60 %. W.farCones: số đo từng nón cho kiểm thử
     const KEEP = []; W.farCones = [];
     {
-      const cp = (W.riverCP = [[205, -160], [150, -140], [100, -136], [84, -170], [64, -204], [34, -218], [0, -220], [-34, -218], [-64, -204], [-77, -170], [-78, -128], [-76, -70], [-68, -30], [-74, 8], [-70, 40], [-76, 76], [-92, 110], [-112, 140]]);
+      const cp = (W.riverCP = [[205, -160], [150, -140], [100, -136], [84, -170 - VUON_DAI / 2], [64, -204 - VUON_DAI], [34, -218 - VUON_DAI], [0, -220 - VUON_DAI], [-34, -218 - VUON_DAI], [-64, -204 - VUON_DAI], [-77, -170 - VUON_DAI / 2], [-78, -128], /* 2026-11-28: năm điểm sau vườn lùi thêm VUON_DAI, hai điểm chuyển tiếp lùi một nửa */ [-76, -70], [-68, -30], [-74, 8], [-70, 40], [-76, 76], [-92, 110], [-112, 140]]);
       const i0 = cp.findIndex((p) => p[0] === 100 && p[1] === -136), i1 = cp.findIndex((p) => p[0] === -68 && p[1] === -30);
       for (let i = i0; i < i1; i++) for (let k = 0; k < 8; k++) { // Catmull-Rom cùng công thức 13-scenery.js (điểm lân cận lấy từ cả danh sách), 8 điểm mỗi đoạn
         const p0 = cp[Math.max(0, i - 1)], p1 = cp[i], p2 = cp[i + 1], p3 = cp[Math.min(cp.length - 1, i + 2)], u = k / 8, u2 = u * u, u3 = u2 * u;
@@ -840,14 +840,14 @@ function buildWorld(G) {
       KEEP.push([-68, -30, 12]);
       for (const [x, z] of [[-38.3, -60], [38.3, -60], [-38.3, 0], [38.3, 0], [-38.3, 33], [38.3, 33]]) KEEP.push([x, z, 6]); // 2026-11-26: tường bên ±36,3 → điểm cách tường 2 m (trước ±26, tường ±24); (±38,3; 33) ứng với góc trước (±36,3; 31), góc sau (±36,3; −118) đã nằm trong viền vườn ngay dưới
       if (typeof TKC_SITE !== 'undefined') for (const z of [TKC_SITE.wallZN, (TKC_SITE.wallZN + TKC_SITE.wallZS) / 2, TKC_SITE.wallZS]) KEEP.push([TKC_SITE.wallX, z, 8]); // 2026-11-27: tường đông của sân Tàng Kinh Các
-      for (let t = 0; t <= 72; t += 12) KEEP.push([-36 + t, -118, 6], [-36 + t, -188, 6]); // viền vườn: cạnh trước (z −118) và cạnh sau (z −188), mỗi 12 m
-      for (let z = -130; z > -188; z -= 12) KEEP.push([-36.6, z, 6], [36.6, z, 6]);        // hai cạnh bên (x ±36,6)
+      for (let t = 0; t <= 72; t += 12) KEEP.push([-36 + t, -118, 6], [-36 + t, -188 - VUON_DAI, 6]); // viền vườn: cạnh trước (z −118) và cạnh sau (z −188 − VUON_DAI), mỗi 12 m
+      for (let z = -130; z > -188 - VUON_DAI; z -= 12) KEEP.push([-36.6, z, 6], [36.6, z, 6]);        // hai cạnh bên (x ±36,6)
     }
     for (let i = 0; i < 34; i++) {
       const a = (i / 34) * PI * 2 + rnd() * 0.15, d = 190 + rnd() * 120, h = 16 + rnd() * 34, r = 55 + rnd() * 45;
       const clear = (k, q) => { const cx = Math.cos(a) * d * k, cz = Math.sin(a) * d * k + 15, re = q * (1 - 3 / (h * k)); return KEEP.every((m) => Math.hypot(cx - m[0], cz - m[1]) >= re + m[2]); }; // re: bán kính chân thấy được (nón chìm 3 m)
       let k = 1, q;
-      while (k < 1.6 && !clear(k, r * k)) k += 0.02;
+      while (k < 1.8 && !clear(k, r * k)) k += 0.02; // 2026-11-28: trần 1,6 → 1,8 vì sông sau vườn lùi thêm VUON_DAI
       q = r * k; while (q > r * k * 0.6 && !clear(k, q)) q *= 0.96;
       W.farCones.push({ i, x: Math.cos(a) * d * k, z: Math.sin(a) * d * k + 15, h: h * k, k, q, foot: q * (1 - 3 / (h * k)) }); FAR.add(new THREE.ConeGeometry(q, h * k, 5 + (i % 3)), i % 2 ? 0x6a4a62 : 0x55405a, { p: [Math.cos(a) * d * k, (h * k) / 2 - 3, Math.sin(a) * d * k + 15], r: [0, rnd() * 3, 0], j: 0.1 });
     }

@@ -57,7 +57,7 @@ function buildWorld2(G) {
   G.roofZones.push([-5.7, 5.7, -56.6, -45.4]);
 
   // ---------- Vật cản (khớp với hình khối ở 09-world2-geo.js) ----------
-  G.collide.bounds.z0 = Math.min(G.collide.bounds.z0, -189); // v5: tường sau vườn z −188,2 (v4: −119, tường bao sau −118): giới hạn đi bộ phải sâu hơn −113 (hành lang, hậu điện) và tới hết vườn. 00-core đặt −189; dòng này chỉ để khu mở rộng không phụ thuộc vào con số đó
+  G.collide.bounds.z0 = Math.min(G.collide.bounds.z0, -189 - VUON_DAI); // v5: tường sau vườn z −188,2 (v4: −119, tường bao sau −118): giới hạn đi bộ phải sâu hơn −113 (hành lang, hậu điện) và tới hết vườn. 00-core đặt −189; dòng này chỉ để khu mở rộng không phụ thuộc vào con số đó
   const P = L.pond;
   col.box(P.x0 - 0.4, P.z0 - 0.4, -1.45, P.z1 + 0.4, 'pond2'); col.box(1.45, P.z0 - 0.4, P.x1 + 0.4, P.z1 + 0.4, 'pond2');
   // mép tầng nền (tường kè đá + lan can), chừa bậc trước và bậc tây

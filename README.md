@@ -85,6 +85,8 @@ gõ mõ tụng kinh, ngồi thiền trên bồ đoàn, viết lời cầu an và
   vẽ lại thành một ảnh bề mặt 2048 px, gắn 12 xương để nhân vật đi, chắp tay, lạy, ngồi; thêm các màu áo bằng chương trình tô),
   lưu thành `assets/nhan-vat/thu-sinh.glb` (0,6 MB) và `assets/nhan-vat/thieu-nu.glb` (0,5 MB), ảnh nhỏ từng nhân vật ở `assets/nhan-vat/anh/`;
   file gốc không có xương và hoạt ảnh nên mọi cử động do game tính; chưa tải được mô hình thì game dùng nhân vật hoạt hình áo lam dựng bằng mã (vẫn là một lựa chọn trong danh sách).
+  Khách hành hương AI cũng vẽ bằng hai mô hình này: bản nhẹ `thu-sinh-nhe.glb` và `thieu-nu-nhe.glb` (khoảng 7 nghìn mặt, 0,2 MB mỗi file), mỗi khách một thân,
+  màu áo nhuộm theo màu áo của từng khách; máy bật tiết kiệm dữ liệu, máy yếu (tụt khung hình) hoặc tải lỗi thì khách giữ dáng hoạt hình cũ.
 - Hậu kỳ trong chính điện: khử răng cưa MSAA, GTAO, bloom, đường cong màu mềm; tự hạ mức trên máy yếu
   hoặc khi trình duyệt không hỗ trợ, và vẫn chạy ở chế độ vẽ thường nếu phần phụ trợ không tải được.
 - Yêu cầu trình duyệt: Chrome / Edge 89+, Safari 16.4+, Firefox 108+ (cần import map và WebGL2).

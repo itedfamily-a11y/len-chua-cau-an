@@ -12,7 +12,8 @@
 //    thân  : cúi ở eo (hip), gật đầu (head); chân: bước theo pha đi; ngồi: hạ người, cắt phần dưới mặt ngồi, thêm khối đùi xếp bằng.
 //  Vì vậy mọi tư thế sẵn có (chắp tay, lạy, dâng hương, thỉnh chuông, gõ mõ, lắc ống xăm, vẫy tay…) dùng được ngay, cả với người chơi khác.
 //  Màu áo: chương trình tô của vật liệu nhuộm phần vải (thuộc tính đỉnh _giu = 1 là phần giữ nguyên: da, tóc, giày) theo độ sáng của ảnh.
-//  API: G.nhanVat = { id, ds, chon(id), than(p), bo(p), caoThem, trangThai, ghiCong }.
+//  Khách hành hương AI (20-crowd.js) cũng vẽ bằng hai mô hình này (bản nhẹ *-nhe.glb, mỗi khách một thân, màu áo nhuộm theo màu áo khách): G.nhanVat.khach.
+//  API: G.nhanVat = { id, ds, chon(id), veXa(p, k), bo(p), caoThem, trangThai, ghiCong, khach: { san, ve(p, px, pz), an(p), xoa(), trangThai } }.
 // =====================================================================
 
 //@@NV-LOI-BAT-DAU  (khối thuần toán, không dùng THREE / DOM: tests-local/quan-am-tools/nv-thu.mjs đọc đúng khối này để dựng ảnh xem thử các tư thế)
@@ -85,10 +86,11 @@ const NV_TOAN = (() => {
   return { qMul, qInv, qAxis, qRot, qArc, tay, tuThe, nhuom, ss };
 })();
 // Mẫu (mô hình). cao: chiều cao trong game (m). voi: tầm đưa tay ra trước; truoc: mặt trước ngực (tay không chui vào);
+// nhe: bản nhẹ (khoảng 7 nghìn mặt, ảnh 1024 px) cho khách hành hương AI; sang: hệ số sáng khi nhuộm áo khách; non: [y, z, tỉ lệ] đặt nón lá của dáng chibi lên đầu (so với xương đầu; không ghi = không đội nón);
 // buoc / goi: biên độ bước chân, gập gối (rad); nhun: nhún khi đi; gio: cổ tay được giơ cao hơn vai tối đa bao nhiêu (không ghi = không giới hạn); ngoi: độ cao đáy hông (mặt ngồi) trong hệ cao 1; dui: màu khối đùi khi ngồi (sRGB).
 const NV_MAU = {
-  'thu-sinh': { url: 'assets/nhan-vat/thu-sinh.glb', cao: 1.5, voi: 0.2, truoc: 0.15, buoc: 0.2, goi: 0.24, nhun: 0.005, gio: 0.07, ngoi: 0.45, dui: [222, 216, 196], thuDa: 1 },
-  'thieu-nu': { url: 'assets/nhan-vat/thieu-nu.glb', cao: 1.42, voi: 0.17, truoc: 0.105, buoc: 0.24, goi: 0.42, nhun: 0.006, ngoi: 0.47, dui: [150, 172, 205], thuDa: 0 },
+  'thu-sinh': { url: 'assets/nhan-vat/thu-sinh.glb', nhe: 'assets/nhan-vat/thu-sinh-nhe.glb', sang: 1.2, cao: 1.5, voi: 0.2, truoc: 0.15, buoc: 0.2, goi: 0.24, nhun: 0.005, gio: 0.07, ngoi: 0.45, dui: [222, 216, 196], thuDa: 1 },
+  'thieu-nu': { url: 'assets/nhan-vat/thieu-nu.glb', nhe: 'assets/nhan-vat/thieu-nu-nhe.glb', sang: 1.7, non: [-0.011, 0.012, 0.258], cao: 1.42, voi: 0.17, truoc: 0.105, buoc: 0.24, goi: 0.42, nhun: 0.006, ngoi: 0.47, dui: [150, 172, 205], thuDa: 0 },
 };
 // Danh sách nhân vật. nhuom: [đỏ, lục, lam (tuyến tính, màu áo mới), mức nhuộm 0…1, hệ số sáng] hoặc null (màu gốc). mau = null: dáng hoạt hình cũ.
 const NV_DS = [
@@ -116,9 +118,10 @@ function installNhanVat(G) {
 
   // ---------- tải mô hình (mỗi mẫu một lần) ----------
   let libs = null;
-  const mauCache = new Map(); // mẫu → Promise<{ scene, R, map }>
-  function taiMau(mid) {
-    if (mauCache.has(mid)) return mauCache.get(mid);
+  const mauCache = new Map(); // mẫu (+ ':nhe' cho bản nhẹ) → Promise<{ scene, R, map }>
+  function taiMau(mid, nhe) {
+    const key = nhe ? mid + ':nhe' : mid;
+    if (mauCache.has(key)) return mauCache.get(key);
     const M = NV_MAU[mid];
     const p = (async () => {
       if (!libs) libs = Promise.all([import('three/addons/loaders/GLTFLoader.js'), import('three/addons/libs/meshopt_decoder.module.js'), import('three/addons/utils/SkeletonUtils.js')]);
@@ -126,7 +129,7 @@ function installNhanVat(G) {
       const Dec = Mo.MeshoptDecoder || Mo.default;
       if (!L.GLTFLoader || !Dec || Dec.supported === false) throw new Error('trình duyệt không chạy được bộ giải nén mô hình');
       const loader = new L.GLTFLoader(); loader.setMeshoptDecoder(Dec);
-      const gltf = await loader.loadAsync(M.url);
+      const gltf = await loader.loadAsync(nhe ? M.nhe : M.url);
       const sc = gltf.scene; sc.updateMatrixWorld(true);
       let mesh = null; const node = {};
       sc.traverse((o) => { if (o.isSkinnedMesh && !mesh) mesh = o; if (o.name) node[o.name] = o; });
@@ -140,8 +143,8 @@ function installNhanVat(G) {
       const idx = mesh.geometry.index;
       return { scene: sc, clone: SU.clone, R, map, M, tris: idx ? idx.count / 3 : 0 };
     })();
-    p.catch(() => mauCache.delete(mid)); // lỗi mạng: lần chọn sau thử lại
-    mauCache.set(mid, p);
+    p.catch(() => mauCache.delete(key)); // lỗi mạng: lần chọn sau thử lại
+    mauCache.set(key, p);
     return p;
   }
 
@@ -170,25 +173,27 @@ function installNhanVat(G) {
         ].join('\n'));
     };
     m.customProgramCacheKey = () => 'nhan-vat-1';
-    m.userData.plane = plane;
+    m.userData.plane = plane; m.userData.un = un;
     return m;
   }
   const lin = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
 
-  // ---------- một thân nhân vật (người chơi hoặc người ở xa) ----------
+  // ---------- một thân nhân vật (người chơi, người ở xa, hoặc khách hành hương AI khi khach = true) ----------
   const _q = new THREE.Quaternion();
-  function taoThan(T, d) {
+  function taoThan(T, d, khach) {
     const M = T.M, R = T.R;
     const obj = T.clone(T.scene), bone = {}; let mesh = null;
     obj.traverse((o) => { if (o.isSkinnedMesh) mesh = o; if (o.name) bone[o.name] = o; });
     const mat = vatLieu(T, d);
     mesh.material = mat; mesh.frustumCulled = false; mesh.castShadow = false; mesh.receiveShadow = false;
+    if (khach) { mesh.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0.5, 0), 0.85); mesh.frustumCulled = true; } // khách AI: mấy chục thân, người ngoài khung hình thì khỏi vẽ (quả cầu bao trong hệ cao 1 của mô hình, đủ cho mọi tư thế)
     const hold = new THREE.Group(); hold.name = 'nhanVat:' + d.id; hold.add(obj);
     const hongY = bone.hong.position.y;
     // khối đùi xếp bằng khi ngồi: cùng hình với dáng chibi, màu vải của nhân vật
     const c = NV_TOAN.nhuom([lin(M.dui[0]), lin(M.dui[1]), lin(M.dui[2])], d.nhuom);
-    const dui = new THREE.Mesh(G.chibi.geos.sitLegs, new THREE.MeshLambertMaterial({ color: new THREE.Color(c[0], c[1], c[2]) }));
-    dui.visible = false; dui.castShadow = false;
+    const dui = khach ? null : new THREE.Mesh(G.chibi.geos.sitLegs, new THREE.MeshLambertMaterial({ color: new THREE.Color(c[0], c[1], c[2]) })); // khách AI dùng lớp khối đùi sẵn có của 20-crowd.js
+    if (dui) { dui.visible = false; dui.castShadow = false; }
+    const LB = [(R.coTay[0] + R.dauTay[0]) / 2 - R.khuyu[0], (R.coTay[1] + R.dauTay[1]) / 2 - R.khuyu[1], (R.coTay[2] + R.dauTay[2]) / 2 - R.khuyu[2]]; // giữa lòng bàn tay trái so với khuỷu (hệ của xương cẳng tay)
     const a2 = { lx: 0, lz: 0, rx: 0, rz: 0, hip: 0, head: 0, pha: 0, di: 0 };
     return {
       d, M, R, hold, dui, bone, mesh, mat,
@@ -201,7 +206,11 @@ function installNhanVat(G) {
       },
       // đặt mặt cắt ngang ở độ cao y (thế giới); tat = true: không cắt
       cat(y, tat) { mat.userData.plane.constant = tat ? 1e4 : -y; },
-      huy() { if (hold.parent) hold.parent.remove(hold); if (dui.parent) dui.parent.remove(dui); mat.dispose(); dui.material.dispose(); try { mesh.skeleton.dispose(); } catch (e) { /* ảnh ma trận xương của riêng thân này; lưới và ảnh bề mặt dùng chung thì giữ */ } },
+      // đổi màu áo: n = [đỏ, lục, lam (tuyến tính), mức nhuộm, hệ số sáng] hoặc null (màu gốc)
+      doiMau(n) { const u = mat.userData.un; u.uNhuom.value.set(n ? n[0] : 1, n ? n[1] : 1, n ? n[2] : 1, n ? n[3] : 0); u.uNhuomK.value.x = n ? n[4] : 1; },
+      // điểm giữa lòng bàn tay trong thế giới (s = 1 tay trái, −1 tay phải); gọi sau hold.updateMatrixWorld(true)
+      tay(s, out) { return out.set(s * LB[0], LB[1], LB[2]).applyMatrix4(bone[s > 0 ? 'tayDuoiT' : 'tayDuoiP'].matrixWorld); },
+      huy() { if (hold.parent) hold.parent.remove(hold); if (dui) { if (dui.parent) dui.parent.remove(dui); dui.material.dispose(); } mat.dispose(); try { mesh.skeleton.dispose(); } catch (e) { /* ảnh ma trận xương của riêng thân này; lưới và ảnh bề mặt dùng chung thì giữ */ } },
     };
   }
   try { G.renderer.localClippingEnabled = true; } catch (e) { /* không cắt được thì phần chân khi ngồi nằm dưới mặt ngồi, vẫn chơi được */ }
@@ -271,7 +280,7 @@ function installNhanVat(G) {
     than.hold.position.y = -chim / K;
     than.cat(P.pos.y - SEAT - 0.004, sit < 0.03);
     const dui = than.dui; dui.visible = sit > 0.15;
-    if (dui.visible) { dui.position.set(0, -sit * 0.34, -0.04); dui.scale.set(1.12 * sit, Math.max(0.01, sit), 1.12 * sit); }
+    if (dui.visible) { dui.position.set(0, -sit * 0.34, -0.04); dui.scale.set(1.0 * sit, 1.4 * Math.max(0.01, sit), 1.05 * sit); }
     P.root.updateMatrixWorld(true);
     C.armL.tip.getWorldPosition(_hl); C.armR.tip.getWorldPosition(_hr);
     P.handsWorld.copy(_hl).add(_hr).multiplyScalar(0.5);
@@ -303,11 +312,66 @@ function installNhanVat(G) {
     t.hold.position.set(p.x, p.y - sit * (SEAT + M.ngoi * M.cao), p.z); t.hold.rotation.y = p.yaw; t.hold.scale.setScalar(M.cao * Math.max(0.001, k));
     t.cat(p.y - SEAT - 0.004, sit < 0.03);
     const dui = t.dui; dui.visible = sit > 0.15 && k > 0.5;
-    if (dui.visible) { dui.position.set(p.x - Math.sin(p.yaw) * 0.03, p.y - sit * 0.34 * K, p.z - Math.cos(p.yaw) * 0.03); dui.rotation.y = p.yaw; dui.scale.set(1.12 * sit * K, Math.max(0.01, sit) * K, 1.12 * sit * K); }
+    if (dui.visible) { dui.position.set(p.x - Math.sin(p.yaw) * 0.03, p.y - sit * 0.34 * K, p.z - Math.cos(p.yaw) * 0.03); dui.rotation.y = p.yaw; dui.scale.set(1.0 * sit * K, 1.4 * Math.max(0.01, sit) * K, 1.05 * sit * K); }
     p.nvCao = M.cao - CHIBI_CAO - sit * (M.ngoi * M.cao - 0.05 * K); // đỉnh đầu so với dáng chibi cùng tư thế (bảng tên, bong bóng lời)
     return true;
   }
   function bo(p) { const r = xa.get(p); if (!r) return; if (r.than) r.than.huy(); xa.delete(p); S.xa = xa.size; }
+
+  // ---------- khách hành hương AI (20-crowd.js): mỗi khách một thân bản nhẹ, màu áo nhuộm theo màu áo khách đã chọn ----------
+  // Tải hai bản nhẹ ngay lúc khởi động (khoảng 0,4 MB). Máy bật tiết kiệm dữ liệu, máy cảm ứng đã được ghi nhớ là yếu trong 7 ngày, hoặc tải hỏng: khách giữ dáng hoạt hình.
+  // Đang chơi mà máy tụt khung hình (sự kiện quality:low): trả hết về dáng hoạt hình.
+  const KH = { state: 'idle', error: null, san: false, n: 0 }; // state: idle | loading | ready | failed | skipped
+  const khTen = Object.keys(NV_MAU), khT = [], khThan = new Map(); // khThan: khách → { m, than }
+  const _kq = new THREE.Quaternion(), _kc = new THREE.Color(), _ky = new THREE.Vector3(0, 1, 0), _kz = new THREE.Vector3(0, 0, 1);
+  const _ka = { lx: 0, lz: 0, rx: 0, rz: 0, hip: 0, head: 0, sit: 0 };
+  function khXoa() { for (const r of khThan.values()) r.than.huy(); khThan.clear(); KH.n = 0; }
+  function khBatDau() {
+    if (KH.state !== 'idle') return;
+    const conn = navigator.connection, tuoi = Date.now() - ((G.save.data && +G.save.data.lowQ) || 0);
+    if ((conn && conn.saveData) || (G.isTouch && tuoi >= 0 && tuoi < 7 * 864e5) || (G.quality && G.quality.low)) { KH.state = 'skipped'; return; } // máy tính từng bị ghi nhớ là yếu vẫn thử lại mỗi lần mở (tụt khung hình thì quality:low trả về dáng hoạt hình); máy cảm ứng yếu thì khỏi tải
+    KH.state = 'loading';
+    Promise.all(khTen.map((m) => taiMau(m, true))).then((ts) => {
+      if (KH.state !== 'loading') return;
+      for (const t of ts) khT.push(t);
+      KH.state = 'ready'; KH.san = true;
+    }).catch((e) => { if (KH.state !== 'loading') return; KH.state = 'failed'; KH.error = (e && e.message) || String(e); console.warn('[nhân vật] không tải được mô hình cho khách hành hương — giữ dáng hoạt hình: ' + KH.error); });
+  }
+  G.events.on('quality:low', () => { KH.san = false; if (KH.state !== 'failed') KH.state = 'skipped'; khXoa(); });
+  // Vẽ khách p (đối tượng của 20-crowd.js) tại (px, pz). Trả về thân (để 20-crowd.js hỏi vị trí bàn tay, đầu) hoặc null = vẽ dáng hoạt hình.
+  // Đọc của p: nvM (mẫu), nvC / nvJ (màu áo, độ lệch sáng), nvMoi (vừa đổi áo), a { la lz ra rz hip head hyaw roll sit }, hunch, kind, scale, phase, walkAmt, yaw, gy, seatTop, vis.
+  // Ghi vào p: nvLap (màu khối đùi, tuyến tính) + nvLapMoi, nvY (độ cao bàn chân), nvH (chiều cao người).
+  function khVe(p, px, pz) {
+    if (!KH.san) return null;
+    const mi = (p.nvM | 0) % khT.length;
+    let r = khThan.get(p);
+    if (!r || r.m !== mi) {
+      if (r) r.than.huy();
+      r = { m: mi, than: taoThan(khT[mi], { id: 'khach', nhuom: null }, true) };
+      scene.add(r.than.hold); khThan.set(p, r); KH.n = khThan.size; p.nvMoi = true;
+    }
+    const t = r.than, M = t.M, a = p.a;
+    if (p.nvMoi) {
+      p.nvMoi = false;
+      _kc.setHex(p.nvC != null ? p.nvC : 0x86a3c8); const j = p.nvJ || 1;
+      const n = [_kc.r * j, _kc.g * j, _kc.b * j, 0.9, M.sang || 1.2];
+      t.doiMau(n);
+      p.nvLap = NV_TOAN.nhuom([lin(M.dui[0]), lin(M.dui[1]), lin(M.dui[2])], n); p.nvLapMoi = true;
+    }
+    const H = M.cao * p.scale, sit = a.sit, v = p.vis, k = v >= 1 ? 1 : v * v * (3 - 2 * v);
+    _ka.lx = a.la; _ka.lz = a.lz; _ka.rx = a.ra; _ka.rz = a.rz; _ka.hip = a.hip + p.hunch; _ka.head = a.head; _ka.sit = sit;
+    t.tuThe(_ka, p.phase, p.walkAmt);
+    if (a.roll) t.bone.nguc.quaternion.multiply(_kq.setFromAxisAngle(_kz, a.roll));   // lắc lư khi tụng
+    if (a.hyaw) t.bone.dau.quaternion.premultiply(_kq.setFromAxisAngle(_ky, a.hyaw)); // quay đầu nhìn quanh
+    t.bone.dau.scale.setScalar(p.kind === 1 ? 1.2 : 1); // trẻ em: người thu nhỏ theo p.scale, đầu to hơn một chút
+    const chan = p.gy + sit * (p.seatTop - M.ngoi * H - p.gy); // ngồi: đáy hông chạm mặt bồ đoàn / ghế
+    t.hold.visible = v >= 0.02;
+    t.hold.position.set(px, p.gy + (chan - p.gy) * k, pz); t.hold.rotation.y = p.yaw; t.hold.scale.setScalar(H * Math.max(0.001, k));
+    t.cat(p.seatTop - 0.004 - (1 - NV_TOAN.ss(0.05, 0.7, sit)) * 0.9, sit < 0.03); // mặt cắt dâng dần tới mặt ngồi trong lúc ngồi xuống
+    p.nvY = chan; p.nvH = H;
+    return t;
+  }
+  function khAn(p) { const r = khThan.get(p); if (r) r.than.hold.visible = false; }
 
   // ---------- giao diện: lưới chọn nhân vật (màn chào + Cài đặt) ----------
   const CHIBI_SVG = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160"><rect width="120" height="160" fill="#3a2417"/><ellipse cx="60" cy="150" rx="34" ry="6" fill="#000" opacity=".3"/><path d="M33 148c-2-34 8-60 27-60s29 26 27 60z" fill="#86a3c8"/><path d="M40 100c6-8 34-8 40 0" stroke="#b8742a" stroke-width="5" fill="none"/><circle cx="60" cy="58" r="33" fill="#f3c9a0"/><path d="M27 54c0-22 15-34 33-34s33 12 33 34c-8-14-20-20-33-20s-25 6-33 20z" fill="#2a1d16"/><circle cx="60" cy="20" r="9" fill="#2a1d16"/><path d="M44 62q5-4 10 0M66 62q5-4 10 0" stroke="#3a2418" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="42" cy="72" rx="6" ry="4" fill="#f09a8a"/><ellipse cx="78" cy="72" rx="6" ry="4" fill="#f09a8a"/><path d="M56 76q4 3 8 0" stroke="#c0604a" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>');
@@ -351,6 +415,9 @@ function installNhanVat(G) {
     get id() { return cur.id; }, get than() { return than; },
     get caoThem() { return than ? than.M.cao - CHIBI_CAO : 0; }, // nhân vật của mình cao hơn dáng chibi bao nhiêu mét (bong bóng lời)
     hopLe: (id) => typeof id === 'string' && byId.has(id),
+    // khách hành hương AI vẽ bằng mô hình: 20-crowd.js gọi khach.ve(p, px, pz) mỗi khung, khach.an(p) khi khách rời chùa
+    khach: { trangThai: KH, ve: khVe, an: khAn, xoa: khXoa, get san() { return KH.san; } },
   };
+  khBatDau();
   chon(cur.id, false); // tải sẵn nhân vật đã chọn lần trước (hoặc nhân vật đầu danh sách) ngay khi còn ở màn chào
 }

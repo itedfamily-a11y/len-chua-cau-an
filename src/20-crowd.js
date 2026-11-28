@@ -162,6 +162,7 @@ function installCrowd(G) {
     p.bun = !p.hat && Math.random() < (kind === 2 ? 0.5 : kind === 1 ? 0.18 : 0.38);
     p.beads = kind !== 1 && Math.random() < (kind === 2 ? 0.6 : 0.28);
     const j = rand(0.93, 1.07), robe = pickRobe(kind, tourist);
+    p.nvM = (Math.random() * 2) | 0; p.nvC = robe; p.nvJ = j; p.nvMoi = true; // khách "người thật" (06-nhan-vat.js): mẫu mô hình + màu áo nhuộm theo đúng màu áo vừa chọn
     setC(mBody, sl, robe, j); setC(mLegs, sl, robe, j); setC(mArms, sl * 2, robe, j); setC(mArms, sl * 2 + 1, robe, j);
     const skin = pick(SKIN), sk = kind === 2 ? 0.95 : 1;
     setC(mHead, sl, skin, sk); setC(mHands, sl * 2, skin, sk); setC(mHands, sl * 2 + 1, skin, sk);
@@ -241,6 +242,7 @@ function installCrowd(G) {
     p.bub = null;
     if (p.grp) { const g = p.grp; p.grp = null; const i = g.members.indexOf(p); if (i >= 0) g.members.splice(i, 1); if (g.guide === p) g.guide = null; }
     hideSlot(p.slot);
+    if (NVK) NVK.an(p); // giấu thân mô hình của khách này (giữ lại để dùng cho lần vào sau)
     p.active = false;
     const i = act.indexOf(p);
     if (i >= 0) { act[i] = act[act.length - 1]; act.pop(); }
@@ -936,9 +938,56 @@ function installCrowd(G) {
   }
 
   // =====================================================================
+  //  KHÁCH "NGƯỜI THẬT" (2026-11-28): thân là mô hình 3D có xương của 06-nhan-vat.js (G.nhanVat.khach, bản nhẹ, mỗi khách một thân,
+  //  tư thế lấy từ cùng các số p.a). Ở đây chỉ còn: giấu dáng hoạt hình của ô, khối đùi khi ngồi, điện thoại, cờ, nón lá, bóng, bong bóng lời.
+  // =====================================================================
+  const NVK = (G.nhanVat && G.nhanVat.khach) || null;
+  const _hatL = new THREE.Matrix4();
+  function writeReal(p, time) {
+    const px = p.pos.x + p.ox, pz = p.pos.z + p.oz;
+    const t = NVK.ve(p, px, pz);
+    if (!t) return false;
+    const a = p.a, s = p.scale * HS, sl = p.slot, sit = a.sit;
+    mBody.setMatrixAt(sl, ZERO); mBeads.setMatrixAt(sl, ZERO); mHead.setMatrixAt(sl, ZERO); mHair.setMatrixAt(sl, ZERO); mBun.setMatrixAt(sl, ZERO); mFace.setMatrixAt(sl, ZERO);
+    for (let k = 0; k < 2; k++) { mArms.setMatrixAt(sl * 2 + k, ZERO); mHands.setMatrixAt(sl * 2 + k, ZERO); mFeet.setMatrixAt(sl * 2 + k, ZERO); }
+    const hy = p.yaw * 0.5; _q.set(0, Math.sin(hy), 0, Math.cos(hy));
+    // khối đùi xếp bằng: đặt như dáng hoạt hình (gốc ở mặt ngồi), màu vải của người thật
+    if (p.nvLapMoi) { p.nvLapMoi = false; _col.setRGB(p.nvLap[0], p.nvLap[1], p.nvLap[2]); mLegs.setColorAt(sl, _col); colDirty = true; }
+    if (sit > 0.12) mLegs.setMatrixAt(sl, _loc.compose(_pv.set(px, p.gy + sit * (p.seatTop - 0.05 * s - p.gy), pz), _q, _sv.set(1.0 * s * sit, 1.4 * s * Math.max(0.01, sit), 1.05 * s * sit)));
+    else mLegs.setMatrixAt(sl, ZERO);
+    const tay = a.phone > 0.03 || p.flagSlot >= 0, non = p.hat && !!t.M.non;
+    if (tay || non) t.hold.updateMatrixWorld(true);
+    if (tay) { t.tay(1, _tipL); t.tay(-1, _tipR); }
+    // điện thoại giữa hai bàn tay (đứng thẳng theo hướng người), đèn chụp lóe phía trước
+    if (a.phone > 0.03) {
+      _pv.copy(_tipL).add(_tipR).multiplyScalar(0.5);
+      _tmp.compose(_pv, _q, _sv.setScalar(a.phone)); _tmp.multiply(_loc.makeTranslation(0, 0.05, 0.06));
+      mPhone.setMatrixAt(sl, _tmp);
+      const te = _tmp.elements;
+      if (p.flashReq) { p.flashReq = false; if (p.vis > 0.5) flashAt(te[12] + te[8] * 0.25, te[13] + te[9] * 0.25, te[14] + te[10] * 0.25); }
+    } else { mPhone.setMatrixAt(sl, ZERO); p.flashReq = false; }
+    // cờ của hướng dẫn viên: cán qua bàn tay phải
+    if (p.flagSlot >= 0) {
+      const f = p.flagSlot, by = _tipR.y - 0.95;
+      mStick.setMatrixAt(f, _loc.makeTranslation(_tipR.x, by, _tipR.z));
+      _e.set(0, p.yaw + PI / 2 + Math.sin(time * 2.4 + f) * 0.35 + Math.sin(time * 5.1 + f * 2) * 0.08, 0, 'XYZ'); _q.setFromEuler(_e);
+      mFlag.setMatrixAt(f, _loc.compose(_pv2.set(_tipR.x, by + 2.34, _tipR.z), _q, _one));
+    }
+    // nón lá (chỉ mẫu có ghi chỗ đặt nón): theo xương đầu
+    if (non) { const n = t.M.non; _hatL.makeScale(n[2], n[2], n[2]).setPosition(0, n[0], n[1]); _tmp.multiplyMatrices(t.bone.dau.matrixWorld, _hatL); mHat.setMatrixAt(sl, _tmp); }
+    else mHat.setMatrixAt(sl, ZERO);
+    mShadow.setMatrixAt(sl, _loc.compose(_pv.set(px, p.gy + 0.025, pz), _qI, _sv.set(0.95 * s * (1 + sit * 0.1), 1, 0.95 * s)));
+    p.bv.set(px, p.nvY, pz);
+    p.bubbleY = p.nvH + (non ? 0.42 : 0.3);
+    if (p.vis < 1) applyVis(p, px, pz);
+    return true;
+  }
+
+  // =====================================================================
   //  GHI MA TRẬN: gốc (vị trí, hướng, tỉ lệ) × nghiêng hông × từng bộ phận
   // =====================================================================
   function writePilgrim(p, time) {
+    if (NVK && NVK.san && writeReal(p, time)) return; // khách "người thật": thân do 06-nhan-vat.js vẽ; chưa tải xong / máy yếu thì vẽ dáng hoạt hình như cũ
     const a = p.a, s = p.scale * HS, sl = p.slot, sit = a.sit; // HS: tỉ lệ người chung (G.chibi.k); p.scale chỉ còn là khác biệt lớn / bé giữa các khách
     const vy = p.gy + sit * (p.seatTop - 0.05 * s - p.gy) + p.bob * s; // ngồi: hạ thân xuống ngang mặt bồ đoàn / ghế
     const px = p.pos.x + p.ox, pz = p.pos.z + p.oz;
@@ -1314,6 +1363,7 @@ function installCrowd(G) {
     disposed = true;
     for (const off of offs) { try { off(); } catch (err) { /* bỏ qua */ } }
     for (const m of meshes) { scene.remove(m); m.dispose(); }
+    if (NVK) NVK.xoa(); // các thân mô hình của khách
     for (const k in mats) mats[k].dispose();
     for (const g of ownGeos) g.dispose();
     if (flashPts) flashPts.dispose();
